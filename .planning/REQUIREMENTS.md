@@ -16,23 +16,22 @@
 - [ ] **SYNC-01**: User can trigger manual sync of bug data from Jira to MySQL via button
 - [ ] **SYNC-02**: Sync fetches all issues of type "Bug" for the selected project (fields: ID, summary, status, priority, sprint, assignee)
 - [ ] **SYNC-03**: Synced bug records are stored in MySQL with a sync timestamp
-- [ ] **SYNC-04**: Dashboard shows last sync timestamp
 
 ### Project Selection
 
-- [ ] **PROJ-01**: User can select from multiple Jira projects via dropdown
+- [ ] **PROJ-01**: User can select from multiple Jira projects via a project list page
 - [ ] **PROJ-02**: Dashboard data refreshes when project selection changes
 
 ### Bug Summary Report
 
 - [ ] **SUMM-01**: Dashboard displays bug count grouped by status (Open, In Progress, Closed, etc.)
 - [ ] **SUMM-02**: Dashboard displays bug count grouped by priority (Critical, High, Medium, Low)
-- [ ] **SUMM-03**: Dashboard displays summary count cards (total bugs, open count, critical count)
+- [ ] **SUMM-03**: Dashboard displays summary count cards (total bugs, open count, resolved count)
 
 ### Sprint Report
 
 - [ ] **SPRINT-01**: Dashboard shows bugs assigned to the current active sprint
-- [ ] **SPRINT-02**: Dashboard shows per-sprint history — bugs opened and closed per sprint
+- [ ] **SPRINT-02**: Dashboard shows per-sprint history — total, open, resolved counts with bug count by priority in a collapsible section per sprint
 
 ### Charts
 
@@ -43,6 +42,10 @@
 
 - [ ] **EXPORT-01**: User can export current bug report to Excel (.xlsx)
 - [ ] **EXPORT-02**: User can export current bug report to Word (.docx)
+
+### UI
+
+- [ ] **UI-01**: Dashboard is responsive and usable on mobile, tablet, and desktop
 
 ## v2 Requirements
 
@@ -65,6 +68,7 @@
 | Dashboard user login/auth | Internal QA tool — no auth needed for v1 |
 | Real-time websocket updates | Manual sync sufficient for v1 |
 | Mobile app | Web dashboard only |
+| Last sync timestamp display (SYNC-04) | Removed from spec — not needed for v1 |
 
 ## Traceability
 
@@ -76,7 +80,6 @@
 | SYNC-01 | Phase 2 | Pending |
 | SYNC-02 | Phase 2 | Pending |
 | SYNC-03 | Phase 2 | Pending |
-| SYNC-04 | Phase 2 | Pending |
 | PROJ-01 | Phase 3 | Pending |
 | PROJ-02 | Phase 3 | Pending |
 | SUMM-01 | Phase 3 | Pending |
@@ -88,6 +91,7 @@
 | CHART-02 | Phase 3 | Pending |
 | EXPORT-01 | Phase 5 | Pending |
 | EXPORT-02 | Phase 5 | Pending |
+| UI-01 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total
