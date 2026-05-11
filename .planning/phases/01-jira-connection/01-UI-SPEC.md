@@ -1,10 +1,11 @@
 ---
 phase: 1
 slug: jira-connection
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-11
+reviewed_at: 2026-05-11
 ---
 
 # Phase 1 — UI Design Contract: Jira Connection
@@ -44,7 +45,7 @@ Declared values (multiples of 4):
 
 Exceptions:
 - App icon: 64×64px (square touch target, not a spacing token)
-- Card padding: 47px top / 49px sides / 49px bottom (preserve exact reference values from login-card)
+- Card padding: 48px top / 48px sides / 48px bottom (rounded from reference 47px/49px to nearest 4-multiples for grid alignment)
 - Page wrapper desktop padding: 80px vertical / 64px horizontal (from `.page-wrapper`)
 - Hero grid gap: 24px (`gap: 24px`)
 - Modal card: 36px top / 32px sides (success + error modals)
@@ -55,26 +56,18 @@ Exceptions:
 
 ## Typography
 
-| Role | Size | Weight | Line Height | Font Family | Usage |
-|------|------|--------|-------------|-------------|-------|
-| Display | 72px | 400 (Inder regular) | 1.1 | Inder | Hero heading (desktop) |
-| Heading | 32px | 700 | 48px (1.5) | Inter | Card title, modal title (20px at weight 700) |
-| Body | 16px | 400 | 1.5 (24px) | Inter | Card subtitle, CTA label, form field text |
-| Label / Meta | 12px | 400 | 16px | Inter | Footer copy, footer links |
-| Micro | 11px | 400/600 | 17.88px | Inter | Security badge text, doc-link |
-| Mono | 12px | 500 | — | JetBrains Mono | Tagline text (letter-spacing: 2.4px) |
-| Subtext | 18px | 400 | 1.6 | Hanken Grotesk | Hero body paragraph |
-| Code / Technical | 11px | 400 | 1.9 | Courier New, monospace | Technical details pre block in error modal |
+> **Reference note (not the declared scale):** The source CSS uses a broad type ramp across all page regions (hero heading at 72px / Inder, hero subtext at 18px / Hanken Grotesk, security micro text at 11px, monospace tagline at 12px / JetBrains Mono, modal title at 20px). These are reference values only — the full ramp is NOT the declared scale for Phase 1.
 
-**Practical set for Phase 1 components (connection form + modals):**
+**Declared typography scale for Phase 1 (connection form + modals):**
 
-| Role | Size | Weight | Line Height |
-|------|------|--------|-------------|
-| Card title | 32px | 700 | 48px |
-| Body / input | 16px | 400 | 24px |
-| Button label | 16px | 500 | — |
-| Label / caption | 13px | 400/500 | 20px |
-| Footer / micro | 12px | 400 | 16px |
+| Role | Size | Weight | Line Height | Font Family |
+|------|------|--------|-------------|-------------|
+| Card title | 32px | 700 | 48px | Inter |
+| Body / input / button label | 16px | 400 | 24px | Inter |
+| Label / caption | 14px | 400 | 20px | Inter |
+| Footer / micro | 12px | 400 | 16px | Inter |
+
+Declared weights: **400** (body, labels, footer) and **700** (card title, CTA button text) only.
 
 **Source:** UI/css/login.css `.card-title`, `.card-subtitle`, `.cta-btn`, `.footer-copy`, `.hero-heading`, `.security-text`
 
@@ -112,6 +105,12 @@ Destructive reserved for: error status banners, error icon color (`#e53935`), lo
 
 ---
 
+## Visuals
+
+Primary focal point: login card (right column) — the hero left is supporting context only.
+
+---
+
 ## Component Inventory
 
 ### Phase 1 Components (build these as React components)
@@ -125,8 +124,8 @@ Structure: two-column hero grid (7fr / 5fr) — left hero copy + right login car
 | Page wrapper | `.page-wrapper` | flexbox centering, padding 80px 64px |
 | Hero grid | `.hero-grid` | `grid-template-columns: 7fr 5fr; gap: 24px; max-width: 1200px` |
 | Hero left | `.hero-left` | Hidden on mobile (<900px) |
-| Login card | `.login-card` | `border-radius: 8px; padding: 47px 49px 49px; box-shadow: 0 40px 80px -20px rgba(0,45,28,0.08)` |
-| Footer | `footer` | `background: #f8f9ff; border-top: 1px solid #c3c6d6; padding: 17px 24px` |
+| Login card | `.login-card` | `border-radius: 8px; padding: 48px; box-shadow: 0 40px 80px -20px rgba(0,45,28,0.08)` |
+| Footer | `footer` | `background: #f8f9ff; border-top: 1px solid #c3c6d6; padding: 16px 24px` |
 
 **NOTE:** Replace the original "Continue with Atlassian" OAuth button with a 3-field credential form (D-01, D-09).
 
@@ -137,7 +136,7 @@ Fields (exactly 3, per D-01):
 - `email` — email input, label "Email Address", placeholder `you@company.com`
 - `api_token` — password input, label "API Token", placeholder `••••••••••••`
 
-Submit button: full-width, matches `.cta-btn` style — `background: #1b4332; border-radius: 12px; padding: 16px 24px; font-size: 16px; font-weight: 500`.
+Submit button: full-width, matches `.cta-btn` style — `background: #1b4332; border-radius: 12px; padding: 16px 24px; font-size: 16px; font-weight: 700`.
 
 Input field style (infer from card style, no explicit input CSS in references):
 - `border: 1px solid rgba(193,200,194,0.84)`
@@ -153,10 +152,10 @@ Used for loading, success flash, and error states. Three variants:
 | Variant | Background | Text color | Usage |
 |---------|------------|------------|-------|
 | `loading` | `#f3f4f6` | `#4b5563` | During connection test (spinner + "Connecting to Jira...") |
-| `success` | `rgba(227,239,234,0.6)` | `#1b4332; font-weight: 500` | Brief success flash before redirect |
+| `success` | `rgba(227,239,234,0.6)` | `#1b4332; font-weight: 700` | Brief success flash before redirect |
 | `error` | `#fef2f2` | `#b91c1c` | Inline error after failed connection attempt |
 
-Dimensions: `padding: 10px 14px; border-radius: 8px; font-size: 13px; gap: 8px`.
+Dimensions: `padding: 8px 16px; border-radius: 8px; font-size: 14px; gap: 8px` (rounded from reference 10px/14px to nearest 4-multiples for grid alignment).
 
 **Source:** UI/css/login.css `.status-banner`, `.status-banner.loading`, `.status-banner.success`, `.status-banner.error`
 
@@ -285,7 +284,7 @@ No component registry used. All components are hand-built React CSS Modules port
 
 6. **Success flash timing (D-10):** Show `SuccessModal` immediately on success response. Auto-redirect after 2000ms via `setTimeout(() => navigate('/dashboard'), 2000)`. "Go to Dashboard" button navigates immediately.
 
-7. **Google Fonts import:** Load in `index.html` or global CSS: `Inter:wght@400;500;600;700`, `JetBrains+Mono:wght@500`, `Hanken+Grotesk`, `Inder`.
+7. **Google Fonts import:** Load in `index.html` or global CSS: `Inter:wght@400;700`, `JetBrains+Mono:wght@400`, `Hanken+Grotesk`, `Inder`.
 
 ---
 
