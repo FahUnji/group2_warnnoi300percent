@@ -11,73 +11,12 @@
 </head>
 <body>
 
-  <!-- ── Top NavBar ── -->
-  <header class="topnav">
-    <div class="topnav-left">
-      <div class="nav-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z"
-            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span class="nav-brand">JIRA Bug Summary</span>
-    </div>
-    <div class="topnav-right">
-      <div class="search-wrap">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none">
-          <circle cx="11" cy="11" r="8" stroke="#6b7280" stroke-width="2"/>
-          <path d="M21 21L16.65 16.65" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <input class="search-input" type="text" placeholder="Search bugs, users, tasks..." />
-      </div>
-      <button class="nav-btn" aria-label="Notifications">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <button class="nav-btn" aria-label="Help">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="#434654" stroke-width="2"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <button class="nav-btn" aria-label="Settings">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="3" stroke="#434654" stroke-width="2"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <div class="nav-divider"></div>
-      <button class="nav-user" aria-label="User menu">
-        <div class="nav-avatar">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="8" r="4" stroke="#065b41" stroke-width="2"/>
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <span class="nav-username">BugTrack Pro</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
-          <path d="M1 1L5 5L9 1" stroke="#065b41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
-  </header>
-
-  <!-- ── Status bar (bottom) ── -->
-  <div class="status-bar">
-    <div class="status-bar-left">
-      <span class="status-dot status-dot-error"></span>
-      <span class="status-text">JIRA STATUS: DISCONNECTED</span>
-    </div>
-    <span class="status-version">BUGTRACK PRO V2.0.1</span>
-  </div>
-
-  <!-- ── Dark overlay ── -->
+  <!-- ── Full-screen gray overlay ── -->
   <div class="modal-overlay">
     <dialog class="modal" open aria-labelledby="modal-title">
 
       <!-- Close -->
-      <button class="modal-close" onclick="window.history.back()" aria-label="Close">
+      <button class="modal-close" onclick="location.href='no-project.html'" aria-label="Close">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M18 6L6 18M6 6L18 18" stroke="#6b7280" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
@@ -110,7 +49,7 @@
         </svg>
       </a>
 
-      <!-- Technical Details box (always visible) -->
+      <!-- Technical Details box -->
       <div class="tech-box">
         <div class="tech-box-header">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none">
