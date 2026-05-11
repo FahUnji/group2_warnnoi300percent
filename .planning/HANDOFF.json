@@ -1,31 +1,58 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-11T08:30:00.000Z",
+  "timestamp": "2026-05-11T09:49:05.000Z",
   "phase": "1",
   "phase_name": "jira-connection",
   "phase_dir": ".planning/phases/01-jira-connection",
-  "plan": 0,
+  "plan": 3,
   "task": 0,
-  "total_tasks": 6,
+  "total_tasks": 0,
   "status": "paused",
   "completed_tasks": [
-    {"id": "ui-spec", "name": "UI-SPEC approved (gsd-ui-phase 1)", "status": "done", "commit": "7c27cf5"},
-    {"id": "patterns", "name": "PATTERNS.md created (gsd-pattern-mapper)", "status": "done", "commit": "37372f3"},
-    {"id": "plan-01", "name": "PLAN-01: FastAPI scaffold + jira_config model + SQL migration", "status": "done", "commit": "37372f3"},
-    {"id": "plan-02", "name": "PLAN-02: JiraService (Fernet encryption + Jira auth) + REST endpoints", "status": "done", "commit": "37372f3"},
-    {"id": "plan-03", "name": "PLAN-03: React frontend (ConnectionForm, StatusBanner, SuccessModal)", "status": "done", "commit": "37372f3"},
-    {"id": "skeleton", "name": "SKELETON.md: Walking Skeleton locked", "status": "done", "commit": "37372f3"}
+    {"id": "plan-01", "name": "Wave 1 — FastAPI scaffold + jira_config model + SQL migration", "status": "done", "commit": "868bf9c"},
+    {"id": "plan-02", "name": "Wave 2 — JiraService (Fernet + Jira auth) + REST endpoints", "status": "done", "commit": "073c99e"},
+    {"id": "plan-03", "name": "Wave 3 — React frontend (ConnectionForm, StatusBanner, SuccessModal)", "status": "done", "commit": "711b59a"},
+    {"id": "code-review", "name": "Code review — 01-REVIEW.md (5 critical, 6 warning, 3 info)", "status": "done", "commit": "17dc93d"},
+    {"id": "verification", "name": "Automated verification — 01-VERIFICATION.md (13/13 PASS)", "status": "done", "commit": "ca6470e"},
+    {"id": "uat-definition", "name": "Human UAT defined — 01-HUMAN-UAT.md (5 tests)", "status": "done", "commit": "2ddf679"}
   ],
   "remaining_tasks": [
-    {"id": "execute-01", "name": "Execute PLAN-01: Wave 1 — backend scaffold", "status": "not_started"},
-    {"id": "execute-02", "name": "Execute PLAN-02: Wave 2 — JiraService + endpoints", "status": "not_started"},
-    {"id": "execute-03", "name": "Execute PLAN-03: Wave 3 — React frontend", "status": "not_started"}
+    {"id": "human-uat", "name": "Run 5 browser UAT tests against live backend + frontend", "status": "not_started"},
+    {"id": "phase-approval", "name": "Mark Phase 1 complete in ROADMAP.md + STATE.md after UAT passes", "status": "not_started"},
+    {"id": "cr-fixes", "name": "Optional: fix 5 critical code review issues before Phase 2 (recommended)", "status": "not_started"}
   ],
   "blockers": [],
   "human_actions_pending": [
-    {"action": "Ensure MySQL is running with a database ready (jira_db or equivalent)", "context": "PLAN-01 runs migration 001_create_jira_config.sql — DB must be accessible", "blocking": true},
-    {"action": "Confirm Node.js + npm installed (for React frontend in PLAN-03)", "context": "Vite scaffold requires Node.js", "blocking": true},
-    {"action": "Confirm Python 3.11+ with pip available (for FastAPI backend in PLAN-01)", "context": "backend/requirements.txt install needs Python", "blocking": true}
+    {
+      "action": "Set up .env in backend/ (copy .env.example, fill DB_PASSWORD, generate FERNET_KEY)",
+      "context": "Backend will crash on startup without FERNET_KEY. Use: python3 -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"",
+      "blocking": true
+    },
+    {
+      "action": "Run MySQL migration: mysql -u root -p < migrations/001_create_jira_config.sql",
+      "context": "Creates jira_db database + jira_config table. Backend will fail to connect without this.",
+      "blocking": true
+    },
+    {
+      "action": "Start backend: cd backend && uvicorn main:app --reload --port 8000",
+      "context": "Terminal 1. Verify health at http://localhost:8000/health",
+      "blocking": true
+    },
+    {
+      "action": "Start frontend: cd frontend && npm install && npm run dev",
+      "context": "Terminal 2. Opens http://localhost:3000",
+      "blocking": true
+    },
+    {
+      "action": "Execute 5 UAT tests from 01-HUMAN-UAT.md in browser",
+      "context": "Tests: success flow, invalid credentials, unreachable host, auto-verify no-config, responsive 900px breakpoint",
+      "blocking": true
+    },
+    {
+      "action": "Report UAT results: say 'approved' if all pass, or describe failures for gap closure",
+      "context": "On approval: agent marks Phase 1 complete and advances to Phase 2",
+      "blocking": false
+    }
   ],
   "decisions": [
     {"decision": "FastAPI (not Flask)", "rationale": "async, auto-docs, Pydantic — D-04", "phase": "1"},
@@ -33,14 +60,21 @@
     {"decision": "3-field form only (base_url, email, api_token)", "rationale": "no project key in Phase 1 — D-01", "phase": "1"},
     {"decision": "CSS Modules, no shadcn, no Tailwind", "rationale": "hand-port from HTML/CSS references — D-09", "phase": "1"},
     {"decision": "Separate dev servers :3000 (React) and :8000 (FastAPI)", "rationale": "CORS enabled for localhost:3000 — D-07", "phase": "1"},
-    {"decision": "MVP mode vertical slices (Wave 1 scaffold → Wave 2 service → Wave 3 UI)", "rationale": "ROADMAP.md Mode: mvp, detected Phase 1 of new project", "phase": "1"}
+    {"decision": "ConnectionForm uses absolute URLs (http://localhost:8000/api/...)", "rationale": "Vite proxy exists but form bypasses it via absolute URLs — advisory finding IN-03", "phase": "1"},
+    {"decision": "base_url validator accepts http:// (not https-only)", "rationale": "Code review CR-01 flags this as SSRF risk — not yet fixed", "phase": "1"}
   ],
   "uncommitted_files": [
-    ".planning/PROJECT.md", ".planning/REQUIREMENTS.md", ".planning/ROADMAP.md",
-    ".planning/STATE.md", ".planning/config.json", "CLAUDE.md", "SPEC.md",
-    "UI/README.md", "UI/css/*", "UI/html/*", "UI/js/*", "UI/server.js", "UI/skill.md",
-    "skills/bug-dashboard/SKILL.md", "skills/jira-to-mysql/SKILL.md", "skills/report-exporter/SKILL.md"
+    ".planning/PROJECT.md", ".planning/REQUIREMENTS.md", ".planning/config.json",
+    ".planning/phases/01-jira-connection/01-CONTEXT.md",
+    ".planning/phases/01-jira-connection/01-DISCUSSION-LOG.md",
+    ".planning/phases/01-jira-connection/01-PATTERNS.md",
+    ".planning/phases/01-jira-connection/01-PLAN-01.md",
+    ".planning/phases/01-jira-connection/01-PLAN-02.md",
+    ".planning/phases/01-jira-connection/01-PLAN-03.md",
+    ".planning/phases/01-jira-connection/01-SKELETON.md",
+    ".planning/phases/01-jira-connection/01-UI-SPEC.md",
+    "CLAUDE.md", "SPEC.md", "UI/*", "skills/*"
   ],
-  "next_action": "Run: /gsd-execute-phase 1 (after /clear). Wave 1 first — creates backend scaffold + jira_config model + SQL migration.",
-  "context_notes": "All 3 plans verified by plan-checker (12/12 dimensions pass, 1 non-blocking warning: Plan-03 has 16 files). Requirements 3/3 covered (JIRA-01/02/03). Decisions 14/14 covered (D-01 through D-14). User chose Plan-then-Execute workflow. STATE.md body not yet updated to reflect plans being done (frontmatter says 'stopped_at: Phase 1 planned — ready to execute' but body still shows old state). Uncommitted files are base project files from initial setup — they exist in working tree but were never staged."
+  "next_action": "User is running UAT. If results are 'approved': update ROADMAP.md Phase 1 checkbox to [x], update STATE.md to Phase 2, update REQUIREMENTS.md traceability for JIRA-01/02/03, then present /gsd-discuss-phase 2 options. If issues reported: run /gsd-plan-phase 1 --gaps for gap closure plans.",
+  "context_notes": "Phase 1 fully implemented across 3 waves (9 commits). Code review found 5 critical issues: CR-01 SSRF (http:// allowed), CR-02 DB connection leak (no try/finally), CR-03 FERNET_KEY crash on missing key, CR-04 missing UNIQUE constraint (rows accumulate), CR-05 unbounded api_token length. These are not blocking UAT but should be fixed before Phase 2 ships. Frontend ConnectionForm hardcodes http://localhost:8000 — works for local dev but not production-ready. Backend proxy in vite.config.js is dead code for connect flow."
 }
