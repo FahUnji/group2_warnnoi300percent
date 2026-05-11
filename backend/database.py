@@ -38,6 +38,24 @@ def init_db() -> None:
                 updated_at        TEXT DEFAULT (datetime('now'))
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS jira_projects (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_key TEXT    NOT NULL UNIQUE,
+                project_url TEXT    NOT NULL,
+                added_at    TEXT    DEFAULT (datetime('now'))
+            )
+        """)
         conn.commit()
+    finally:
+        conn.close()
+
+
+def count_projects() -> int:
+    """Return number of connected Jira projects."""
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT COUNT(*) FROM jira_projects").fetchone()
+        return row[0] if row else 0
     finally:
         conn.close()

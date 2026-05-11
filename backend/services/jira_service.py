@@ -15,6 +15,7 @@ import requests
 from cryptography.fernet import Fernet
 from fastapi import HTTPException
 
+from backend.database import count_projects
 from backend.models.jira_config import load_config, upsert_config
 
 
@@ -129,7 +130,13 @@ class JiraService:
         # Credentials valid — encrypt and persist (D-03)
         encrypted = _encrypt_token(api_token)
         await loop.run_in_executor(None, upsert_config, base_url, email, encrypted)
-        return {"ok": True, "message": "Connected successfully", "user": result.get("user", {})}
+        project_count = await loop.run_in_executor(None, count_projects)
+        return {
+            "ok": True,
+            "message": "Connected successfully",
+            "user": result.get("user", {}),
+            "has_projects": project_count > 0,
+        }
 
     async def get_current_user(self) -> dict:
         """

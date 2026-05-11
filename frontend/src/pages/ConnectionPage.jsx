@@ -30,7 +30,7 @@ function ConnectionPage() {
         return;
       }
       if (data.user) sessionStorage.setItem('jira_user', JSON.stringify(data.user));
-      navigate('/dashboard');
+      navigate(data.has_projects ? '/dashboard' : '/no-project');
     } catch {
       setError('Cannot reach the server. Check your network.');
     } finally {

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-11T11:23:12Z",
+  "timestamp": "2026-05-11T11:52:40Z",
   "phase": "01",
   "phase_name": "jira-connection",
   "phase_dir": ".planning/phases/01-jira-connection",
@@ -17,43 +17,36 @@
     {"id": "cr-fixes", "name": "All CR/WR issues remediated (SSRF, FERNET_KEY, timeout)", "status": "done", "commit": "2da6ea0"},
     {"id": "sqlite-docker", "name": "SQLite migration + Docker Compose setup", "status": "done", "commit": "c31427c"},
     {"id": "ui-redesign", "name": "ConnectionPage redesigned to match Figma — single button hero layout", "status": "done", "commit": "45aacf0"},
-    {"id": "footer-fix", "name": "Footer fixed to bottom of screen (flex: 1 on heroGrid)", "status": "done", "commit": null},
-    {"id": "modal-auth", "name": "Button opens modal with Basic Auth form — POST /api/jira/connect", "status": "done", "commit": null},
-    {"id": "user-info", "name": "Backend returns user info from /rest/api/3/myself; dashboard shows name/email/avatar", "status": "done", "commit": null}
+    {"id": "footer-fix", "name": "Footer fixed to bottom of screen (flex: 1 on heroGrid)", "status": "done", "commit": "0bc36e8"},
+    {"id": "modal-auth", "name": "Button opens modal with Basic Auth form — POST /api/jira/connect", "status": "done", "commit": "0bc36e8"},
+    {"id": "user-info", "name": "Backend returns user info from /rest/api/3/myself; dashboard shows name/email/avatar", "status": "done", "commit": "0bc36e8"},
+    {"id": "no-project-routing", "name": "Post-login routing: has_projects → /dashboard else /no-project", "status": "done", "commit": null},
+    {"id": "no-project-page", "name": "NoProjectPage.jsx + CSS matching no-project.html Figma design", "status": "done", "commit": null},
+    {"id": "jira-projects-table", "name": "jira_projects table in SQLite + count_projects() helper", "status": "done", "commit": null},
+    {"id": "backend-restart", "name": "docker compose restart backend — new routes + schema loaded", "status": "done", "commit": null}
   ],
   "remaining_tasks": [
-    {"id": "backend-restart", "name": "docker compose restart backend — load new routes (auth.py, jira/me)", "status": "not_started"},
-    {"id": "test-modal", "name": "Test modal with real Jira credentials — confirm dashboard shows user info", "status": "not_started"},
-    {"id": "rescope-uat", "name": "Re-scope UAT — 3 new tests: render, modal opens, valid creds → user card", "status": "not_started"},
+    {"id": "test-e2e", "name": "Test full flow: login modal → /no-project renders correctly", "status": "not_started"},
+    {"id": "rescope-uat", "name": "Re-scope UAT — 3 new tests: render, modal opens, valid creds → no-project page", "status": "not_started"},
     {"id": "phase-approval", "name": "Mark Phase 1 complete in ROADMAP.md + STATE.md", "status": "not_started"},
     {"id": "advance-phase2", "name": "/gsd-discuss-phase 2 — Data Sync phase", "status": "not_started"}
   ],
   "blockers": [
     {
-      "description": "Backend not restarted after new route files added (auth.py, oauth_token.py, jira/me endpoint)",
-      "type": "human_action",
-      "workaround": "docker compose restart backend"
-    },
-    {
-      "description": "Real Jira credentials needed to test end-to-end modal flow",
+      "description": "Real Jira credentials needed to test end-to-end modal → /no-project flow",
       "type": "human_action",
       "workaround": "Generate API token at id.atlassian.com/manage/api-tokens"
     },
     {
       "description": "Original UAT tests (01-HUMAN-UAT.md) test the removed 3-field inline form",
       "type": "technical",
-      "workaround": "Re-scope to: (1) page renders with button, (2) button opens modal, (3) valid creds shows user card on dashboard"
+      "workaround": "Re-scope to: (1) page renders with button, (2) button opens modal, (3) valid creds → /no-project shows 'Connect your first JIRA Project'"
     }
   ],
   "human_actions_pending": [
     {
-      "action": "Run: docker compose restart backend",
-      "context": "New routes won't respond until backend reloaded",
-      "blocking": true
-    },
-    {
       "action": "Get Jira API token from id.atlassian.com/manage/api-tokens",
-      "context": "Needed to test modal → connect → user card flow",
+      "context": "Needed to test modal → connect → /no-project routing end-to-end",
       "blocking": true
     }
   ],
@@ -64,19 +57,17 @@
     {"decision": "Dashboard fallback to GET /api/jira/me", "rationale": "sessionStorage lost on tab reopen; saved credentials in SQLite remain", "phase": "01"},
     {"decision": "FastAPI + SQLite (not MySQL)", "rationale": "Simpler setup — no DB server needed", "phase": "01"},
     {"decision": "Docker Compose for dev environment", "rationale": "One-command startup", "phase": "01"},
-    {"decision": "Vite usePolling:true (500ms) for WSL2+Docker", "rationale": "inotify doesn't work on /mnt/c Windows filesystem", "phase": "01"}
+    {"decision": "Post-login routing via has_projects flag", "rationale": "Backend checks jira_projects table count, returns flag in connect response — clean separation", "phase": "01"},
+    {"decision": "NoProjectPage matches no-project.html Figma design exactly", "rationale": "Pixel-accurate from UI/ design files — no deviation", "phase": "01"}
   ],
   "uncommitted_files": [
-    "backend/routers/auth.py",
-    "backend/models/oauth_token.py",
-    "backend/services/jira_service.py",
-    "backend/routers/jira.py",
+    "frontend/src/pages/NoProjectPage.jsx",
+    "frontend/src/pages/NoProjectPage.module.css",
     "backend/database.py",
-    "backend/main.py",
-    "frontend/src/pages/ConnectionPage.jsx",
-    "frontend/src/pages/ConnectionPage.module.css",
-    "frontend/src/pages/DashboardPage.jsx"
+    "backend/services/jira_service.py",
+    "frontend/src/App.jsx",
+    "frontend/src/pages/ConnectionPage.jsx"
   ],
-  "next_action": "docker compose restart backend → open http://localhost:3000 → click Continue with Atlassian → enter real Jira credentials → confirm dashboard shows user name/email/avatar",
-  "context_notes": "Session goal was making Jira connection real and verifiable. OAuth 3LO built first then abandoned for simpler Basic Auth modal. All backend auth logic was already in place (jira_service.py) — only needed modal UI + user info passthrough. Dashboard now proves connection worked by showing Jira user identity."
+  "next_action": "Open http://localhost:3000 → Ctrl+Shift+R → click 'Continue with Atlassian' → enter real Jira credentials → confirm redirect lands on /no-project with 'Connect your first JIRA Project' UI",
+  "context_notes": "This session added post-login routing: after Jira auth, backend checks jira_projects table (new, always empty for now) and returns has_projects=false. Frontend routes to /no-project (new page matching Figma no-project.html design) or /dashboard. Backend restarted successfully. Phase 1 is feature-complete — only human testing + UAT re-scope + phase close remaining."
 }
