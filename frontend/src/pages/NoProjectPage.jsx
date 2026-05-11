@@ -1,10 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './NoProjectPage.module.css';
 
 function NoProjectPage() {
-  const user = (() => {
+  const [user, setUser] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('jira_user') || 'null'); } catch { return null; }
-  })();
+  });
+
+  useEffect(() => {
+    if (user) return;
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok && data.user) {
+          sessionStorage.setItem('jira_user', JSON.stringify(data.user));
+          setUser(data.user);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const [projectUrl, setProjectUrl] = useState('');
   const [status, setStatus] = useState(null);

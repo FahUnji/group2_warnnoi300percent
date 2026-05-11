@@ -7,15 +7,16 @@ import requests as http
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
 
+from backend.database import count_projects
 from backend.models.oauth_token import upsert_oauth_token
-from backend.services.jira_service import _encrypt_token
+from backend.services.jira_service import _encrypt_token, _decrypt_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 ATLASSIAN_AUTH_URL = "https://auth.atlassian.com/authorize"
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
 ATLASSIAN_RESOURCES_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
-SCOPES = "read:jira-data read:jira-work offline_access"
+SCOPES = "read:me read:jira-data read:jira-work offline_access"
 STATE_TTL = 600  # seconds
 
 # state → issued_at timestamp (in-memory, single-process dev store)
@@ -126,4 +127,37 @@ async def atlassian_callback(code: str = "", state: str = "", error: str = ""):
         access_token_enc, refresh_token_enc, cloud_id, site_url, site_name, expires_at
     )
 
-    return RedirectResponse(f"{frontend_url}/dashboard")
+    project_count = count_projects()
+    redirect_path = "/dashboard" if project_count > 0 else "/no-project"
+    return RedirectResponse(f"{frontend_url}{redirect_path}")
+
+
+@router.get("/me")
+async def auth_me():
+    """Return current user info from stored OAuth access token."""
+    from backend.models.oauth_token import load_oauth_token
+    row = load_oauth_token()
+    if not row:
+        return {"ok": False, "error": "not_authenticated"}
+    try:
+        access_token = _decrypt_token(row["access_token_enc"])
+    except Exception:
+        return {"ok": False, "error": "token_decrypt_failed"}
+    try:
+        resp = http.get(
+            "https://api.atlassian.com/me",
+            headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception:
+        return {"ok": False, "error": "fetch_failed"}
+    return {
+        "ok": True,
+        "user": {
+            "name": data.get("name") or data.get("displayName", ""),
+            "email": data.get("email") or data.get("emailAddress", ""),
+            "avatar": data.get("picture") or (data.get("avatarUrls") or {}).get("48x48", ""),
+        },
+    }

@@ -7,9 +7,14 @@ function DashboardPage() {
 
   useEffect(() => {
     if (user) return;
-    fetch('/api/jira/me')
+    fetch('/api/auth/me')
       .then(r => r.json())
-      .then(data => { if (data.ok && data.user) setUser(data.user); })
+      .then(data => {
+        if (data.ok && data.user) {
+          sessionStorage.setItem('jira_user', JSON.stringify(data.user));
+          setUser(data.user);
+        }
+      })
       .catch(() => {});
   }, []);
 

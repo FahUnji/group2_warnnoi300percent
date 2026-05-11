@@ -1,48 +1,27 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import styles from './ConnectionPage.module.css';
 
+const OAUTH_URL = 'http://localhost:8000/api/auth/atlassian';
+
+const ERROR_MESSAGES = {
+  oauth_not_configured: 'OAuth is not configured on the server.',
+  invalid_state: 'Security check failed — please try again.',
+  token_exchange_failed: 'Authorization failed — please try again.',
+  resources_failed: 'Could not retrieve your Jira sites — please try again.',
+  no_jira_access: 'Your Atlassian account has no accessible Jira sites.',
+};
+
 function ConnectionPage() {
-  const navigate = useNavigate();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ base_url: '', email: '', api_token: '' });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  function handleChange(e) {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    setError('');
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/jira/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.detail?.message || data?.message || 'Connection failed.');
-        return;
-      }
-      if (data.user) sessionStorage.setItem('jira_user', JSON.stringify(data.user));
-      navigate(data.has_projects ? '/dashboard' : '/no-project');
-    } catch {
-      setError('Cannot reach the server. Check your network.');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get('error');
+    if (err) {
+      setError(ERROR_MESSAGES[err] || `Authentication error: ${err}`);
+      window.history.replaceState({}, '', '/');
     }
-  }
-
-  function closeModal() {
-    if (loading) return;
-    setModalOpen(false);
-    setError('');
-  }
+  }, []);
 
   return (
     <div className={styles.pageWrapper}>
@@ -78,7 +57,9 @@ function ConnectionPage() {
             Bridge your Jira workflow with Jira Bug Summary analytical engine.
           </p>
 
-          <button className={styles.ctaBtn} onClick={() => setModalOpen(true)}>
+          {error && <p className={styles.oauthError}>{error}</p>}
+
+          <button className={styles.ctaBtn} onClick={() => { window.location.href = OAUTH_URL; }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -95,7 +76,7 @@ function ConnectionPage() {
               </svg>
             </div>
             <p className={styles.securityText}>
-              <strong>API Token + AES-256.</strong> Tokens are encrypted at rest.
+              <strong>OAuth 2.0 + AES-256.</strong> Tokens are encrypted at rest.
               Your credentials never leave your server.
             </p>
           </div>
@@ -113,102 +94,6 @@ function ConnectionPage() {
           <a href="#" onClick={(e) => e.preventDefault()}>Status</a>
         </nav>
       </footer>
-
-      {modalOpen && (
-        <div className={styles.modalOverlay} onClick={closeModal}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.modalClose} onClick={closeModal} aria-label="Close">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </button>
-
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Connect to Jira</h3>
-              <p className={styles.modalSubtitle}>
-                Enter your Jira credentials.{' '}
-                <a
-                  href="https://id.atlassian.com/manage/api-tokens"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.modalLink}
-                >
-                  Generate API token →
-                </a>
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className={styles.modalForm}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel} htmlFor="base_url">Jira Base URL</label>
-                <input
-                  id="base_url"
-                  name="base_url"
-                  type="url"
-                  className={styles.fieldInput}
-                  placeholder="https://yourcompany.atlassian.net"
-                  value={form.base_url}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  autoComplete="off"
-                />
-              </div>
-
-              <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel} htmlFor="email">Email</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  className={styles.fieldInput}
-                  placeholder="you@company.com"
-                  value={form.email}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  autoComplete="username"
-                />
-              </div>
-
-              <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel} htmlFor="api_token">API Token</label>
-                <input
-                  id="api_token"
-                  name="api_token"
-                  type="password"
-                  className={styles.fieldInput}
-                  placeholder="Paste your API token"
-                  value={form.api_token}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  autoComplete="current-password"
-                />
-              </div>
-
-              {error && <p className={styles.modalError}>{error}</p>}
-
-              <button
-                type="submit"
-                className={styles.modalSubmit}
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className={styles.spinner} />
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Connect
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

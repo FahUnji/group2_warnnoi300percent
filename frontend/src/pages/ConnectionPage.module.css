@@ -354,6 +354,18 @@
   padding: 10px 14px;
 }
 
+.oauthError {
+  font-size: 13px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .modalSubmit {
   display: flex;
   align-items: center;
