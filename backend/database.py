@@ -26,6 +26,18 @@ def init_db() -> None:
                 updated_at          TEXT    DEFAULT (datetime('now'))
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS oauth_tokens (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                access_token_enc  TEXT NOT NULL,
+                refresh_token_enc TEXT,
+                cloud_id          TEXT NOT NULL,
+                site_url          TEXT NOT NULL,
+                site_name         TEXT,
+                expires_at        TEXT,
+                updated_at        TEXT DEFAULT (datetime('now'))
+            )
+        """)
         conn.commit()
     finally:
         conn.close()

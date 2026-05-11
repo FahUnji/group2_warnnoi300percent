@@ -24,7 +24,7 @@ except Exception as exc:
     raise RuntimeError(f"FERNET_KEY is invalid: {exc}") from exc
 
 from backend.database import init_db  # noqa: E402
-from backend.routers import jira  # noqa: E402 — import after load_dotenv
+from backend.routers import jira, auth  # noqa: E402 — import after load_dotenv
 
 init_db()
 
@@ -54,6 +54,7 @@ async def limit_body_size(request: Request, call_next):
 
 
 app.include_router(jira.router)
+app.include_router(auth.router)
 
 
 @app.get("/health")

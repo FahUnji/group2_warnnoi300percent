@@ -6,6 +6,7 @@
 }
 
 .heroGrid {
+  flex: 1;
   display: grid;
   grid-template-columns: 7fr 5fr;
   gap: 24px;
@@ -178,6 +179,19 @@
   font-weight: 600;
 }
 
+.errorText {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  width: 100%;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
 .cardDivider {
   width: 100%;
   height: 1px;
@@ -215,6 +229,174 @@
 
 .footerLinks a:hover {
   color: #002d1c;
+}
+
+/* ── Modal ── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0px 40px 80px -20px rgba(0, 45, 28, 0.18);
+  padding: 40px;
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+}
+
+.modalClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #8b9196;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.modalClose:hover {
+  color: #002d1c;
+  background: #f0f4f1;
+}
+
+.modalHeader {
+  margin-bottom: 28px;
+}
+
+.modalTitle {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: #002d1c;
+  margin-bottom: 6px;
+}
+
+.modalSubtitle {
+  font-size: 14px;
+  color: #434654;
+  line-height: 1.5;
+}
+
+.modalLink {
+  color: #1b4332;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.modalLink:hover {
+  color: #002d1c;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #002d1c;
+}
+
+.fieldInput {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(193, 200, 194, 0.84);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #002d1c;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.fieldInput::placeholder {
+  color: #a3b1a8;
+}
+
+.fieldInput:focus {
+  border-color: #1b4332;
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+}
+
+.fieldInput:disabled {
+  background: #f5f7f5;
+  color: #8b9196;
+}
+
+.modalError {
+  font-size: 13px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.modalSubmit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 24px;
+  background: #1b4332;
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.2s, transform 0.15s;
+  min-height: 46px;
+}
+
+.modalSubmit:hover:not(:disabled) {
+  background: #1f5040;
+  transform: translateY(-1px);
+}
+
+.modalSubmit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Responsive ── */

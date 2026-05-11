@@ -95,3 +95,13 @@ async def jira_status():
     """
     service = JiraService()
     return await service.verify_saved_credentials()
+
+
+@router.get("/me")
+async def jira_me():
+    """
+    Return current Jira user info from saved credentials.
+    Returns {"ok": true, "user": {...}} or {"ok": false, "error": "..."}.
+    """
+    service = JiraService()
+    return await service.get_current_user()

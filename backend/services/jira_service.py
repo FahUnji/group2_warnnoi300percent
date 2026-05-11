@@ -61,7 +61,15 @@ def _test_jira_auth(base_url: str, email: str, api_token: str) -> dict:
                 "message": "Invalid email or API token. Please check your credentials and try again.",
             }
         response.raise_for_status()
-        return {"ok": True}
+        data = response.json()
+        return {
+            "ok": True,
+            "user": {
+                "name": data.get("displayName", ""),
+                "email": data.get("emailAddress", ""),
+                "avatar": (data.get("avatarUrls") or {}).get("48x48", ""),
+            },
+        }
     except requests.exceptions.ConnectionError:
         return {
             "ok": False,
@@ -121,7 +129,25 @@ class JiraService:
         # Credentials valid — encrypt and persist (D-03)
         encrypted = _encrypt_token(api_token)
         await loop.run_in_executor(None, upsert_config, base_url, email, encrypted)
-        return {"ok": True, "message": "Connected successfully"}
+        return {"ok": True, "message": "Connected successfully", "user": result.get("user", {})}
+
+    async def get_current_user(self) -> dict:
+        """
+        Load saved credentials and return /rest/api/3/myself user info.
+        Returns {"ok": False, "error": "not_configured"} if no credentials saved.
+        """
+        loop = asyncio.get_running_loop()
+        config = await loop.run_in_executor(None, load_config)
+        if config is None:
+            return {"ok": False, "error": "not_configured", "message": "No Jira connection configured."}
+        try:
+            api_token = _decrypt_token(config["api_token_encrypted"])
+        except Exception:
+            return {"ok": False, "error": "not_configured", "message": "Saved credentials could not be decrypted."}
+        result = await loop.run_in_executor(
+            None, _test_jira_auth, config["base_url"], config["email"], api_token
+        )
+        return result
 
     async def verify_saved_credentials(self) -> dict:
         """

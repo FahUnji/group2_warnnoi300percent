@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-11T10:58:12Z",
+  "timestamp": "2026-05-11T11:23:12Z",
   "phase": "01",
   "phase_name": "jira-connection",
   "phase_dir": ".planning/phases/01-jira-connection",
@@ -12,48 +12,71 @@
     {"id": "plan-01", "name": "Wave 1 — FastAPI scaffold + jira_config model + SQL migration", "status": "done", "commit": "868bf9c"},
     {"id": "plan-02", "name": "Wave 2 — JiraService (Fernet + Jira auth) + REST endpoints", "status": "done", "commit": "073c99e"},
     {"id": "plan-03", "name": "Wave 3 — React frontend (ConnectionForm, StatusBanner, SuccessModal)", "status": "done", "commit": "711b59a"},
-    {"id": "code-review", "name": "Code review — 01-REVIEW.md (5 critical, 6 warning, 3 info)", "status": "done", "commit": "17dc93d"},
+    {"id": "code-review", "name": "Code review — 01-REVIEW.md", "status": "done", "commit": "17dc93d"},
     {"id": "verification", "name": "Automated verification — 01-VERIFICATION.md (13/13 PASS)", "status": "done", "commit": "ca6470e"},
-    {"id": "cr-fixes", "name": "All 11 CR/WR issues remediated (SSRF, FERNET_KEY, timeout, etc.)", "status": "done", "commit": "2da6ea0"},
+    {"id": "cr-fixes", "name": "All CR/WR issues remediated (SSRF, FERNET_KEY, timeout)", "status": "done", "commit": "2da6ea0"},
     {"id": "sqlite-docker", "name": "SQLite migration + Docker Compose setup", "status": "done", "commit": "c31427c"},
-    {"id": "ui-redesign", "name": "ConnectionPage redesigned to match Figma login.html — single button", "status": "done", "commit": "45aacf0"},
-    {"id": "docker-ready", "name": "Docker fully rebuilt and running (frontend:3000, backend:8000)", "status": "done", "commit": null}
+    {"id": "ui-redesign", "name": "ConnectionPage redesigned to match Figma — single button hero layout", "status": "done", "commit": "45aacf0"},
+    {"id": "footer-fix", "name": "Footer fixed to bottom of screen (flex: 1 on heroGrid)", "status": "done", "commit": null},
+    {"id": "modal-auth", "name": "Button opens modal with Basic Auth form — POST /api/jira/connect", "status": "done", "commit": null},
+    {"id": "user-info", "name": "Backend returns user info from /rest/api/3/myself; dashboard shows name/email/avatar", "status": "done", "commit": null}
   ],
   "remaining_tasks": [
-    {"id": "verify-ui", "name": "Confirm http://localhost:3000 shows new Figma design (single button, no form)", "status": "not_started"},
-    {"id": "rescope-uat", "name": "Re-scope UAT — original 5 tests assumed 3-field form (now removed)", "status": "not_started"},
+    {"id": "backend-restart", "name": "docker compose restart backend — load new routes (auth.py, jira/me)", "status": "not_started"},
+    {"id": "test-modal", "name": "Test modal with real Jira credentials — confirm dashboard shows user info", "status": "not_started"},
+    {"id": "rescope-uat", "name": "Re-scope UAT — 3 new tests: render, modal opens, valid creds → user card", "status": "not_started"},
     {"id": "phase-approval", "name": "Mark Phase 1 complete in ROADMAP.md + STATE.md", "status": "not_started"},
-    {"id": "advance-phase2", "name": "Run /gsd-discuss-phase 2 to plan Data Sync phase", "status": "not_started"}
+    {"id": "advance-phase2", "name": "/gsd-discuss-phase 2 — Data Sync phase", "status": "not_started"}
   ],
   "blockers": [
     {
-      "description": "User has not confirmed if new Figma UI is visible at http://localhost:3000",
+      "description": "Backend not restarted after new route files added (auth.py, oauth_token.py, jira/me endpoint)",
       "type": "human_action",
-      "workaround": "Open http://localhost:3000 + Ctrl+Shift+R. Should show single 'Continue with Atlassian' button."
+      "workaround": "docker compose restart backend"
     },
     {
-      "description": "Original UAT tests (01-HUMAN-UAT.md) test the removed 3-field form",
+      "description": "Real Jira credentials needed to test end-to-end modal flow",
+      "type": "human_action",
+      "workaround": "Generate API token at id.atlassian.com/manage/api-tokens"
+    },
+    {
+      "description": "Original UAT tests (01-HUMAN-UAT.md) test the removed 3-field inline form",
       "type": "technical",
-      "workaround": "Re-scope to: (1) landing page renders, (2) button navigates to /dashboard, (3) responsive at 900px"
+      "workaround": "Re-scope to: (1) page renders with button, (2) button opens modal, (3) valid creds shows user card on dashboard"
     }
   ],
   "human_actions_pending": [
     {
-      "action": "Open http://localhost:3000 and confirm new Figma design is visible",
-      "context": "Docker is up and running. Should show single 'Continue with Atlassian' button, no form fields.",
+      "action": "Run: docker compose restart backend",
+      "context": "New routes won't respond until backend reloaded",
+      "blocking": true
+    },
+    {
+      "action": "Get Jira API token from id.atlassian.com/manage/api-tokens",
+      "context": "Needed to test modal → connect → user card flow",
       "blocking": true
     }
   ],
   "decisions": [
+    {"decision": "Basic Auth modal over OAuth 3LO", "rationale": "Simpler, no app registration, same as MCP Jira approach", "phase": "01"},
+    {"decision": "OAuth router (auth.py) left in codebase unused", "rationale": "Built first then abandoned — can remove in cleanup", "phase": "01"},
+    {"decision": "User info stored in sessionStorage not localStorage", "rationale": "Cleared on tab close — better security default", "phase": "01"},
+    {"decision": "Dashboard fallback to GET /api/jira/me", "rationale": "sessionStorage lost on tab reopen; saved credentials in SQLite remain", "phase": "01"},
     {"decision": "FastAPI + SQLite (not MySQL)", "rationale": "Simpler setup — no DB server needed", "phase": "01"},
     {"decision": "Docker Compose for dev environment", "rationale": "One-command startup", "phase": "01"},
-    {"decision": "Removed 3-field credential form — single 'Continue with Atlassian' button", "rationale": "User requested UI match Figma (UI/html/login.html)", "phase": "01"},
-    {"decision": "Button navigates directly to /dashboard (no real OAuth)", "rationale": "UI-only change — user did not request Atlassian OAuth flow", "phase": "01"},
-    {"decision": "App.jsx simplified — startup verify removed", "rationale": "Credential storage flow removed; verify was dead code", "phase": "01"},
-    {"decision": "Vite usePolling:true (500ms) for WSL2+Docker", "rationale": "inotify doesn't work on /mnt/c Windows filesystem", "phase": "01"},
-    {"decision": "CSS Modules only, no Tailwind, no shadcn", "rationale": "Hand-port from UI/html reference designs", "phase": "01"}
+    {"decision": "Vite usePolling:true (500ms) for WSL2+Docker", "rationale": "inotify doesn't work on /mnt/c Windows filesystem", "phase": "01"}
   ],
-  "uncommitted_files": [],
-  "next_action": "Open http://localhost:3000, hard-refresh (Ctrl+Shift+R), confirm new Figma design visible. Then re-scope UAT and approve Phase 1.",
-  "context_notes": "Docker is fully up (rebuilt from scratch this session). ConnectionPage matches Figma login.html — single 'Continue with Atlassian' button, no credential form. Backend auth API still exists but frontend no longer calls it. User paused before confirming UI is correct."
+  "uncommitted_files": [
+    "backend/routers/auth.py",
+    "backend/models/oauth_token.py",
+    "backend/services/jira_service.py",
+    "backend/routers/jira.py",
+    "backend/database.py",
+    "backend/main.py",
+    "frontend/src/pages/ConnectionPage.jsx",
+    "frontend/src/pages/ConnectionPage.module.css",
+    "frontend/src/pages/DashboardPage.jsx"
+  ],
+  "next_action": "docker compose restart backend → open http://localhost:3000 → click Continue with Atlassian → enter real Jira credentials → confirm dashboard shows user name/email/avatar",
+  "context_notes": "Session goal was making Jira connection real and verifiable. OAuth 3LO built first then abandoned for simpler Basic Auth modal. All backend auth logic was already in place (jira_service.py) — only needed modal UI + user info passthrough. Dashboard now proves connection worked by showing Jira user identity."
 }
