@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-11T08:30:00.000Z",
+  "phase": "1",
+  "phase_name": "jira-connection",
+  "phase_dir": ".planning/phases/01-jira-connection",
+  "plan": 0,
+  "task": 0,
+  "total_tasks": 6,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": "ui-spec", "name": "UI-SPEC approved (gsd-ui-phase 1)", "status": "done", "commit": "7c27cf5"},
+    {"id": "patterns", "name": "PATTERNS.md created (gsd-pattern-mapper)", "status": "done", "commit": "37372f3"},
+    {"id": "plan-01", "name": "PLAN-01: FastAPI scaffold + jira_config model + SQL migration", "status": "done", "commit": "37372f3"},
+    {"id": "plan-02", "name": "PLAN-02: JiraService (Fernet encryption + Jira auth) + REST endpoints", "status": "done", "commit": "37372f3"},
+    {"id": "plan-03", "name": "PLAN-03: React frontend (ConnectionForm, StatusBanner, SuccessModal)", "status": "done", "commit": "37372f3"},
+    {"id": "skeleton", "name": "SKELETON.md: Walking Skeleton locked", "status": "done", "commit": "37372f3"}
+  ],
+  "remaining_tasks": [
+    {"id": "execute-01", "name": "Execute PLAN-01: Wave 1 — backend scaffold", "status": "not_started"},
+    {"id": "execute-02", "name": "Execute PLAN-02: Wave 2 — JiraService + endpoints", "status": "not_started"},
+    {"id": "execute-03", "name": "Execute PLAN-03: Wave 3 — React frontend", "status": "not_started"}
+  ],
+  "blockers": [],
+  "human_actions_pending": [
+    {"action": "Ensure MySQL is running with a database ready (jira_db or equivalent)", "context": "PLAN-01 runs migration 001_create_jira_config.sql — DB must be accessible", "blocking": true},
+    {"action": "Confirm Node.js + npm installed (for React frontend in PLAN-03)", "context": "Vite scaffold requires Node.js", "blocking": true},
+    {"action": "Confirm Python 3.11+ with pip available (for FastAPI backend in PLAN-01)", "context": "backend/requirements.txt install needs Python", "blocking": true}
+  ],
+  "decisions": [
+    {"decision": "FastAPI (not Flask)", "rationale": "async, auto-docs, Pydantic — D-04", "phase": "1"},
+    {"decision": "Fernet encryption for API token at rest", "rationale": "FERNET_KEY in .env — D-03", "phase": "1"},
+    {"decision": "3-field form only (base_url, email, api_token)", "rationale": "no project key in Phase 1 — D-01", "phase": "1"},
+    {"decision": "CSS Modules, no shadcn, no Tailwind", "rationale": "hand-port from HTML/CSS references — D-09", "phase": "1"},
+    {"decision": "Separate dev servers :3000 (React) and :8000 (FastAPI)", "rationale": "CORS enabled for localhost:3000 — D-07", "phase": "1"},
+    {"decision": "MVP mode vertical slices (Wave 1 scaffold → Wave 2 service → Wave 3 UI)", "rationale": "ROADMAP.md Mode: mvp, detected Phase 1 of new project", "phase": "1"}
+  ],
+  "uncommitted_files": [
+    ".planning/PROJECT.md", ".planning/REQUIREMENTS.md", ".planning/ROADMAP.md",
+    ".planning/STATE.md", ".planning/config.json", "CLAUDE.md", "SPEC.md",
+    "UI/README.md", "UI/css/*", "UI/html/*", "UI/js/*", "UI/server.js", "UI/skill.md",
+    "skills/bug-dashboard/SKILL.md", "skills/jira-to-mysql/SKILL.md", "skills/report-exporter/SKILL.md"
+  ],
+  "next_action": "Run: /gsd-execute-phase 1 (after /clear). Wave 1 first — creates backend scaffold + jira_config model + SQL migration.",
+  "context_notes": "All 3 plans verified by plan-checker (12/12 dimensions pass, 1 non-blocking warning: Plan-03 has 16 files). Requirements 3/3 covered (JIRA-01/02/03). Decisions 14/14 covered (D-01 through D-14). User chose Plan-then-Execute workflow. STATE.md body not yet updated to reflect plans being done (frontmatter says 'stopped_at: Phase 1 planned — ready to execute' but body still shows old state). Uncommitted files are base project files from initial setup — they exist in working tree but were never staged."
+}
