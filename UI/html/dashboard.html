@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JIRA Bug Summary – Active Projects</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+<body>
+
+  <!-- ── Top NavBar ── -->
+  <header class="topnav">
+    <div class="topnav-left">
+      <div class="nav-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="nav-brand">JIRA Bug Summary</span>
+    </div>
+
+    <div class="search-wrap">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="8" stroke="#6b7280" stroke-width="2"/>
+        <path d="M21 21L16.65 16.65" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input class="search-input" type="text" placeholder="Search bugs, users, tasks..." />
+    </div>
+
+    <div class="topnav-right">
+      <button class="nav-btn" aria-label="Notifications">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="nav-btn" aria-label="Help">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#434654" stroke-width="2"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="nav-btn" aria-label="History">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <polyline points="12 8 12 12 14 14" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3.05 11a9 9 0 1 0 .5-4M3 3v4h4" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="nav-divider"></div>
+      <button class="nav-user" aria-label="User menu">
+        <div class="nav-avatar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="#065b41" stroke-width="2"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="nav-username">BugTrack Pro</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
+          <path d="M1 1L5 5L9 1" stroke="#065b41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Main Content ── -->
+  <main class="main-content">
+
+    <!-- Page heading -->
+    <div class="page-header">
+      <h1 class="page-title">Active Projects</h1>
+      <p class="page-subtitle">Currently monitoring 4 critical infrastructure projects.</p>
+    </div>
+
+    <!-- ── Project Cards Grid ── -->
+    <div class="projects-grid">
+
+      <!-- Core Banking Engine -->
+      <div class="project-card">
+        <div class="card-bar bar-normal"></div>
+        <div class="card-content">
+          <div class="card-header">
+            <span class="project-name">Core Banking Engine</span>
+            <span class="project-code">PRJ-001</span>
+          </div>
+          <div class="stat-boxes">
+            <div class="stat-box">
+              <span class="stat-label">OPEN BUGS</span>
+              <span class="stat-val">12</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">CRITICAL</span>
+              <span class="stat-val stat-zero">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Gateway v2 — has critical bugs -->
+      <div class="project-card">
+        <div class="card-bar bar-critical"></div>
+        <div class="card-content">
+          <div class="card-header">
+            <span class="project-name">Payment Gateway v2</span>
+            <span class="project-code">PRJ-042</span>
+          </div>
+          <div class="stat-boxes">
+            <div class="stat-box">
+              <span class="stat-label">OPEN BUGS</span>
+              <span class="stat-val">48</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">CRITICAL</span>
+              <span class="stat-val stat-critical">7</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Authentication -->
+      <div class="project-card">
+        <div class="card-bar bar-normal"></div>
+        <div class="card-content">
+          <div class="card-header">
+            <span class="project-name">User Authentication</span>
+            <span class="project-code">PRJ-009</span>
+          </div>
+          <div class="stat-boxes">
+            <div class="stat-box">
+              <span class="stat-label">OPEN BUGS</span>
+              <span class="stat-val">3</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">CRITICAL</span>
+              <span class="stat-val stat-zero">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+    </div><!-- /projects-grid -->
+
+    <!-- ── Add New Project / Connect Section ── -->
+    <div class="connect-section">
+      <div class="connect-left">
+        <div class="connect-icon-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="22.08" x2="12" y2="12" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="connect-title">Connect to Jira</h3>
+        <p class="connect-subtitle">Synchronize your existing Jira tickets and workflow seamlessly.</p>
+      </div>
+
+      <div class="connect-right">
+        <h2 class="add-title">Add New Project</h2>
+        <p class="add-desc">Provide your Jira project URL or unique Project Key to begin the ingestion process. BugTrack Pro will automatically map your custom fields and status transitions.</p>
+
+        <label class="input-label" for="jiraLink">Jira Project Link</label>
+        <div class="input-row">
+          <input
+            class="jira-input"
+            id="jiraLink"
+            type="url"
+            placeholder="https://your-company.atlassian.net/projects/ABC"
+          />
+          <button class="btn-connect" id="dashboard-connect-btn">
+            Connect
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z"
+                stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="white"/>
+            </svg>
+          </button>
+        </div>
+        <p class="input-hint">Requires Admin permissions in the target Jira instance.</p>
+        <p id="dashboard-connect-status" class="connect-status" hidden></p>
+
+        <div class="features-divider"></div>
+
+        <div class="features">
+          <div class="feature-item">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <polyline points="23 4 23 10 17 10" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="1 20 1 14 7 14" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="feature-text">
+              <span class="feature-title">Auto-Syncing</span>
+              <p class="feature-desc">Real-time updates between tools.</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="feature-text">
+              <span class="feature-title">Enterprise Encryption</span>
+              <p class="feature-desc">256-bit AES for all data in transit.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

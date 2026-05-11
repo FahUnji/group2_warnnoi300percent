@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JIRA Bug Summary – Connect Project</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/no-project.css" />
+</head>
+<body>
+
+  <!-- ── Top NavBar ── -->
+  <header class="topnav">
+    <div class="topnav-left">
+      <div class="nav-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="nav-brand">JIRA Bug Summary</span>
+    </div>
+
+
+      <div class="nav-actions">
+        <!-- Notifications -->
+        <button class="nav-btn" aria-label="Notifications">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <!-- Help -->
+        <button class="nav-btn" aria-label="Help">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#434654" stroke-width="2"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <!-- History -->
+        <button class="nav-btn" aria-label="History">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <polyline points="12 8 12 12 14 14" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3.05 11a9 9 0 1 0 .5-4M3 3v4h4" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div class="nav-divider"></div>
+
+        <!-- User -->
+        <button class="nav-user" aria-label="User menu">
+          <div class="nav-avatar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="4" stroke="#065b41" stroke-width="2"/>
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="nav-username">BugTrack Pro</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1L5 5L9 1" stroke="#065b41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main content ── -->
+  <main class="main-area">
+    <div class="content-card">
+
+      <!-- Empty state hero -->
+      <div class="empty-hero">
+        <div class="empty-icon-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="empty-title">Connect your first JIRA Project</h1>
+        <p class="empty-subtitle">
+          BugTrack Pro bridges the gap between your engineering workflow and automated bug
+          reporting. Connect your Jira instance to start monitoring issues in real-time.
+        </p>
+      </div>
+
+      <!-- Connect input area -->
+      <div class="connect-area">
+        <label for="jira-project-url" class="connect-label">ENTER JIRA PROJECT URL OR KEY</label>
+        <div class="connect-row">
+          <div class="input-wrap">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="10" viewBox="0 0 24 12" fill="none">
+              <path d="M10 6H14M4.5 6a3.5 3.5 0 0 0 0 7h4a3.5 3.5 0 0 0 0-7M19.5 6a3.5 3.5 0 0 1 0 7h-4a3.5 3.5 0 0 1 0-7"
+                stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="translate(0,-1)"/>
+            </svg>
+            <input
+              id="jira-project-url"
+              class="connect-input"
+              type="url"
+              placeholder="https://your-domain.atlassian.net/browse/PROJ"
+            />
+          </div>
+          <button class="connect-btn" id="connect-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Connect
+          </button>
+        </div>
+        <div class="connect-hint">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#6b7280" stroke-width="2"/>
+            <path d="M12 16v-4M12 8h.01" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Example: engineering.atlassian.net/browse/APP-702
+        </div>
+        <p id="connect-status" class="connect-status" hidden></p>
+      </div>
+
+      <!-- 3-step instructions -->
+      <div class="steps-grid">
+        <div class="step">
+          <span class="step-num">01</span>
+          <h3 class="step-title">Provide Link</h3>
+          <p class="step-desc">Paste your Jira project URL or specific board key to initialize the handshake.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">02</span>
+          <h3 class="step-title">Authorize Access</h3>
+          <p class="step-desc">Grant BugTrack Pro read/write permissions via OAuth 2.0 to sync bug tickets automatically.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">03</span>
+          <h3 class="step-title">Analyze &amp; Track</h3>
+          <p class="step-desc">Your dashboard will populate with historical data and real-time bug lifecycle metrics.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="../js/no-project.js"></script>
+</body>
+</html>
