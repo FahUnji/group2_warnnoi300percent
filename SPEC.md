@@ -33,3 +33,6 @@ A 1-week sprint to build a web dashboard where QA testers can instantly see bug 
 | 4 | Re-upload of Seller Excel is defined to add only new valid IDs, but there is no clear way for Admin to see which IDs were skipped (already exist) vs which were invalid — this may affect test verification | Medium |
 | 5 | The spec does not define a maximum length for the Promotion Name field — a very long name could break the UI or be truncated unexpectedly | Low |
 | 6 | Terms & Conditions is pre-filled but editable — there is no minimum length, no format validation, and no reset-to-default option defined | Low |
+
+## Design
+The design should following design from https://www.figma.com/design/j7cSdqhEBnIFUK2DZPTuNo/JIRA-Bug-Summary?node-id=0-1&p=f 
