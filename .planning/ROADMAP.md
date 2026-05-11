@@ -1,0 +1,92 @@
+# Roadmap: Jira Bug Summary Dashboard
+
+## Overview
+
+Five vertical slices deliver the complete dashboard: first the Jira connection is proven, then data is persisted locally, then the core UI is visible, then the sprint report completes the dashboard, and finally export rounds out the feature set. Each phase is independently verifiable — a QA tester can confirm what changed before the next phase begins.
+
+## Phases
+
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+
+Decimal phases appear between their surrounding integers in numeric order.
+
+- [ ] **Phase 1: Jira Connection** - Authenticate to Jira REST API and confirm a live connection
+- [ ] **Phase 2: Data Sync** - Pull bug data from Jira and persist it in MySQL
+- [ ] **Phase 3: Dashboard UI** - Display bug summaries and charts with project switching
+- [ ] **Phase 4: Sprint Report** - Add active-sprint view and per-sprint history
+- [ ] **Phase 5: Export** - Generate downloadable Excel and Word reports
+
+## Phase Details
+
+### Phase 1: Jira Connection
+**Goal**: The backend can authenticate to Jira and fetch data from it
+**Mode**: mvp
+**Depends on**: Nothing (first phase)
+**Requirements**: JIRA-01, JIRA-02, JIRA-03
+**Success Criteria** (what must be TRUE):
+  1. Running the backend reads Jira credentials from environment variables or config file without hardcoding
+  2. The backend successfully authenticates to the Jira REST API using Basic Auth (email + API token)
+  3. A valid connection produces a success response; invalid credentials surface a clear error message
+**Plans**: TBD
+
+### Phase 2: Data Sync
+**Goal**: Bug data from Jira is stored in MySQL and available to the backend
+**Mode**: mvp
+**Depends on**: Phase 1
+**Requirements**: SYNC-01, SYNC-02, SYNC-03, SYNC-04
+**Success Criteria** (what must be TRUE):
+  1. User can trigger a manual sync via a UI button that calls the backend
+  2. After sync, the MySQL database contains bug records with ID, summary, status, priority, sprint, and assignee fields
+  3. Each sync run records a timestamp in the database
+  4. The dashboard displays the timestamp of the most recent sync
+**Plans**: TBD
+
+### Phase 3: Dashboard UI
+**Goal**: QA testers can see bug summaries and charts for a selected project
+**Mode**: mvp
+**Depends on**: Phase 2
+**Requirements**: PROJ-01, PROJ-02, SUMM-01, SUMM-02, SUMM-03, CHART-01, CHART-02
+**Success Criteria** (what must be TRUE):
+  1. User can select a Jira project from a dropdown and the dashboard refreshes to show that project's data
+  2. Summary cards show total bug count, open bug count, and critical bug count
+  3. Dashboard shows bug counts grouped by status (Open, In Progress, Closed, etc.)
+  4. Dashboard shows bug counts grouped by priority (Critical, High, Medium, Low)
+  5. Priority and status breakdowns are rendered as visual charts (bar or pie)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 4: Sprint Report
+**Goal**: QA testers can see active-sprint bugs and historical per-sprint trends
+**Mode**: mvp
+**Depends on**: Phase 3
+**Requirements**: SPRINT-01, SPRINT-02
+**Success Criteria** (what must be TRUE):
+  1. Dashboard shows the list of bugs assigned to the current active sprint
+  2. Dashboard shows per-sprint history with bugs opened and closed per sprint
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 5: Export
+**Goal**: Users can download the current bug report as Excel or Word
+**Mode**: mvp
+**Depends on**: Phase 4
+**Requirements**: EXPORT-01, EXPORT-02
+**Success Criteria** (what must be TRUE):
+  1. User can click an export button and download a .xlsx file containing the current bug report data
+  2. User can click an export button and download a .docx file containing the current bug report data
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Jira Connection | 0/TBD | Not started | - |
+| 2. Data Sync | 0/TBD | Not started | - |
+| 3. Dashboard UI | 0/TBD | Not started | - |
+| 4. Sprint Report | 0/TBD | Not started | - |
+| 5. Export | 0/TBD | Not started | - |
