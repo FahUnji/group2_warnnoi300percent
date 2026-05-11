@@ -267,6 +267,16 @@ body {
 }
 .export-item:hover { background: #f3f4f6; }
 
+.export-item-icon {
+  width: 32px; height: 32px; flex-shrink: 0;
+  background: #f3f4f6; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.export-item-text { display: flex; flex-direction: column; gap: 1px; }
+.export-item-label { font-size: 14px; font-weight: 600; color: #111827; }
+.export-item-ext   { font-size: 12px; color: #6b7280; }
+
 .export-divider {
   height: 1px;
   background: #e5e7eb;
@@ -309,6 +319,11 @@ body {
   padding: 24px;
   cursor: pointer;
   user-select: none;
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
 }
 .sprint-row:hover { background: #f9fafb; }
 
@@ -408,13 +423,11 @@ body {
 
 /* Chevron */
 .chevron {
-  background: none; border: none; cursor: pointer;
   padding: 8px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   transition: transform 0.2s, background 0.15s;
 }
-.chevron:hover { background: #f3f4f6; }
 .chevron-right svg { transform: rotate(-90deg); }
 
 /* ── Sprint detail (expanded) ── */

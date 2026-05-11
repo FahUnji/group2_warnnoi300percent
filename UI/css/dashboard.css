@@ -43,12 +43,11 @@ body {
   white-space: nowrap;
 }
 
-/* Search — centered between left and right */
+/* Search — inside topnav-right, before action icons */
 .search-wrap {
   position: relative;
-  flex: 1;
-  max-width: 380px;
-  margin: 0 auto;
+  width: 260px;
+  flex-shrink: 0;
 }
 .search-icon {
   position: absolute;
@@ -147,6 +146,8 @@ body {
 }
 
 /* ── Project Card ── */
+.project-card-link { text-decoration: none; display: block; }
+
 .project-card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -155,7 +156,11 @@ body {
   display: flex;
   flex-direction: row;
   min-height: 160px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
 }
+.project-card:hover  { transform: translateY(-2px); box-shadow: 0px 20px 25px -5px rgba(27,67,50,0.12), 0px 8px 10px -6px rgba(27,67,50,0.1); }
+.project-card:active { transform: translateY(0); }
 
 .card-bar {
   width: 5px;
@@ -202,6 +207,7 @@ body {
   background: #e7f4f0;
   border-radius: 6px;
   padding: 10px 14px;
+  transition: background 0.35s ease;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -218,7 +224,7 @@ body {
 .stat-val {
   font-size: 26px;
   font-weight: 700;
-  color: #111827;
+  color: #065b41;
   line-height: 1.1;
 }
 
@@ -327,20 +333,25 @@ body {
 .btn-connect {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
   background: #1b4332;
   border: none;
-  border-radius: 8px;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 12px;
   color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
+  box-shadow: 0px 20px 25px -5px rgba(27,67,50,0.1), 0px 8px 10px -6px rgba(27,67,50,0.1);
+  transition: background 0.2s, transform 0.15s;
+  flex-shrink: 0;
 }
-.btn-connect:hover { background: #065b41; }
+.btn-connect:hover  { background: #1f5040; transform: translateY(-1px); }
+.btn-connect:active { transform: translateY(0); }
+.btn-connect:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 .input-hint {
   font-size: 12px;

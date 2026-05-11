@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JIRA Bug Summary – Bug Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/bug-report.css" />
+</head>
+<body>
+
+  <!-- ── Top NavBar ── -->
+  <header class="topnav">
+    <div class="topnav-left">
+      <div class="nav-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="nav-brand">JIRA Bug Summary</span>
+    </div>
+
+    <div class="topnav-right">
+      <div class="search-wrap">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="8" stroke="#6b7280" stroke-width="2"/>
+          <path d="M21 21L16.65 16.65" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input class="search-input" type="text" placeholder="Search bugs, users, tasks..." />
+      </div>
+      <button class="nav-btn" aria-label="Notifications">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="nav-btn" aria-label="Help">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#434654" stroke-width="2"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="nav-btn" aria-label="History">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <polyline points="12 8 12 12 14 14" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3.05 11a9 9 0 1 0 .5-4M3 3v4h4" stroke="#434654" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="nav-divider"></div>
+      <button class="nav-user" aria-label="User menu">
+        <div class="nav-avatar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="#065b41" stroke-width="2"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="nav-username">BugTrack Pro</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
+          <path d="M1 1L5 5L9 1" stroke="#065b41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+      <div class="sidebar-project">
+        <div class="project-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="project-info">
+          <span class="project-name">Manao Project</span>
+          <span class="project-sub">Jira Cloud Instance</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="7" height="7" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="14" y="3" width="7" height="7" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="14" y="14" width="7" height="7" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="3" y="14" width="7" height="7" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Dashboard
+        </a>
+        <a href="bug-report.html" class="nav-link active">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="14 2 14 8 20 8" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="16" y1="13" x2="8" y2="13" stroke="#065b41" stroke-width="2" stroke-linecap="round"/>
+            <line x1="16" y1="17" x2="8" y2="17" stroke="#065b41" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Bug Report
+        </a>
+        <a href="sprint.html" class="nav-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="16" y1="2" x2="16" y2="6" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
+            <line x1="8" y1="2" x2="8" y2="6" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
+            <line x1="3" y1="10" x2="21" y2="10" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Sprint
+        </a>
+      </nav>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1 class="page-title">Bug Report Summary</h1>
+          <p class="page-subtitle">Real-time status of Project Alpha Jira Instance</p>
+        </div>
+        <div class="page-header-right">
+          <div class="export-wrap">
+            <button class="btn-outline" onclick="toggleExportMenu(event)">
+              Export Report
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
+                <path d="M1 1L5 5L9 1" stroke="#065b41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="export-menu" id="exportMenu">
+              <button class="export-item" onclick="closeExportMenu()">
+                <div class="export-item-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="14 2 14 8 20 8" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="16" y1="13" x2="8" y2="13" stroke="#374151" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="16" y1="17" x2="8" y2="17" stroke="#374151" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="export-item-text">
+                  <span class="export-item-label">Export as Word</span>
+                  <span class="export-item-ext">(.docx)</span>
+                </div>
+              </button>
+              <button class="export-item" onclick="closeExportMenu()">
+                <div class="export-item-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="#374151" stroke-width="2"/>
+                    <path d="M3 9h18M3 15h18M9 3v18M15 3v18" stroke="#374151" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="export-item-text">
+                  <span class="export-item-label">Export as Excel</span>
+                  <span class="export-item-ext">(.xlsx)</span>
+                </div>
+              </button>
+            </div>
+          </div>
+          <button class="btn-primary">Refresh Data</button>
+        </div>
+      </div>
+
+      <!-- ── Stat Cards ── -->
+      <div class="stat-row">
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-card-label">Total Bugs</span>
+            <div class="stat-icon stat-icon-bug">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M8 2l1.5 1.5M16 2l-1.5 1.5M12 6a4 4 0 0 0-4 4v4a4 4 0 0 0 8 0v-4a4 4 0 0 0-4-4zM4 10h2M18 10h2M4 14h2M18 14h2M8 20l-1.5 1.5M16 20l1.5 1.5" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9.5 3.5A3.5 3.5 0 0 1 12 3a3.5 3.5 0 0 1 2.5.5" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-card-value val-red">1,284</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-card-label">Open</span>
+            <div class="stat-icon stat-icon-open">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#f59e0b" stroke-width="2"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+                <line x1="9" y1="9" x2="9.01" y2="9" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="15" y1="9" x2="15.01" y2="9" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-card-value val-orange">318</div>
+          <p class="stat-card-sub">Active development queue</p>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-card-label">Resolved</span>
+            <div class="stat-icon stat-icon-resolved">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="22 4 12 14.01 9 11.01" stroke="#065b41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-card-value val-dark">924</div>
+          <p class="stat-card-sub sub-green">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <polyline points="20 6 9 17 4 12" stroke="#065b41" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            85% completion rate
+          </p>
+        </div>
+
+      </div><!-- /stat-row -->
+
+      <!-- ── Charts Row ── -->
+      <div class="charts-row">
+
+        <!-- Bugs by Priority -->
+        <div class="chart-card chart-priority">
+          <div class="chart-header">
+            <h3 class="chart-title">Bugs by Priority</h3>
+            <div class="priority-legend">
+              <span class="legend-item"><span class="dot dot-critical"></span>Critical</span>
+              <span class="legend-item"><span class="dot dot-high"></span>High</span>
+              <span class="legend-item"><span class="dot dot-medium"></span>Medium</span>
+              <span class="legend-item"><span class="dot dot-low"></span>Low</span>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div class="donut-wrap" id="priorityDonut">
+              <svg viewBox="0 0 240 240" width="240" height="240">
+                <!-- track: r=104, circumference=653.45 -->
+                <circle cx="120" cy="120" r="104" fill="none" stroke="#f3f4f6" stroke-width="28"/>
+                <!-- Critical 15% -->
+                <circle class="donut-arc" cx="120" cy="120" r="104" fill="none" stroke="#ba1a1a" stroke-width="28"
+                        stroke-dasharray="98.02 653.45" stroke-dashoffset="0"
+                        transform="rotate(-90 120 120)"
+                        onmouseenter="showDonutTip(event,'Critical','15%','#ba1a1a')"
+                        onmouseleave="hideDonutTip()"/>
+                <!-- High 30% -->
+                <circle class="donut-arc" cx="120" cy="120" r="104" fill="none" stroke="#f57c00" stroke-width="28"
+                        stroke-dasharray="196.04 653.45" stroke-dashoffset="-98.02"
+                        transform="rotate(-90 120 120)"
+                        onmouseenter="showDonutTip(event,'High','30%','#f57c00')"
+                        onmouseleave="hideDonutTip()"/>
+                <!-- Medium 10% -->
+                <circle class="donut-arc" cx="120" cy="120" r="104" fill="none" stroke="#fbc02d" stroke-width="28"
+                        stroke-dasharray="65.35 653.45" stroke-dashoffset="-294.06"
+                        transform="rotate(-90 120 120)"
+                        onmouseenter="showDonutTip(event,'Medium','10%','#fbc02d')"
+                        onmouseleave="hideDonutTip()"/>
+                <!-- Low 25% -->
+                <circle class="donut-arc" cx="120" cy="120" r="104" fill="none" stroke="#b2c5ff" stroke-width="28"
+                        stroke-dasharray="163.36 653.45" stroke-dashoffset="-359.41"
+                        transform="rotate(-90 120 120)"
+                        onmouseenter="showDonutTip(event,'Low','25%','#b2c5ff')"
+                        onmouseleave="hideDonutTip()"/>
+              </svg>
+              <div class="donut-center">
+                <span class="donut-value donut-red">1,284</span>
+                <span class="donut-label">Total Bugs</span>
+              </div>
+              <div class="donut-tooltip" id="donutTip"></div>
+            </div>
+            <div class="priority-stats">
+              <div class="priority-item">
+                <span class="dot dot-critical"></span>
+                <span class="priority-name">Critical</span>
+                <span class="priority-pct">15%</span>
+              </div>
+              <div class="priority-item">
+                <span class="dot dot-high"></span>
+                <span class="priority-name">High</span>
+                <span class="priority-pct">30%</span>
+              </div>
+              <div class="priority-item">
+                <span class="dot dot-medium"></span>
+                <span class="priority-name">Medium</span>
+                <span class="priority-pct">10%</span>
+              </div>
+              <div class="priority-item">
+                <span class="dot dot-low"></span>
+                <span class="priority-name">Low</span>
+                <span class="priority-pct">25%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Distribution -->
+        <div class="chart-card chart-status">
+          <h3 class="chart-title">Status Distribution</h3>
+          <div class="status-chart-body">
+            <div class="donut-wrap">
+              <svg viewBox="0 0 192 192" width="160" height="160">
+                <circle cx="96" cy="96" r="80" fill="none" stroke="#e7f4f0" stroke-width="16"/>
+                <circle class="donut-arc" cx="96" cy="96" r="80" fill="none" stroke="#065b41" stroke-width="16"
+                        stroke-dasharray="502.65" stroke-dashoffset="0"
+                        transform="rotate(-90 96 96)"
+                        onmouseenter="showDonutTip(event,'Done','100%','#065b41','statusDonutTip')"
+                        onmouseleave="hideDonutTip('statusDonutTip')"/>
+              </svg>
+              <div class="donut-center">
+                <span class="donut-value donut-dark">100%</span>
+                <span class="donut-label">Done</span>
+              </div>
+              <div class="donut-tooltip" id="statusDonutTip"></div>
+            </div>
+            <div class="status-legend">
+              <div class="status-item">
+                <span class="dot dot-todo"></span>
+                <span class="status-name">To Do</span>
+                <span class="status-pct">0%</span>
+              </div>
+              <div class="status-item">
+                <span class="dot dot-inprogress"></span>
+                <span class="status-name">In Progress</span>
+                <span class="status-pct">0%</span>
+              </div>
+              <div class="status-item">
+                <span class="dot dot-done"></span>
+                <span class="status-name">Done</span>
+                <span class="status-pct pct-green">100%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /charts-row -->
+
+    </main>
+  </div><!-- /layout -->
+
+  <script src="../js/bug-report.js"></script>
+</body>
+</html>
