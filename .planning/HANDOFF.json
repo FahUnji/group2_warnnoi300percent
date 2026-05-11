@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-11T10:45:17Z",
+  "timestamp": "2026-05-11T10:58:12Z",
   "phase": "01",
   "phase_name": "jira-connection",
   "phase_dir": ".planning/phases/01-jira-connection",
@@ -14,61 +14,46 @@
     {"id": "plan-03", "name": "Wave 3 — React frontend (ConnectionForm, StatusBanner, SuccessModal)", "status": "done", "commit": "711b59a"},
     {"id": "code-review", "name": "Code review — 01-REVIEW.md (5 critical, 6 warning, 3 info)", "status": "done", "commit": "17dc93d"},
     {"id": "verification", "name": "Automated verification — 01-VERIFICATION.md (13/13 PASS)", "status": "done", "commit": "ca6470e"},
-    {"id": "uat-definition", "name": "Human UAT defined — 01-HUMAN-UAT.md (5 tests)", "status": "done", "commit": "2ddf679"},
-    {"id": "sqlite-migration", "name": "Migrated from MySQL to SQLite — auto-init on startup", "status": "done", "commit": "2da6ea0"},
-    {"id": "docker-setup", "name": "Docker Compose for one-command startup (frontend:3000, backend:8000)", "status": "done", "commit": "2da6ea0"},
     {"id": "cr-fixes", "name": "All 11 CR/WR issues remediated (SSRF, FERNET_KEY, timeout, etc.)", "status": "done", "commit": "2da6ea0"},
-    {"id": "ui-redesign", "name": "ConnectionPage redesigned to match Figma login.html — single 'Continue with Atlassian' button", "status": "done_uncommitted", "progress": "Files changed, Docker rebuild in progress at pause time"}
+    {"id": "sqlite-docker", "name": "SQLite migration + Docker Compose setup", "status": "done", "commit": "c31427c"},
+    {"id": "ui-redesign", "name": "ConnectionPage redesigned to match Figma login.html — single button", "status": "done", "commit": "45aacf0"},
+    {"id": "docker-ready", "name": "Docker fully rebuilt and running (frontend:3000, backend:8000)", "status": "done", "commit": null}
   ],
   "remaining_tasks": [
-    {"id": "verify-docker", "name": "Confirm Docker build finished + http://localhost:3000 shows new Figma design", "status": "not_started"},
-    {"id": "rescope-uat", "name": "Re-scope UAT — original 5 tests assumed 3-field form (now removed), need updated tests", "status": "not_started"},
-    {"id": "phase-approval", "name": "Mark Phase 1 complete in ROADMAP.md + STATE.md after UAT passes", "status": "not_started"},
+    {"id": "verify-ui", "name": "Confirm http://localhost:3000 shows new Figma design (single button, no form)", "status": "not_started"},
+    {"id": "rescope-uat", "name": "Re-scope UAT — original 5 tests assumed 3-field form (now removed)", "status": "not_started"},
+    {"id": "phase-approval", "name": "Mark Phase 1 complete in ROADMAP.md + STATE.md", "status": "not_started"},
     {"id": "advance-phase2", "name": "Run /gsd-discuss-phase 2 to plan Data Sync phase", "status": "not_started"}
   ],
   "blockers": [
     {
-      "description": "Docker frontend container was rebuilding at pause time — need to verify build completed",
+      "description": "User has not confirmed if new Figma UI is visible at http://localhost:3000",
       "type": "human_action",
-      "workaround": "Check terminal for 'VITE ready', then hard-refresh http://localhost:3000 (Ctrl+Shift+R)"
+      "workaround": "Open http://localhost:3000 + Ctrl+Shift+R. Should show single 'Continue with Atlassian' button."
     },
     {
-      "description": "Original UAT test suite tests credential form flow that no longer exists in the UI",
+      "description": "Original UAT tests (01-HUMAN-UAT.md) test the removed 3-field form",
       "type": "technical",
-      "workaround": "Re-scope to: (1) landing page renders correctly, (2) button navigates to /dashboard, (3) responsive at 900px"
+      "workaround": "Re-scope to: (1) landing page renders, (2) button navigates to /dashboard, (3) responsive at 900px"
     }
   ],
   "human_actions_pending": [
     {
-      "action": "Check Docker terminal — wait for 'VITE ready' line, then open http://localhost:3000",
-      "context": "Verifying new Figma-matched landing page with single 'Continue with Atlassian' button",
+      "action": "Open http://localhost:3000 and confirm new Figma design is visible",
+      "context": "Docker is up and running. Should show single 'Continue with Atlassian' button, no form fields.",
       "blocking": true
-    },
-    {
-      "action": "Hard-refresh browser (Ctrl+Shift+R) if still seeing old 3-field form",
-      "context": "Browser may have cached old version",
-      "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "FastAPI (not Flask)", "rationale": "async, auto-docs, Pydantic", "phase": "01"},
-    {"decision": "Fernet encryption for API token at rest", "rationale": "FERNET_KEY in .env", "phase": "01"},
-    {"decision": "SQLite instead of MySQL", "rationale": "Simpler UAT setup — no DB server needed", "phase": "01"},
-    {"decision": "Docker Compose for dev environment", "rationale": "One-command startup for UAT", "phase": "01"},
+    {"decision": "FastAPI + SQLite (not MySQL)", "rationale": "Simpler setup — no DB server needed", "phase": "01"},
+    {"decision": "Docker Compose for dev environment", "rationale": "One-command startup", "phase": "01"},
     {"decision": "Removed 3-field credential form — single 'Continue with Atlassian' button", "rationale": "User requested UI match Figma (UI/html/login.html)", "phase": "01"},
-    {"decision": "Button navigates directly to /dashboard (no real OAuth)", "rationale": "User did not request real Atlassian OAuth flow — UI-only change", "phase": "01"},
-    {"decision": "Simplified App.jsx — removed startup /api/jira/status verify", "rationale": "Credential storage flow removed; startup verify became dead code", "phase": "01"},
-    {"decision": "Vite usePolling:true (500ms) for WSL2+Docker", "rationale": "inotify doesn't work on /mnt/c Windows filesystem — polling required for HMR", "phase": "01"},
-    {"decision": "CSS Modules, no shadcn, no Tailwind", "rationale": "Hand-port from UI/html reference designs", "phase": "01"}
+    {"decision": "Button navigates directly to /dashboard (no real OAuth)", "rationale": "UI-only change — user did not request Atlassian OAuth flow", "phase": "01"},
+    {"decision": "App.jsx simplified — startup verify removed", "rationale": "Credential storage flow removed; verify was dead code", "phase": "01"},
+    {"decision": "Vite usePolling:true (500ms) for WSL2+Docker", "rationale": "inotify doesn't work on /mnt/c Windows filesystem", "phase": "01"},
+    {"decision": "CSS Modules only, no Tailwind, no shadcn", "rationale": "Hand-port from UI/html reference designs", "phase": "01"}
   ],
-  "uncommitted_files": [
-    "frontend/src/App.jsx",
-    "frontend/src/pages/ConnectionPage.jsx",
-    "frontend/src/pages/ConnectionPage.module.css",
-    "frontend/vite.config.js",
-    ".planning/HANDOFF.json",
-    ".planning/phases/01-jira-connection/.continue-here.md"
-  ],
-  "next_action": "Check Docker build status. If 'VITE ready' seen: open http://localhost:3000, verify Figma design renders, then re-scope UAT and mark phase approved. If not: wait for build then verify.",
-  "context_notes": "Major UI scope change this session: ConnectionPage redesigned to match UI/html/login.html (Figma reference). 3-field form removed entirely. Backend auth endpoints (POST /api/jira/connect, GET /api/jira/status) still exist but unused by frontend now. Vite polling added for WSL2 Docker compatibility. All CR issues from previous session were committed as 2da6ea0 before this UI change."
+  "uncommitted_files": [],
+  "next_action": "Open http://localhost:3000, hard-refresh (Ctrl+Shift+R), confirm new Figma design visible. Then re-scope UAT and approve Phase 1.",
+  "context_notes": "Docker is fully up (rebuilt from scratch this session). ConnectionPage matches Figma login.html — single 'Continue with Atlassian' button, no credential form. Backend auth API still exists but frontend no longer calls it. User paused before confirming UI is correct."
 }
