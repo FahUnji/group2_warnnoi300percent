@@ -32,9 +32,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-PLAN-01.md — Backend scaffold: FastAPI app, database utility, jira_config model, SQL migration
-- [ ] 01-PLAN-02.md — Jira service: Fernet encryption, /rest/api/3/myself auth, POST /connect + GET /status endpoints
-- [ ] 01-PLAN-03.md — React frontend: Vite scaffold, ConnectionForm, StatusBanner, SuccessModal, LoadingSpinner, routing
+- [x] 01-PLAN-01.md — Backend scaffold: FastAPI app, database utility, jira_config model, SQL migration
+- [x] 01-PLAN-02.md — Jira service: Fernet encryption, /rest/api/3/myself auth, POST /connect + GET /status endpoints
+- [x] 01-PLAN-03.md — React frontend: Vite scaffold, ConnectionForm, StatusBanner, SuccessModal, LoadingSpinner, routing
 
 ### Phase 2: Data Sync
 **Goal**: Bug data from Jira is stored in MySQL and available to the backend
@@ -90,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Jira Connection | 0/3 | Not started | - |
+| 1. Jira Connection | 3/3 | Executed — pending verification | 2026-05-11 |
 | 2. Data Sync | 0/TBD | Not started | - |
 | 3. Dashboard UI | 0/TBD | Not started | - |
 | 4. Sprint Report | 0/TBD | Not started | - |
