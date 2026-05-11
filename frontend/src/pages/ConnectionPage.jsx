@@ -26,10 +26,11 @@ function ConnectionPage({ initialError, apiBase }) {
           © 2024 JIRA Bug Summary Enterprise. All rights reserved.
         </span>
         <nav className={styles.footerLinks}>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">Security</a>
-          <a href="#">Status</a>
+          {/* WR-06: prevent scroll-to-top nav and history entry for placeholder links */}
+          <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>Security</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>Status</a>
         </nav>
       </footer>
     </div>

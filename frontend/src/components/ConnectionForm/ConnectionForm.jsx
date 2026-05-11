@@ -21,6 +21,7 @@ function ConnectionForm({ initialError = null, apiBase = 'http://localhost:8000'
   function handleChange(e) {
     const { name, value } = e.target;
     setFields((prev) => ({ ...prev, [name]: value }));
+    if (error) setError(null); // WR-05: clear stale error as soon as user edits
   }
 
   async function handleSubmit(e) {
@@ -122,7 +123,7 @@ function ConnectionForm({ initialError = null, apiBase = 'http://localhost:8000'
               onChange={handleChange}
               required
               disabled={loading}
-              autoComplete="current-password"
+              autoComplete="off"
             />
           </div>
 

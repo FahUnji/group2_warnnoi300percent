@@ -8,6 +8,9 @@ Error response shape (D-13):
   HTTP 400: {"ok": false, "error": "<code>", "message": "<human text>"}
   Codes: invalid_credentials | unreachable_host | timeout | not_configured
 """
+import ipaddress
+import urllib.parse
+
 from fastapi import APIRouter
 from pydantic import BaseModel, field_validator
 
@@ -27,10 +30,20 @@ class JiraConfigRequest(BaseModel):
     @classmethod
     def base_url_must_be_https(cls, v: str) -> str:
         v = v.strip()
-        if not v.startswith("http://") and not v.startswith("https://"):
-            raise ValueError("base_url must start with http:// or https://")
+        # CR-03: https-only — http:// allows SSRF to internal services
+        if not v.startswith("https://"):
+            raise ValueError("base_url must start with https://")
         if len(v) > 500:
             raise ValueError("base_url must be 500 characters or fewer")
+        # CR-03: Reject IP literals pointing at private/loopback ranges
+        host = urllib.parse.urlparse(v).hostname or ""
+        try:
+            addr = ipaddress.ip_address(host)
+        except ValueError:
+            pass  # hostname — not an IP, acceptable
+        else:
+            if addr.is_private or addr.is_loopback or addr.is_link_local:
+                raise ValueError("base_url must not point to a private or internal address")
         return v
 
     @field_validator("email")
@@ -49,6 +62,9 @@ class JiraConfigRequest(BaseModel):
         v = v.strip()
         if not v:
             raise ValueError("api_token must not be empty")
+        # CR-05: Jira tokens are fixed-length (<256 chars); reject oversized payloads
+        if len(v) > 500:
+            raise ValueError("api_token must be 500 characters or fewer")
         return v
 
 

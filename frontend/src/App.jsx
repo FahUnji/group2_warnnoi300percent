@@ -4,7 +4,7 @@ import ConnectionPage from './pages/ConnectionPage';
 import DashboardPage from './pages/DashboardPage';
 import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = '';
 
 function App() {
   // 'checking' | 'connected' | 'disconnected'
@@ -29,6 +29,8 @@ function App() {
         }
       })
       .catch(() => {
+        // WR-02: surface backend-down vs "not configured" — don't swallow silently
+        setSavedError({ error: 'network_error', message: 'Cannot reach backend. Is the server running?' });
         setVerifyStatus('disconnected');
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

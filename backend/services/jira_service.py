@@ -50,8 +50,9 @@ def _test_jira_auth(base_url: str, email: str, api_token: str) -> dict:
         response = requests.get(
             url,
             auth=(email, api_token),
-            timeout=10,  # Claude's discretion: 10s per CONTEXT.md
+            timeout=(5, 10),  # WR-03: (connect_s, read_s) — scalar allows 20s worst-case
             headers={"Accept": "application/json"},
+            verify=True,      # WR-03: explicit — never disable TLS cert validation
         )
         if response.status_code == 401:
             return {
@@ -73,8 +74,22 @@ def _test_jira_auth(base_url: str, email: str, api_token: str) -> dict:
             "error": "timeout",
             "message": "Connection timed out. Jira did not respond in time — try again in a moment.",
         }
+    except requests.exceptions.HTTPError as exc:
+        # WR-04: distinguish 403 (permissions) from other unexpected HTTP errors
+        status = exc.response.status_code if exc.response is not None else 0
+        if status == 403:
+            return {
+                "ok": False,
+                "error": "forbidden",
+                "message": "Connected to Jira but access was denied. Check that your account has API access.",
+            }
+        return {
+            "ok": False,
+            "error": "unreachable_host",
+            "message": f"Jira returned an unexpected error (HTTP {status}). Check the base URL.",
+        }
     except requests.exceptions.RequestException:
-        # Catch-all for unexpected HTTP errors — do not leak details
+        # Catch-all — do not leak exception details
         return {
             "ok": False,
             "error": "unreachable_host",
@@ -94,7 +109,7 @@ class JiraService:
         Raises HTTPException(400) with D-13 error shape on failure.
         Returns {"ok": True, "message": "Connected successfully"} on success.
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             None, _test_jira_auth, base_url, email, api_token
         )
@@ -115,7 +130,7 @@ class JiraService:
         Used on app load (D-14): if valid → {"ok": True}; if not → {"ok": False, ...}.
         Returns {"ok": False, "error": "not_configured", ...} if no saved credentials.
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         config = await loop.run_in_executor(None, load_config)
         if config is None:
             return {
