@@ -12,7 +12,7 @@ Five vertical slices deliver the complete dashboard: first the Jira connection i
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Jira Connection** - Authenticate to Jira REST API and confirm a live connection
+- [x] **Phase 1: Jira Connection** - Authenticate to Jira REST API and confirm a live connection
 - [ ] **Phase 2: Data Sync** - Pull bug data from Jira and persist it in MySQL
 - [ ] **Phase 3: Dashboard UI** - Display bug summaries and charts with project switching
 - [ ] **Phase 4: Sprint Report** - Add active-sprint view and per-sprint history
@@ -29,7 +29,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Running the backend reads Jira credentials from environment variables or config file without hardcoding
   2. The backend successfully authenticates to the Jira REST API using Basic Auth (email + API token)
   3. A valid connection produces a success response; invalid credentials surface a clear error message
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [x] 01-PLAN-01.md — Backend scaffold: FastAPI app, database utility, jira_config model, SQL migration
+- [x] 01-PLAN-02.md — Jira service: Fernet encryption, /rest/api/3/myself auth, POST /connect + GET /status endpoints
+- [x] 01-PLAN-03.md — React frontend: Vite scaffold, ConnectionForm, StatusBanner, SuccessModal, LoadingSpinner, routing
 
 ### Phase 2: Data Sync
 **Goal**: Bug data from Jira is stored in MySQL and available to the backend
@@ -85,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Jira Connection | 0/TBD | Not started | - |
+| 1. Jira Connection | 3/3 | Complete | 2026-05-12 |
 | 2. Data Sync | 0/TBD | Not started | - |
 | 3. Dashboard UI | 0/TBD | Not started | - |
 | 4. Sprint Report | 0/TBD | Not started | - |
