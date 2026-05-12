@@ -6,7 +6,7 @@ See `.planning/PROJECT.md` for full project context.
 
 **Core value:** QA testers can instantly see bug health (status + priority breakdown) across any Jira project without navigating Jira directly.
 
-**Stack:** Python backend (FastAPI/Flask) + React frontend (Node.js) + MySQL
+**Stack:** Python backend (FastAPI/Flask) + React frontend (Node.js) + SQLite
 
 ## GSD Workflow
 
@@ -14,7 +14,7 @@ This project uses the GSD workflow. Always check `.planning/STATE.md` for curren
 
 ### Phase Execution Order
 1. Jira Connection — backend auth + Jira REST API
-2. Data Sync — manual sync Jira → MySQL
+2. Data Sync — manual sync Jira → SQLite
 3. Dashboard UI — charts + project switcher
 4. Sprint Report — active sprint + history
 5. Export — Excel (.xlsx) + Word (.docx)

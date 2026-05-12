@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Jira Connection | 3/3 | Complete | 2026-05-12 |
-| 2. Data Sync | 0/2 | Not started | - |
+| 2. Data Sync | 0/2 | Planned | - |
 | 3. Dashboard UI | 0/TBD | Not started | - |
 | 4. Sprint Report | 0/TBD | Not started | - |
 | 5. Export | 0/TBD | Not started | - |
