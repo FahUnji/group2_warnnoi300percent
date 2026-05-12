@@ -28,6 +28,8 @@ function DashboardPage() {
   const [connectingKey, setConnectingKey] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [openCardMenu, setOpenCardMenu] = useState(null);
+  const [removingKey, setRemovingKey] = useState(null);
+  const [isLeavingDashboard, setIsLeavingDashboard] = useState(false);
   const searchRef = useRef(null);
   const userMenuRef = useRef(null);
 
@@ -196,9 +198,24 @@ function DashboardPage() {
     setOpenCardMenu(null);
     try {
       await fetch(`/api/projects/${key}`, { method: 'DELETE' });
-      setProjects(updated => updated.filter(p => p.key !== key));
+      const remaining = projects.filter(p => p.key !== key);
+      setRemovingKey(key);
+      if (remaining.length === 0) {
+        // card exit → then main content exit → then switch to no-project
+        setTimeout(() => setIsLeavingDashboard(true), 240);
+        setTimeout(() => {
+          setProjects([]);
+          setRemovingKey(null);
+          setIsLeavingDashboard(false);
+        }, 560);
+      } else {
+        setTimeout(() => {
+          setProjects(remaining);
+          setRemovingKey(null);
+        }, 260);
+      }
     } catch {
-      // silent — project stays in list
+      setRemovingKey(null);
     }
   }
 
@@ -320,7 +337,9 @@ function DashboardPage() {
         </div>
       </header>
 
-      {(!loadingProjects && projects.length === 0) ? (
+      {loadingProjects ? (
+        <div className={styles.pageLoadingCenter}><LoadingSpinner size={32} /></div>
+      ) : projects.length === 0 ? (
 
         <main className={styles.noProjectMain}>
           <div className={styles.noProjectCard}>
@@ -434,7 +453,7 @@ function DashboardPage() {
 
       ) : (
 
-        <main className={styles.mainContent}>
+        <main className={`${styles.mainContent}${isLeavingDashboard ? ' ' + styles.mainContentLeaving : ''}`}>
 
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Active Projects</h1>
@@ -450,12 +469,12 @@ function DashboardPage() {
           ) : projectsError ? (
             <div role="alert" className={styles.errorBanner}>{projectsError}</div>
           ) : (
-            projects.map(project => {
+            projects.map((project, idx) => {
               const stats = bugStats[project.key] || { total: 0, open: 0, critical: 0, loading: true };
               const hasCritical = !stats.loading && stats.critical > 0;
               const menuOpen = openCardMenu === project.key;
               return (
-                <div key={project.key} className={styles.projectCardWrap}>
+                <div key={project.key} className={`${styles.projectCardWrap}${removingKey === project.key ? ' ' + styles.projectCardWrapRemoving : ''}`} style={{ '--card-index': idx }}>
                   <button
                     className={styles.projectCard}
                     aria-label={`${project.name} — ${stats.loading ? 'loading' : `${stats.open} open bugs, ${stats.critical} critical`}`}

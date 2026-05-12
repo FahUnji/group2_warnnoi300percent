@@ -4,6 +4,28 @@
    No global resets — those live in index.css
 */
 
+/* ── Keyframe Animations ── */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardExit {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.92) translateY(8px); }
+}
+
+@keyframes fadeOutUp {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-14px); }
+}
+
 /* ── Top NavBar ── */
 
 .topnav {
@@ -114,6 +136,7 @@
   overflow: hidden;
   max-height: 280px;
   overflow-y: auto;
+  animation: slideDown 0.15s ease both;
 }
 
 .searchEmpty {
@@ -257,6 +280,7 @@
   z-index: 200;
   min-width: 140px;
   overflow: hidden;
+  animation: slideDown 0.15s ease both;
 }
 
 .logoutItem {
@@ -285,6 +309,19 @@
   padding: 32px 32px 0;
   max-width: 1200px;
   margin: 0 auto;
+  animation: fadeInUp 0.35s ease both;
+}
+
+.mainContentLeaving {
+  animation: fadeOutUp 0.28s ease forwards !important;
+  pointer-events: none;
+}
+
+.pageLoadingCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 60px);
 }
 
 .pageHeader {
@@ -758,6 +795,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #ffffff;
+  animation: fadeInUp 0.2s ease both;
 }
 
 .addProjectRow {
@@ -838,6 +876,13 @@
 
 .projectCardWrap {
   position: relative;
+  animation: fadeInUp 0.35s ease both;
+  animation-delay: calc(var(--card-index, 0) * 55ms);
+}
+
+.projectCardWrapRemoving {
+  animation: cardExit 0.25s ease forwards !important;
+  pointer-events: none;
 }
 
 .cardMenuBtn {
@@ -879,6 +924,7 @@
   z-index: 50;
   min-width: 160px;
   overflow: hidden;
+  animation: slideDown 0.12s ease both;
 }
 
 .cardMenuDelete {
@@ -942,6 +988,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px 24px;
+  animation: fadeInUp 0.4s ease both;
 }
 
 .noProjectCard {
