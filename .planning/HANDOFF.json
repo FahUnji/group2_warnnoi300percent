@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-12T10:40:00Z",
+  "phase": "03",
+  "phase_name": "dashboard-ui",
+  "phase_dir": ".planning/phases/03-dashboard-ui",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": "03-01", "name": "CSS Module + static structure: DashboardPage.module.css + DashboardPage.jsx rewrite", "status": "done", "commit": "9a950e7"},
+    {"id": "03-02", "name": "Data flow: /api/projects fetch, parallel /api/bugs/{key} stats, handleConnect, handleSync", "status": "done", "commit": "60b09f6"},
+    {"id": "03-review", "name": "Code review: 3 critical, 7 warning, 3 info findings", "status": "done", "commit": "849a6de"},
+    {"id": "03-verify", "name": "Verification: 7/8 must-haves pass, human_needed status", "status": "done", "commit": "9e9c035"}
+  ],
+  "remaining_tasks": [
+    {"id": "03-human-uat", "name": "Human UAT: 5 items in 03-HUMAN-UAT.md — run frontend + backend, test visuals and data flow", "status": "not_started"},
+    {"id": "03-fix-blockers", "name": "Fix 3 code review blockers (CR-01 URL injection, CR-02 resp.ok, CR-03 setTimeout) — run /gsd-code-review 3 --fix", "status": "not_started"},
+    {"id": "03-complete", "name": "Mark phase complete after UAT approval — update ROADMAP + STATE to Complete", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "backend/.env contains secrets — must NEVER be committed", "type": "technical", "workaround": "File is gitignored; stage only specific files"},
+    {"description": "npm install fails on WSL with NTFS EACCES permission error", "type": "technical", "workaround": "Run npm install from native Linux path or use Docker"}
+  ],
+  "human_actions_pending": [
+    {"action": "Run 5 UAT items in 03-HUMAN-UAT.md: build, visual render, card stats with live data, bar color, connect project E2E", "context": "Phase 3 verification is human_needed — automated checks pass but visual/data flow requires manual testing with running backend+frontend", "blocking": true}
+  ],
+  "decisions": [
+    {"decision": "Atlassian OAuth 2.0 (3LO) over Basic Auth modal", "rationale": "Required for future API access + better UX", "phase": "01"},
+    {"decision": "Token encrypted with Fernet at rest in SQLite oauth_tokens table", "rationale": "Security requirement from CR", "phase": "01"},
+    {"decision": "Dashboard shows only Bug and Bug Task issues — no subtasks", "rationale": "User explicitly requested: display Bug/Bug Task only, no child tickets", "phase": "02"},
+    {"decision": "Jira Cloud API pagination via nextPageToken cursor, not startAt offset", "rationale": "POST /search/jql returns HTTP 400 on startAt; only nextPageToken supported", "phase": "02"},
+    {"decision": "No Recharts — Phase 3 has no pie charts", "rationale": "UI redesigned to match dashboard.html which has no charts at all", "phase": "03"},
+    {"decision": "Per-card inline stats: OPEN BUGS + CRITICAL counts from GET /api/bugs/{project_key}", "rationale": "Matches dashboard.html design — each card fetches its own stats in parallel on mount", "phase": "03"},
+    {"decision": "Colored left bar: red (#dc2626) if critical > 0, green (#065b41) if critical = 0", "rationale": "Direct from dashboard.html/dashboard.css mockup", "phase": "03"},
+    {"decision": "CSS Modules: DashboardPage.module.css (new file)", "rationale": "CSS Modules pattern; all new styles go here", "phase": "03"}
+  ],
+  "uncommitted_files": [],
+  "next_action": "Run human UAT (5 items in 03-HUMAN-UAT.md) with backend+frontend running. After approval, run /gsd-code-review 3 --fix to fix 3 blockers, then mark phase complete.",
+  "context_notes": "Phase 3 executed successfully this session. Both plans complete and merged. Code review found 3 blockers (URL injection, missing resp.ok check, setTimeout leak) — advisory for now but should be fixed before Phase 4. Verification is human_needed because npm install fails in WSL environment preventing build confirmation. All 7 automated must-haves pass. ROADMAP shows 2/2 plans done, Human UAT Pending."
+}
