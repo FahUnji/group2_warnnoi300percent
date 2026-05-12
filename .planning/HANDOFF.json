@@ -1,18 +1,24 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-12T10:40:00Z",
+  "timestamp": "2026-05-12T15:56:19Z",
   "phase": "03",
   "phase_name": "dashboard-ui",
   "phase_dir": ".planning/phases/03-dashboard-ui",
   "plan": null,
   "task": null,
   "total_tasks": null,
-  "status": "paused",
+  "status": "human_uat_pending",
   "completed_tasks": [
     {"id": "03-01", "name": "CSS Module + static structure: DashboardPage.module.css + DashboardPage.jsx rewrite", "status": "done", "commit": "9a950e7"},
     {"id": "03-02", "name": "Data flow: /api/projects fetch, parallel /api/bugs/{key} stats, handleConnect, handleSync", "status": "done", "commit": "60b09f6"},
     {"id": "03-review", "name": "Code review: 3 critical, 7 warning, 3 info findings", "status": "done", "commit": "849a6de"},
-    {"id": "03-verify", "name": "Verification: 7/8 must-haves pass, human_needed status", "status": "done", "commit": "9e9c035"}
+    {"id": "03-verify", "name": "Verification: 7/8 must-haves pass, human_needed status", "status": "done", "commit": "9e9c035"},
+    {"id": "03-search", "name": "Jira project search in navbar + NoProjectPage discovery fix", "status": "done", "commit": "166c97c"},
+    {"id": "03-search-select", "name": "Replace Add-project form with debounced search-and-select UI", "status": "done", "commit": "97fe240"},
+    {"id": "03-kebab", "name": "Per-project 3-dot kebab menu with remove action; navigate to /no-project when last removed", "status": "done", "commit": "37bfb5a"},
+    {"id": "03-kebab-visible", "name": "Make kebab button always visible (removed hover-only opacity:0)", "status": "done", "commit": "57046df"},
+    {"id": "03-docs", "name": "Correct planning docs: OAuth 2.0, SQLite, search-and-select flow, PROJ-03", "status": "done", "commit": "69be528"},
+    {"id": "03-critical-fix", "name": "Fix critical count to exclude resolved bugs (isNotDone predicate)", "status": "done", "commit": "8fdec32"}
   ],
   "remaining_tasks": [
     {"id": "03-human-uat", "name": "Human UAT: 5 items in 03-HUMAN-UAT.md — run frontend + backend, test visuals and data flow", "status": "not_started"},
@@ -34,9 +40,13 @@
     {"decision": "No Recharts — Phase 3 has no pie charts", "rationale": "UI redesigned to match dashboard.html which has no charts at all", "phase": "03"},
     {"decision": "Per-card inline stats: OPEN BUGS + CRITICAL counts from GET /api/bugs/{project_key}", "rationale": "Matches dashboard.html design — each card fetches its own stats in parallel on mount", "phase": "03"},
     {"decision": "Colored left bar: red (#dc2626) if critical > 0, green (#065b41) if critical = 0", "rationale": "Direct from dashboard.html/dashboard.css mockup", "phase": "03"},
-    {"decision": "CSS Modules: DashboardPage.module.css (new file)", "rationale": "CSS Modules pattern; all new styles go here", "phase": "03"}
+    {"decision": "CSS Modules: DashboardPage.module.css (new file)", "rationale": "CSS Modules pattern; all new styles go here", "phase": "03"},
+    {"decision": "isNotDone predicate for critical count", "rationale": "critical = bugs with status != done AND priority critical/highest — prevents resolved bugs inflating the critical counter", "phase": "03"},
+    {"decision": "Kebab menu as sibling button (wrapper div + absolute position)", "rationale": "Project cards are <button> — nested <button> is invalid HTML; wrapper div + sibling button solves it cleanly", "phase": "03"},
+    {"decision": "Always-visible 3-dot button (no hover-only)", "rationale": "User preference — hover-only was too hard to discover for QA users", "phase": "03"},
+    {"decision": "Privacy-by-default project search (no auto-load on mount)", "rationale": "Prevents leaking full Jira project list; user must type before results appear", "phase": "03"}
   ],
   "uncommitted_files": [],
   "next_action": "Run human UAT (5 items in 03-HUMAN-UAT.md) with backend+frontend running. After approval, run /gsd-code-review 3 --fix to fix 3 blockers, then mark phase complete.",
-  "context_notes": "Phase 3 executed successfully this session. Both plans complete and merged. Code review found 3 blockers (URL injection, missing resp.ok check, setTimeout leak) — advisory for now but should be fixed before Phase 4. Verification is human_needed because npm install fails in WSL environment preventing build confirmation. All 7 automated must-haves pass. ROADMAP shows 2/2 plans done, Human UAT Pending."
+  "context_notes": "Phase 3 fully executed. Both plans done + multiple post-plan additions: project search-and-select in navbar, NoProjectPage privacy fix, kebab remove menu, always-visible button, docs corrected, critical count fixed. All committed clean. Human UAT is the only remaining gate. 3 code review blockers (CR-01 URL injection, CR-02 resp.ok, CR-03 setTimeout) are advisory — fix before Phase 4 ships."
 }
