@@ -64,6 +64,18 @@ async def get_bugs(project_key: str):
     return {"ok": True, "bugs": bugs, "total": len(bugs)}
 
 
+@router.get("/projects/search")
+async def search_projects(q: str = ""):
+    """
+    Search accessible Jira projects by name or key for the project picker.
+    Empty query returns all accessible projects (up to 20).
+
+    Success: HTTP 200, {"ok": true, "projects": [{"key": "PROJ", "name": "My Project"}, ...]}
+    """
+    service = JiraSyncService()
+    return await service.search_projects(q.strip())
+
+
 @router.get("/projects")
 async def list_projects():
     """

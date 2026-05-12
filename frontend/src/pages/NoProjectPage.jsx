@@ -11,12 +11,12 @@ function NoProjectPage() {
   const menuRef = useRef(null);
 
   const [projects, setProjects] = useState([]);
-  const [loadingProjects, setLoadingProjects] = useState(true);
   const [projectsError, setProjectsError] = useState('');
   const [selectedKey, setSelectedKey] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,22 +43,22 @@ function NoProjectPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMenu]);
 
+  // Debounced search — calls Jira API as user types; empty query clears list
   useEffect(() => {
-    setLoadingProjects(true);
-    fetch('/api/projects')
-      .then(r => r.json())
-      .then(data => {
-        if (data.ok) {
-          setProjects(data.projects);
-        } else {
-          setProjectsError('Could not load projects. Check your connection and reload the page.');
-        }
-      })
-      .catch(() => {
-        setProjectsError('Could not load projects. Check your connection and reload the page.');
-      })
-      .finally(() => setLoadingProjects(false));
-  }, []);
+    if (!searchQuery.trim()) {
+      setProjects([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSearchLoading(true);
+      fetch(`/api/projects/search?q=${encodeURIComponent(searchQuery)}`)
+        .then(r => r.json())
+        .then(data => { if (data.ok) setProjects(data.projects); })
+        .catch(() => {})
+        .finally(() => setSearchLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
@@ -202,19 +202,7 @@ function NoProjectPage() {
             {syncing ? (
               <div className={styles.syncStatusBar}>
                 <LoadingSpinner size={20} />
-                <span>Syncing {projects.find(p => p.key === selectedKey)?.name || selectedKey}…</span>
-              </div>
-            ) : loadingProjects ? (
-              <div className={styles.syncStatusBar}>
-                <LoadingSpinner size={24} />
-                <span style={{ color: '#6b7280' }}>Loading projects…</span>
-              </div>
-            ) : projects.length === 0 && !projectsError ? (
-              <div style={{ padding: '24px', textAlign: 'center' }}>
-                <p style={{ fontWeight: 700, color: '#002d1c', marginBottom: '4px' }}>No projects found</p>
-                <p style={{ fontSize: '14px', color: '#6b7280' }}>
-                  Your Jira account has no accessible projects. Check your OAuth permissions and try again.
-                </p>
+                <span>Syncing {selectedKey}…</span>
               </div>
             ) : (
               <>
@@ -233,54 +221,55 @@ function NoProjectPage() {
                     autoComplete="off"
                   />
                 </div>
-                {searchQuery && (() => {
-                  const q = searchQuery.toLowerCase();
-                  const filtered = projects.filter(p =>
-                    p.name.toLowerCase().includes(q) || p.key.toLowerCase().includes(q)
-                  );
-                  if (filtered.length === 0) {
-                    return (
-                      <div style={{ padding: '20px', textAlign: 'center' }}>
-                        <p style={{ fontSize: '14px', color: '#6b7280' }}>No projects match "{searchQuery}"</p>
-                      </div>
-                    );
-                  }
-                  return (
-                    <ul className={styles.projectList} role="list" aria-label="Jira projects">
-                      {filtered.map((project, idx) => (
-                        <li key={project.key} role="listitem">
-                          <button
-                            className={`${styles.projectRow}${selectedKey === project.key ? ' ' + styles.projectRowSelected : ''}`}
-                            onClick={() => handleProjectSelect(project)}
-                            aria-pressed={selectedKey === project.key}
-                            style={{ borderBottom: idx < filtered.length - 1 ? '1px solid #c3c6d6' : 'none' }}
-                          >
-                            <div className={styles.projectAvatar} aria-hidden="true">
-                              {project.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className={styles.projectInfo}>
-                              <span className={styles.projectName}>{project.name}</span>
-                              <span className={styles.projectKeyBadge}>{project.key}</span>
-                            </div>
-                            {selectedKey !== project.key && (
-                              <svg
-                                className={styles.projectChevron}
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                aria-hidden="true"
-                              >
-                                <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            )}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  );
-                })()}
+
+                {searchLoading ? (
+                  <div className={styles.syncStatusBar}>
+                    <LoadingSpinner size={20} />
+                    <span style={{ color: '#6b7280' }}>Searching…</span>
+                  </div>
+                ) : !searchQuery.trim() ? (
+                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '14px', color: '#9ca3af' }}>Type to search your Jira projects</p>
+                  </div>
+                ) : projects.length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '14px', color: '#6b7280' }}>No projects match &ldquo;{searchQuery}&rdquo;</p>
+                  </div>
+                ) : (
+                  <ul className={styles.projectList} role="list" aria-label="Jira projects">
+                    {projects.map((project, idx) => (
+                      <li key={project.key} role="listitem">
+                        <button
+                          className={`${styles.projectRow}${selectedKey === project.key ? ' ' + styles.projectRowSelected : ''}`}
+                          onClick={() => handleProjectSelect(project)}
+                          aria-pressed={selectedKey === project.key}
+                          style={{ borderBottom: idx < projects.length - 1 ? '1px solid #c3c6d6' : 'none' }}
+                        >
+                          <div className={styles.projectAvatar} aria-hidden="true">
+                            {project.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className={styles.projectInfo}>
+                            <span className={styles.projectName}>{project.name}</span>
+                            <span className={styles.projectKeyBadge}>{project.key}</span>
+                          </div>
+                          {selectedKey !== project.key && (
+                            <svg
+                              className={styles.projectChevron}
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </>
             )}
           </div>

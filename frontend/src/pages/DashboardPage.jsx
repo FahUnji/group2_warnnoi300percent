@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 import styles from './DashboardPage.module.css';
 
@@ -7,36 +7,25 @@ function DashboardPage() {
     try { return JSON.parse(sessionStorage.getItem('jira_user') || 'null'); } catch { return null; }
   });
 
-  const [syncing, setSyncing] = useState(false);
-  const [syncError, setSyncError] = useState('');
-  const [syncSuccess, setSyncSuccess] = useState('');
-  const [lastSynced, setLastSynced] = useState(null);
-  const [projectKey, setProjectKey] = useState(() => {
-    // Resolve active project from sessionStorage (set during NoProjectPage auto-sync)
-    try { return sessionStorage.getItem('active_project_key') || ''; } catch { return ''; }
-  });
-
-  // Projects grid state
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [projectsError, setProjectsError] = useState('');
 
-  // Per-card bug stats: { [projectKey]: { open: number, critical: number, loading: boolean } }
   const [bugStats, setBugStats] = useState({});
 
-  // Connect section state
   const [connectInput, setConnectInput] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [connectStatus, setConnectStatus] = useState({ type: '', message: '' });
-  // type: '' | 'loading' | 'success' | 'error'
 
-  // Show inline fallback when arriving at /dashboard without a project selected
-  const [noProjectWarning, setNoProjectWarning] = useState(false);
-  useEffect(() => {
-    if (!projectKey) {
-      setNoProjectWarning(true);
-    }
-  }, [projectKey]);
+  // Navbar search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [connectingKey, setConnectingKey] = useState('');
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const searchRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   useEffect(() => {
     if (user) return;
@@ -51,62 +40,72 @@ function DashboardPage() {
       .catch(() => {});
   }, []);
 
-  // Fetch /api/projects on mount
   useEffect(() => {
     setLoadingProjects(true);
     fetch('/api/projects')
       .then(r => r.json())
       .then(data => {
-        if (data.ok) {
-          setProjects(data.projects);
-        } else {
-          setProjectsError('Could not load projects. Check your connection and reload.');
-        }
+        if (data.ok) setProjects(data.projects);
+        else setProjectsError('Could not load projects. Check your connection and reload.');
       })
-      .catch(() => {
-        setProjectsError('Could not load projects. Check your connection and reload.');
-      })
+      .catch(() => setProjectsError('Could not load projects. Check your connection and reload.'))
       .finally(() => setLoadingProjects(false));
   }, []);
 
-  // Fetch /api/bugs/{key} per project in parallel
   useEffect(() => {
     if (!projects.length) return;
     const initial = {};
     projects.forEach(p => { initial[p.key] = { open: 0, critical: 0, loading: true }; });
     setBugStats(initial);
-
     projects.forEach(project => {
       fetch(`/api/bugs/${project.key}`)
         .then(r => r.json())
         .then(data => {
           if (data.ok) {
             const bugs = data.bugs;
-            const open = bugs.filter(b =>
-              ['open', 'to do'].includes((b.status || '').toLowerCase())
-            ).length;
-            const critical = bugs.filter(b =>
-              ['critical', 'highest'].includes((b.priority || '').toLowerCase())
-            ).length;
-            setBugStats(prev => ({
-              ...prev,
-              [project.key]: { open, critical, loading: false }
-            }));
+            const open = bugs.filter(b => ['open', 'to do'].includes((b.status || '').toLowerCase())).length;
+            const critical = bugs.filter(b => ['critical', 'highest'].includes((b.priority || '').toLowerCase())).length;
+            setBugStats(prev => ({ ...prev, [project.key]: { open, critical, loading: false } }));
           } else {
-            setBugStats(prev => ({
-              ...prev,
-              [project.key]: { open: 0, critical: 0, loading: false }
-            }));
+            setBugStats(prev => ({ ...prev, [project.key]: { open: 0, critical: 0, loading: false } }));
           }
         })
-        .catch(() => {
-          setBugStats(prev => ({
-            ...prev,
-            [project.key]: { open: 0, critical: 0, loading: false }
-          }));
-        });
+        .catch(() => setBugStats(prev => ({ ...prev, [project.key]: { open: 0, critical: 0, loading: false } })));
     });
   }, [projects]);
+
+  // Debounced search for Jira projects
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSearchLoading(true);
+      fetch(`/api/projects/search?q=${encodeURIComponent(searchQuery)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) {
+            setSearchResults(data.projects);
+            setShowDropdown(true);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setSearchLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Close dropdown / user menu on outside click
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setShowDropdown(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
@@ -114,49 +113,32 @@ function DashboardPage() {
     window.location.href = '/';
   }
 
-  async function handleSync() {
-    if (!projectKey || syncing) return;
-    setSyncing(true);
-    setSyncError('');
-    setSyncSuccess('');
+  async function handleSelectProject(project) {
+    setShowDropdown(false);
+    setSearchQuery('');
+    setConnectingKey(project.key);
     try {
-      const resp = await fetch(`/api/sync/${projectKey}`, { method: 'POST' });
+      const resp = await fetch(`/api/sync/${project.key}`, { method: 'POST' });
       const data = await resp.json();
       if (data.ok) {
-        setLastSynced(data.synced_at);
-        setSyncSuccess('Sync complete');
-        // Re-fetch bugs for the active project and update its card stats
-        if (projectKey) {
-          fetch(`/api/bugs/${projectKey}`)
-            .then(r => r.json())
-            .then(d => {
-              if (d.ok) {
-                const bugs = d.bugs;
-                const open = bugs.filter(b => ['open', 'to do'].includes((b.status || '').toLowerCase())).length;
-                const critical = bugs.filter(b => ['critical', 'highest'].includes((b.priority || '').toLowerCase())).length;
-                setBugStats(prev => ({ ...prev, [projectKey]: { open, critical, loading: false } }));
-              }
-            })
-            .catch(() => {});
-        }
-        setTimeout(() => setSyncSuccess(''), 2000);
-      } else {
-        setSyncError('Sync failed. Try again or check your Jira connection.');
+        const r = await fetch('/api/projects');
+        const d = await r.json();
+        if (d.ok) setProjects(d.projects);
       }
     } catch {
-      setSyncError('Sync failed. Try again or check your Jira connection.');
+      // silent — user can retry via connect form
     } finally {
-      setSyncing(false);
+      setConnectingKey('');
     }
   }
 
   function extractProjectKey(input) {
-    const trimmed = input.trim();
+    const trimmed = input.trim().toUpperCase();
     if (trimmed.includes('/')) {
       const parts = trimmed.split('/').filter(Boolean);
-      return parts[parts.length - 1].toUpperCase();
+      return parts[parts.length - 1];
     }
-    return trimmed.toUpperCase();
+    return trimmed;
   }
 
   async function handleConnect() {
@@ -170,10 +152,9 @@ function DashboardPage() {
       if (data.ok) {
         setConnectStatus({ type: 'success', message: `Project ${key} synced successfully.` });
         setConnectInput('');
-        fetch('/api/projects')
-          .then(r => r.json())
-          .then(d => { if (d.ok) setProjects(d.projects); })
-          .catch(() => {});
+        const r = await fetch('/api/projects');
+        const d = await r.json();
+        if (d.ok) setProjects(d.projects);
       } else {
         setConnectStatus({ type: 'error', message: `${data.detail || 'Sync failed'}. Check project key and try again.` });
       }
@@ -186,137 +167,129 @@ function DashboardPage() {
 
   return (
     <div style={{ fontFamily: 'Inter, sans-serif', color: '#414944', background: '#f0f2f5', minHeight: '100vh' }}>
+
+      {/* Top NavBar */}
+      <header className={styles.topnav}>
+        <div className={styles.topnavLeft}>
+          <div className={styles.navLogo}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z"
+                stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span className={styles.navBrand}>JIRA Bug Summary</span>
+        </div>
+
+        <div className={styles.topnavRight}>
+          {/* Project search */}
+          <div className={styles.searchWrap} ref={searchRef}>
+            <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+              <path d="M21 21L16.65 16.65" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <input
+              className={styles.searchInput}
+              type="text"
+              placeholder="Search Jira projects…"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+              aria-label="Search Jira projects"
+              aria-autocomplete="list"
+              aria-expanded={showDropdown}
+            />
+            {searchLoading && (
+              <span className={styles.searchSpinner}><LoadingSpinner size={13} /></span>
+            )}
+            {showDropdown && (
+              <div className={styles.searchDropdown} role="listbox" aria-label="Project search results">
+                {searchResults.length === 0 ? (
+                  <div className={styles.searchEmpty}>No projects found</div>
+                ) : (
+                  searchResults.map(p => (
+                    <button
+                      key={p.key}
+                      className={styles.searchItem}
+                      role="option"
+                      onClick={() => handleSelectProject(p)}
+                      disabled={connectingKey === p.key}
+                    >
+                      <span className={styles.searchItemKey}>{p.key}</span>
+                      <span className={styles.searchItemName}>{p.name}</span>
+                      {connectingKey === p.key && <LoadingSpinner size={12} />}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          <button className={styles.navBtn} aria-label="Notifications">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <button className={styles.navBtn} aria-label="Help">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#434654" strokeWidth="2"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <button className={styles.navBtn} aria-label="History">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <polyline points="12 8 12 12 14 14" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3.05 11a9 9 0 1 0 .5-4M3 3v4h4" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <div className={styles.navDivider} />
+
+          {/* User menu */}
+          <div className={styles.userMenuWrap} ref={userMenuRef}>
+            <button
+              className={styles.navUser}
+              aria-label="User menu"
+              aria-haspopup="true"
+              aria-expanded={showUserMenu}
+              onClick={() => setShowUserMenu(v => !v)}
+            >
+              <div className={styles.navAvatar}>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="" width={24} height={24} style={{ borderRadius: '50%' }} />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="#065b41" strokeWidth="2"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </div>
+              <span className={styles.navUsername}>{user?.name || 'Account'}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+                <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showUserMenu && (
+              <div className={styles.userMenu} role="menu">
+                <button className={styles.logoutItem} role="menuitem" onClick={handleLogout}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <polyline points="16 17 21 12 16 7" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="21" y1="12" x2="9" y2="12" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
       <main className={styles.mainContent}>
 
-        {/* PageHeader */}
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Active Projects</h1>
-          <p className={styles.pageSubtitle}>
-            Currently monitoring {projects.length} project(s).
-          </p>
+          <p className={styles.pageSubtitle}>Currently monitoring {projects.length} project(s).</p>
         </div>
 
-        {/* SyncRow — keep existing Sync button block exactly as-is with all inline styles */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px', flexWrap: 'wrap' }}>
-          <button
-            onClick={handleSync}
-            disabled={syncing || !projectKey}
-            aria-busy={syncing}
-            aria-disabled={syncing || !projectKey}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: syncing || !projectKey ? '#1b4332' : '#1b4332',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '8px 16px',
-              minHeight: '48px',
-              fontSize: '14px',
-              fontWeight: 700,
-              cursor: syncing || !projectKey ? 'not-allowed' : 'pointer',
-              opacity: syncing || !projectKey ? 0.7 : 1,
-              transition: 'background 0.2s, transform 0.15s',
-              fontFamily: 'Inter, sans-serif',
-            }}
-            onMouseEnter={e => { if (!syncing && projectKey) e.currentTarget.style.transform = 'translateY(-1px)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
-          >
-            {syncing && <LoadingSpinner size={16} />}
-            {syncing ? 'Syncing…' : 'Sync Now'}
-          </button>
-        </div>
-
-        {/* Last synced timestamp */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginBottom: '24px' }}>
-          {/* Clock icon */}
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" stroke="#c3c6d6" strokeWidth="2"/>
-            <polyline points="12 6 12 12 16 14" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span style={{ fontSize: '12px', fontWeight: 400, color: '#6b7280' }}>
-            Last synced: {lastSynced ? new Date(lastSynced).toLocaleString() : 'Never'}
-          </span>
-        </div>
-
-        {/* noProjectWarning banner */}
-        {noProjectWarning && !projectKey && (
-          <div role="alert" style={{ fontSize: '13px', color: '#b45309', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px', padding: '8px 12px', marginBottom: '8px' }}>
-            No project selected. <a href="/no-project" style={{ color: '#b45309', fontWeight: 700 }}>Go to project selection</a>
-          </div>
-        )}
-
-        {/* Sync success inline message */}
-        {syncSuccess && (
-          <div
-            role="alert"
-            style={{
-              background: 'rgba(227,239,234,0.6)',
-              color: '#1b4332',
-              fontSize: '13px',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              marginBottom: '16px',
-              display: 'inline-block',
-            }}
-          >
-            {syncSuccess}
-          </div>
-        )}
-
-        {/* Sync error banner */}
-        {syncError && (
-          <div
-            role="alert"
-            style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#b91c1c',
-              fontSize: '12px',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              marginBottom: '16px',
-            }}
-          >
-            {syncError}
-          </div>
-        )}
-
-        {/* Existing user card — preserved unchanged */}
-        {user ? (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '12px',
-            background: '#f0f7f4', border: '1px solid #c1e0d5',
-            borderRadius: '10px', padding: '12px 18px', marginBottom: '24px',
-          }}>
-            {user.avatar && (
-              <img src={user.avatar} alt="" width={36} height={36}
-                style={{ borderRadius: '50%', flexShrink: 0 }} />
-            )}
-            <div>
-              <div style={{ fontWeight: 600, color: '#002d1c', fontSize: '15px' }}>{user.name}</div>
-              <div style={{ fontSize: '13px', color: '#5a7a6a' }}>{user.email}</div>
-            </div>
-            <div style={{
-              marginLeft: '8px', fontSize: '12px', color: '#1b7a4a',
-              background: '#d1fae5', borderRadius: '6px', padding: '3px 10px', fontWeight: 500,
-            }}>
-              Connected
-            </div>
-            <button onClick={handleLogout} style={{
-              marginLeft: '12px', fontSize: '13px', color: '#dc2626', background: 'none',
-              border: '1px solid #fca5a5', borderRadius: '6px', padding: '4px 12px',
-              cursor: 'pointer', fontWeight: 500,
-            }}>
-              Sign out
-            </button>
-          </div>
-        ) : (
-          <p style={{ marginBottom: '24px', color: '#8b9196' }}>Connecting to Jira…</p>
-        )}
-
-        {/* ProjectsGrid */}
         <div className={styles.projectsGrid}>
           {loadingProjects ? (
             <div className={styles.gridLoading}>
@@ -328,7 +301,7 @@ function DashboardPage() {
           ) : projects.length === 0 ? (
             <div className={styles.emptyState}>
               <p className={styles.emptyHeading}>No projects synced yet</p>
-              <p className={styles.emptyBody}>Use the form below to add your first Jira project.</p>
+              <p className={styles.emptyBody}>Search for a Jira project in the search bar above, or enter a project key in the form below.</p>
             </div>
           ) : (
             projects.map(project => {
@@ -339,9 +312,6 @@ function DashboardPage() {
                   key={project.key}
                   className={styles.projectCard}
                   aria-label={`${project.name} — ${stats.loading ? 'loading' : `${stats.open} open bugs, ${stats.critical} critical`}`}
-                  onClick={() => {
-                    try { sessionStorage.setItem('active_project_key', project.key); } catch {}
-                  }}
                 >
                   <div className={`${styles.cardBar} ${hasCritical ? styles.barCritical : styles.barNormal}`} />
                   <div className={styles.cardContent}>
@@ -352,9 +322,7 @@ function DashboardPage() {
                     <div className={styles.statBoxes}>
                       <div className={styles.statBox}>
                         <span className={styles.statLabel}>OPEN BUGS</span>
-                        <span className={styles.statVal}>
-                          {stats.loading ? '—' : stats.open}
-                        </span>
+                        <span className={styles.statVal}>{stats.loading ? '—' : stats.open}</span>
                       </div>
                       <div className={styles.statBox}>
                         <span className={styles.statLabel}>CRITICAL</span>
@@ -378,7 +346,6 @@ function DashboardPage() {
         <div className={styles.connectSection}>
           <div className={styles.connectLeft}>
             <div className={styles.connectIconWrap}>
-              {/* Package/box SVG from dashboard.html */}
               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -445,7 +412,6 @@ function DashboardPage() {
             <div className={styles.features}>
               <div className={styles.featureItem}>
                 <div className={styles.featureIcon}>
-                  {/* Auto-sync SVG from dashboard.html */}
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <polyline points="23 4 23 10 17 10" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <polyline points="1 20 1 14 7 14" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -459,7 +425,6 @@ function DashboardPage() {
               </div>
               <div className={styles.featureItem}>
                 <div className={styles.featureIcon}>
-                  {/* Shield SVG from dashboard.html */}
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
