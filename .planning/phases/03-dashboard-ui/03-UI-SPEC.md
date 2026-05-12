@@ -1,10 +1,11 @@
 ---
 phase: 3
 slug: dashboard-ui
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-12
+reviewed_at: 2026-05-12
 ---
 
 # Phase 3 — UI Design Contract
@@ -69,11 +70,11 @@ Inherited from Phase 2 UI-SPEC (approved). No new sizes or weights introduced.
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Display / Count | 32px | 700 (bold) | 1.25 | Summary card count numbers (total, open, critical) |
-| Heading | 20px | 600 (semibold) | 1.4 | Section headings: "Projects", "Summary", chart titles ("Bug Status", "Bug Priority") |
+| Heading | 20px | 700 (bold) | 1.4 | Section headings: "Projects", "Summary", chart titles ("Bug Status", "Bug Priority") |
 | Body | 14px | 400 (regular) | 1.5 | Project card name, summary card label text, chart legend text |
 | Subtext / Badge | 12px | 400 (regular) | 1.33 | Project key badge on project card, section sub-labels, count unit labels ("bugs") |
 
-Do NOT introduce new sizes. The `20px / 600` heading size exists as `.stepTitle` in `NoProjectPage.module.css` — reuse this pattern directly for Phase 3 section headings.
+Do NOT introduce new sizes. The `20px / 700` heading size exists as `.stepTitle` in `NoProjectPage.module.css` — reuse this pattern directly for Phase 3 section headings.
 
 ---
 
@@ -144,7 +145,7 @@ Displays all synced projects from `GET /api/projects` as a card grid. Clicking a
 **Layout:**
 - CSS grid: `grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))`, gap 16px
 - Placed at the top of the dashboard main content area, above summary cards
-- Section heading: "Projects" — 20px, weight 600, color `#065b41`, margin-bottom 12px
+- Section heading: "Projects" — 20px, weight 700, color `#065b41`, margin-bottom 8px
 
 **States:**
 
@@ -183,7 +184,7 @@ Three cards in a horizontal row: Total Bugs, Open Bugs, Critical Bugs.
 **Layout:**
 - `display: flex; gap: 16px;` on the container
 - Each card: `flex: 1; min-width: 0`
-- Section heading: "Summary" — 20px, weight 600, color `#065b41`, margin-bottom 12px
+- Section heading: "Summary" — 20px, weight 700, color `#065b41`, margin-bottom 8px
 - Placed below ProjectGrid, above charts
 
 **SummaryCard anatomy:**
@@ -216,7 +217,7 @@ Two side-by-side pie charts: status breakdown (left) and priority breakdown (rig
 **Layout:**
 - `display: flex; gap: 24px; flex-wrap: wrap` on the container
 - Each chart wrapper: `flex: 1; min-width: 280px`
-- Section heading per chart: "Bug Status" (left) and "Bug Priority" (right) — 20px, weight 600, color `#065b41`, margin-bottom 8px
+- Section heading per chart: "Bug Status" (left) and "Bug Priority" (right) — 20px, weight 700, color `#065b41`, margin-bottom 8px
 - Chart container padding: 16px, border `1px solid #c3c6d6`, border-radius 8px, background `#ffffff`
 
 **Recharts spec:**
