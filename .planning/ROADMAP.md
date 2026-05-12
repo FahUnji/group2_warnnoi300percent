@@ -49,7 +49,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Backend sync layer: bugs table migration, JiraSyncService (OAuth + Jira Cloud API), POST /api/sync/{project_key} + GET /api/projects endpoints, router registration
+- [x] 02-01-PLAN.md — Backend sync layer: bugs table migration, JiraSyncService (OAuth + Jira Cloud API), POST /api/sync/{project_key} + GET /api/projects endpoints, router registration
 - [ ] 02-02-PLAN.md — Frontend sync UI: NoProjectPage project picker (replaces URL input) with auto-sync, DashboardPage Sync Now button + LastSyncedTimestamp
 
 ### Phase 3: Dashboard UI
