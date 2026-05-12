@@ -127,14 +127,14 @@ Replaces the existing URL text input and Connect button. Renders the list of Jir
 | Populated | Scrollable list (max-height 320px, overflow-y auto) of project rows |
 | Empty (API returns 0 projects) | See Copywriting Contract — "No projects found" empty state |
 | Error (fetch failed) | See Copywriting Contract — error banner above the list area |
-| Project selected | Selected row gets `background: #e7f4f0`, left border `3px solid #1b4332`, `font-weight: 600` on project name |
-| Syncing (auto-sync in progress) | Full-width inline status bar replaces list: `<LoadingSpinner size={20} />` + "Syncing {PROJECT_NAME}…" text — 14px, color `#4b5563`, background `#f3f4f6`, border-radius 6px, padding 12px 16px |
+| Project selected | Selected row gets `background: #e7f4f0`, left border `3px solid #1b4332`, `font-weight: 700` on project name |
+| Syncing (auto-sync in progress) | Full-width inline status bar replaces list: `<LoadingSpinner size={20} />` + "Syncing {PROJECT_NAME}…" text — 14px, color `#4b5563`, background `#f3f4f6`, border-radius 6px, padding 8px 16px |
 | Sync error | Error banner: background `#fef2f2`, border `1px solid #fecaca`, text `#b91c1c`, 13px |
 | Sync success | Brief success flash (background `rgba(227,239,234,0.6)`, text `#1b4332`) then immediate redirect — no manual dismiss needed |
 
 **Project row anatomy:**
 - Height: 48px minimum
-- Padding: 12px 16px
+- Padding: 8px 16px
 - Layout: flex row, align-items center, gap 12px
 - Left: project avatar/icon placeholder — 32x32px, background `#e7f4f0`, border-radius 8px, flex-shrink 0
 - Center: project name (14px, 400 weight, `#002d1c`) + project key (12px, 400, `#434654`) stacked vertically
@@ -153,7 +153,7 @@ A compact button placed in the DashboardPage header area, to the right of the pa
 
 | State | Visual |
 |-------|--------|
-| Idle | Background `#1b4332`, text `#ffffff`, 14px, weight 500, border-radius 10px, padding 8px 16px, min-height 40px; label: "Sync Now" |
+| Idle | Background `#1b4332`, text `#ffffff`, 14px, weight 700, border-radius 10px, padding 8px 16px, min-height 40px; label: "Sync Now" |
 | Hover | Background `#1f5040`, translateY(-1px) |
 | Active | translateY(0) |
 | Loading | Disabled, opacity 0.7, cursor not-allowed; shows `<LoadingSpinner size={16} />` inline left of label text "Syncing…" |
