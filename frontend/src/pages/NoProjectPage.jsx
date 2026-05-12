@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './NoProjectPage.module.css';
 
 function NoProjectPage() {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('jira_user') || 'null'); } catch { return null; }
   });
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     if (user) return;
@@ -18,6 +20,23 @@ function NoProjectPage() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenu]);
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    sessionStorage.removeItem('jira_user');
+    window.location.href = '/';
+  }
 
   const [projectUrl, setProjectUrl] = useState('');
   const [status, setStatus] = useState(null);
@@ -64,22 +83,45 @@ function NoProjectPage() {
             </svg>
           </button>
           <div className={styles.navDivider}></div>
-          <button className={styles.navUser} aria-label="User menu">
-            <div className={styles.navAvatar}>
-              {user?.avatar ? (
-                <img src={user.avatar} alt="" width={20} height={20} style={{ borderRadius: '50%' }} />
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="8" r="4" stroke="#065b41" strokeWidth="2"/>
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              )}
-            </div>
-            <span className={styles.navUsername}>{user?.name || 'Account'}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
-              <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <div className={styles.navUserWrap} ref={menuRef}>
+            <button
+              className={styles.navUser}
+              aria-label="User menu"
+              aria-expanded={showMenu}
+              onClick={() => setShowMenu(v => !v)}
+            >
+              <div className={styles.navAvatar}>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="" width={20} height={20} style={{ borderRadius: '50%' }} />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="#065b41" strokeWidth="2"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </div>
+              <span className={styles.navUsername}>{user?.name || 'Account'}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
+                <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showMenu && (
+              <div className={styles.navDropdown}>
+                {user && (
+                  <div className={styles.navDropdownUser}>
+                    <span className={styles.navDropdownName}>{user.name}</span>
+                    <span className={styles.navDropdownEmail}>{user.email}</span>
+                  </div>
+                )}
+                <button className={styles.navDropdownItem} onClick={handleLogout}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

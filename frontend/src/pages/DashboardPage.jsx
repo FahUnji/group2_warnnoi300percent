@@ -18,6 +18,12 @@ function DashboardPage() {
       .catch(() => {});
   }, []);
 
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    sessionStorage.removeItem('jira_user');
+    window.location.href = '/';
+  }
+
   return (
     <div style={{ padding: '48px', fontFamily: 'Inter, sans-serif', color: '#414944' }}>
       <h1 style={{ color: '#002d1c', marginBottom: '16px' }}>Dashboard</h1>
@@ -41,6 +47,13 @@ function DashboardPage() {
           }}>
             Connected
           </div>
+          <button onClick={handleLogout} style={{
+            marginLeft: '12px', fontSize: '13px', color: '#dc2626', background: 'none',
+            border: '1px solid #fca5a5', borderRadius: '6px', padding: '4px 12px',
+            cursor: 'pointer', fontWeight: 500,
+          }}>
+            Sign out
+          </button>
         </div>
       ) : (
         <p style={{ marginBottom: '24px', color: '#8b9196' }}>Connecting to Jira…</p>

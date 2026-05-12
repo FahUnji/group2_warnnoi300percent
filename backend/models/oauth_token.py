@@ -31,3 +31,12 @@ def load_oauth_token() -> dict | None:
         return dict(row) if row else None
     finally:
         conn.close()
+
+
+def delete_oauth_token() -> None:
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM oauth_tokens")
+        conn.commit()
+    finally:
+        conn.close()

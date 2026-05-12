@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-11T11:52:40Z",
+  "timestamp": "2026-05-12T02:53:50Z",
   "phase": "01",
   "phase_name": "jira-connection",
   "phase_dir": ".planning/phases/01-jira-connection",
@@ -18,56 +18,46 @@
     {"id": "sqlite-docker", "name": "SQLite migration + Docker Compose setup", "status": "done", "commit": "c31427c"},
     {"id": "ui-redesign", "name": "ConnectionPage redesigned to match Figma — single button hero layout", "status": "done", "commit": "45aacf0"},
     {"id": "footer-fix", "name": "Footer fixed to bottom of screen (flex: 1 on heroGrid)", "status": "done", "commit": "0bc36e8"},
-    {"id": "modal-auth", "name": "Button opens modal with Basic Auth form — POST /api/jira/connect", "status": "done", "commit": "0bc36e8"},
-    {"id": "user-info", "name": "Backend returns user info from /rest/api/3/myself; dashboard shows name/email/avatar", "status": "done", "commit": "0bc36e8"},
-    {"id": "no-project-routing", "name": "Post-login routing: has_projects → /dashboard else /no-project", "status": "done", "commit": null},
-    {"id": "no-project-page", "name": "NoProjectPage.jsx + CSS matching no-project.html Figma design", "status": "done", "commit": null},
-    {"id": "jira-projects-table", "name": "jira_projects table in SQLite + count_projects() helper", "status": "done", "commit": null},
-    {"id": "backend-restart", "name": "docker compose restart backend — new routes + schema loaded", "status": "done", "commit": null}
+    {"id": "oauth-3lo", "name": "Replace Basic Auth modal with Atlassian OAuth 2.0 (3LO)", "status": "done", "commit": null},
+    {"id": "auth-me-endpoint", "name": "/api/auth/me — decrypt token, call Atlassian, return user info + has_projects", "status": "done", "commit": null},
+    {"id": "no-project-page", "name": "NoProjectPage.jsx + CSS matching Figma design", "status": "done", "commit": null},
+    {"id": "jira-projects-table", "name": "jira_projects table + count_projects() helper", "status": "done", "commit": null},
+    {"id": "user-info-nav", "name": "NoProjectPage + DashboardPage display user avatar + name from /api/auth/me", "status": "done", "commit": null},
+    {"id": "logout", "name": "POST /api/auth/logout — delete DB token + sessionStorage clear + redirect to /", "status": "done", "commit": null},
+    {"id": "session-persistence", "name": "ConnectionPage auth check on mount — auto-redirect if token valid + spinner", "status": "done", "commit": null},
+    {"id": "has-projects-field", "name": "has_projects field added to /api/auth/me response for routing", "status": "done", "commit": null}
   ],
   "remaining_tasks": [
-    {"id": "test-e2e", "name": "Test full flow: login modal → /no-project renders correctly", "status": "not_started"},
-    {"id": "rescope-uat", "name": "Re-scope UAT — 3 new tests: render, modal opens, valid creds → no-project page", "status": "not_started"},
+    {"id": "rescope-uat", "name": "Re-scope UAT — 3 new OAuth tests replacing old Basic Auth modal tests", "status": "not_started"},
+    {"id": "run-uat", "name": "Run re-scoped UAT and confirm pass", "status": "not_started"},
     {"id": "phase-approval", "name": "Mark Phase 1 complete in ROADMAP.md + STATE.md", "status": "not_started"},
     {"id": "advance-phase2", "name": "/gsd-discuss-phase 2 — Data Sync phase", "status": "not_started"}
   ],
   "blockers": [
     {
-      "description": "Real Jira credentials needed to test end-to-end modal → /no-project flow",
-      "type": "human_action",
-      "workaround": "Generate API token at id.atlassian.com/manage/api-tokens"
-    },
-    {
-      "description": "Original UAT tests (01-HUMAN-UAT.md) test the removed 3-field inline form",
+      "description": "UAT tests (01-HUMAN-UAT.md) test removed Basic Auth modal — must be re-scoped before running",
       "type": "technical",
-      "workaround": "Re-scope to: (1) page renders with button, (2) button opens modal, (3) valid creds → /no-project shows 'Connect your first JIRA Project'"
+      "workaround": "Re-scope to 3 tests: (1) ConnectionPage renders 'Continue with Atlassian' button, (2) button redirects to Atlassian OAuth URL, (3) after OAuth → /no-project shows user name + avatar in navbar"
     }
   ],
-  "human_actions_pending": [
-    {
-      "action": "Get Jira API token from id.atlassian.com/manage/api-tokens",
-      "context": "Needed to test modal → connect → /no-project routing end-to-end",
-      "blocking": true
-    }
-  ],
+  "human_actions_pending": [],
   "decisions": [
-    {"decision": "Basic Auth modal over OAuth 3LO", "rationale": "Simpler, no app registration, same as MCP Jira approach", "phase": "01"},
-    {"decision": "OAuth router (auth.py) left in codebase unused", "rationale": "Built first then abandoned — can remove in cleanup", "phase": "01"},
-    {"decision": "User info stored in sessionStorage not localStorage", "rationale": "Cleared on tab close — better security default", "phase": "01"},
-    {"decision": "Dashboard fallback to GET /api/jira/me", "rationale": "sessionStorage lost on tab reopen; saved credentials in SQLite remain", "phase": "01"},
-    {"decision": "FastAPI + SQLite (not MySQL)", "rationale": "Simpler setup — no DB server needed", "phase": "01"},
-    {"decision": "Docker Compose for dev environment", "rationale": "One-command startup", "phase": "01"},
-    {"decision": "Post-login routing via has_projects flag", "rationale": "Backend checks jira_projects table count, returns flag in connect response — clean separation", "phase": "01"},
-    {"decision": "NoProjectPage matches no-project.html Figma design exactly", "rationale": "Pixel-accurate from UI/ design files — no deviation", "phase": "01"}
+    {"decision": "Atlassian OAuth 2.0 (3LO) over Basic Auth modal", "rationale": "Required for future API access + better UX; prompt=consent enables account switching", "phase": "01"},
+    {"decision": "Token encrypted with Fernet at rest in SQLite oauth_tokens table", "rationale": "Security requirement from CR", "phase": "01"},
+    {"decision": "User info from https://api.atlassian.com/me (read:me scope)", "rationale": "Standard Atlassian identity endpoint", "phase": "01"},
+    {"decision": "sessionStorage for user display cache, SQLite for auth persistence", "rationale": "sessionStorage cleared on tab close; SQLite token survives browser close for session persistence", "phase": "01"},
+    {"decision": "Logout deletes DB token (not just sessionStorage)", "rationale": "Full logout enables clean account switching on next login", "phase": "01"},
+    {"decision": "prompt=consent in OAuth params", "rationale": "Atlassian shows account picker on every new auth — enables multi-account switching after logout", "phase": "01"},
+    {"decision": "has_projects in /api/auth/me response", "rationale": "ConnectionPage needs routing destination without extra API call", "phase": "01"}
   ],
   "uncommitted_files": [
+    "backend/models/oauth_token.py",
+    "backend/routers/auth.py",
+    "frontend/src/pages/ConnectionPage.jsx",
+    "frontend/src/pages/DashboardPage.jsx",
     "frontend/src/pages/NoProjectPage.jsx",
-    "frontend/src/pages/NoProjectPage.module.css",
-    "backend/database.py",
-    "backend/services/jira_service.py",
-    "frontend/src/App.jsx",
-    "frontend/src/pages/ConnectionPage.jsx"
+    "frontend/src/pages/NoProjectPage.module.css"
   ],
-  "next_action": "Open http://localhost:3000 → Ctrl+Shift+R → click 'Continue with Atlassian' → enter real Jira credentials → confirm redirect lands on /no-project with 'Connect your first JIRA Project' UI",
-  "context_notes": "This session added post-login routing: after Jira auth, backend checks jira_projects table (new, always empty for now) and returns has_projects=false. Frontend routes to /no-project (new page matching Figma no-project.html design) or /dashboard. Backend restarted successfully. Phase 1 is feature-complete — only human testing + UAT re-scope + phase close remaining."
+  "next_action": "Re-scope 01-HUMAN-UAT.md with 3 new OAuth tests, run them, then mark Phase 1 complete in ROADMAP.md + STATE.md",
+  "context_notes": "Two sessions of auth work. Session N: OAuth 2.0 (3LO) replacing Basic Auth modal, /api/auth/me, user info in nav. Session N+1: logout (POST /api/auth/logout deletes DB token), session persistence (ConnectionPage auto-redirects on mount if token valid, spinner prevents login page flash). All features confirmed working end-to-end with real Atlassian account. Only UAT re-scope + phase close remain before Phase 2."
 }

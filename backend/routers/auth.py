@@ -8,7 +8,7 @@ from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
 
 from backend.database import count_projects
-from backend.models.oauth_token import upsert_oauth_token
+from backend.models.oauth_token import upsert_oauth_token, delete_oauth_token
 from backend.services.jira_service import _encrypt_token, _decrypt_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -155,9 +155,16 @@ async def auth_me():
         return {"ok": False, "error": "fetch_failed"}
     return {
         "ok": True,
+        "has_projects": count_projects() > 0,
         "user": {
             "name": data.get("name") or data.get("displayName", ""),
             "email": data.get("email") or data.get("emailAddress", ""),
             "avatar": data.get("picture") or (data.get("avatarUrls") or {}).get("48x48", ""),
         },
     }
+
+
+@router.post("/logout")
+async def auth_logout():
+    delete_oauth_token()
+    return {"ok": True}

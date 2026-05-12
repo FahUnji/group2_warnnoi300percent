@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './ConnectionPage.module.css';
 
 const OAUTH_URL = 'http://localhost:8000/api/auth/atlassian';
@@ -13,6 +14,8 @@ const ERROR_MESSAGES = {
 
 function ConnectionPage() {
   const [error, setError] = useState('');
+  const [checking, setChecking] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -20,8 +23,30 @@ function ConnectionPage() {
     if (err) {
       setError(ERROR_MESSAGES[err] || `Authentication error: ${err}`);
       window.history.replaceState({}, '', '/');
+      setChecking(false);
+      return;
     }
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          if (data.user) sessionStorage.setItem('jira_user', JSON.stringify(data.user));
+          navigate(data.has_projects ? '/dashboard' : '/no-project', { replace: true });
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => setChecking(false));
   }, []);
+
+  if (checking) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f8f9ff' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #c3c6d6', borderTopColor: '#065b41', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.pageWrapper}>
