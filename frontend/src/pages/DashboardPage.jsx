@@ -13,9 +13,12 @@ function DashboardPage() {
 
   const [bugStats, setBugStats] = useState({});
 
-  const [connectInput, setConnectInput] = useState('');
-  const [connecting, setConnecting] = useState(false);
-  const [connectStatus, setConnectStatus] = useState({ type: '', message: '' });
+  const [addQuery, setAddQuery] = useState('');
+  const [addResults, setAddResults] = useState([]);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addSyncing, setAddSyncing] = useState(false);
+  const [addSelectedKey, setAddSelectedKey] = useState('');
+  const [addError, setAddError] = useState('');
 
   // Navbar search
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,6 +100,23 @@ function DashboardPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Debounced search for Add Project section
+  useEffect(() => {
+    if (!addQuery.trim()) {
+      setAddResults([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setAddLoading(true);
+      fetch(`/api/projects/search?q=${encodeURIComponent(addQuery)}`)
+        .then(r => r.json())
+        .then(data => { if (data.ok) setAddResults(data.projects); })
+        .catch(() => {})
+        .finally(() => setAddLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [addQuery]);
+
   // Close dropdown / user menu on outside click
   useEffect(() => {
     function onClickOutside(e) {
@@ -132,36 +152,29 @@ function DashboardPage() {
     }
   }
 
-  function extractProjectKey(input) {
-    const trimmed = input.trim().toUpperCase();
-    if (trimmed.includes('/')) {
-      const parts = trimmed.split('/').filter(Boolean);
-      return parts[parts.length - 1];
-    }
-    return trimmed;
-  }
-
-  async function handleConnect() {
-    if (!connectInput.trim() || connecting) return;
-    const key = extractProjectKey(connectInput);
-    setConnecting(true);
-    setConnectStatus({ type: 'loading', message: 'Connecting…' });
+  async function handleAddProject(project) {
+    if (addSyncing) return;
+    setAddSelectedKey(project.key);
+    setAddSyncing(true);
+    setAddError('');
     try {
-      const resp = await fetch(`/api/sync/${key}`, { method: 'POST' });
+      const resp = await fetch(`/api/sync/${project.key}`, { method: 'POST' });
       const data = await resp.json();
       if (data.ok) {
-        setConnectStatus({ type: 'success', message: `Project ${key} synced successfully.` });
-        setConnectInput('');
+        setAddQuery('');
+        setAddResults([]);
         const r = await fetch('/api/projects');
         const d = await r.json();
         if (d.ok) setProjects(d.projects);
       } else {
-        setConnectStatus({ type: 'error', message: `${data.detail || 'Sync failed'}. Check project key and try again.` });
+        setAddError('Sync failed. Select the project again to retry.');
+        setAddSelectedKey('');
       }
     } catch {
-      setConnectStatus({ type: 'error', message: 'Connection failed. Check project key and try again.' });
+      setAddError('Sync failed. Select the project again to retry.');
+      setAddSelectedKey('');
     } finally {
-      setConnecting(false);
+      setAddSyncing(false);
     }
   }
 
@@ -301,7 +314,7 @@ function DashboardPage() {
           ) : projects.length === 0 ? (
             <div className={styles.emptyState}>
               <p className={styles.emptyHeading}>No projects synced yet</p>
-              <p className={styles.emptyBody}>Search for a Jira project in the search bar above, or enter a project key in the form below.</p>
+              <p className={styles.emptyBody}>Search for a Jira project using the search bar above or the Add New Project section below.</p>
             </div>
           ) : (
             projects.map(project => {
@@ -359,82 +372,70 @@ function DashboardPage() {
           <div className={styles.connectRight}>
             <h2 className={styles.addTitle}>Add New Project</h2>
             <p className={styles.addDesc}>
-              Provide your Jira project key (e.g. SAM) to begin syncing.
-              JIRA Bug Summary will pull all bugs from the project.
+              Search and select a Jira project to start syncing bugs.
             </p>
 
-            <label className={styles.inputLabel} htmlFor="jiraInput">Jira Project Link</label>
-            <div className={styles.inputRow}>
-              <input
-                id="jiraInput"
-                className={styles.jiraInput}
-                type="text"
-                placeholder="https://your-company.atlassian.net/projects/ABC"
-                value={connectInput}
-                onChange={e => setConnectInput(e.target.value)}
-                disabled={connecting}
-                aria-describedby="jiraInputHint jiraConnectStatus"
-              />
-              <button
-                className={styles.btnConnect}
-                onClick={handleConnect}
-                disabled={connecting || !connectInput.trim()}
-                aria-busy={connecting}
-              >
-                {connecting ? (
-                  <><LoadingSpinner size={14} /> Connecting…</>
+            {addError && <div className={styles.errorBanner} role="alert">{addError}</div>}
+
+            {addSyncing ? (
+              <div className={styles.addSyncBar}>
+                <LoadingSpinner size={18} />
+                <span>Syncing {addSelectedKey}…</span>
+              </div>
+            ) : (
+              <>
+                <div className={styles.addSearchWrap}>
+                  <svg className={styles.addSearchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+                    <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <input
+                    className={styles.addSearchInput}
+                    type="search"
+                    placeholder="Search projects…"
+                    value={addQuery}
+                    onChange={e => setAddQuery(e.target.value)}
+                    aria-label="Search projects to add"
+                    autoComplete="off"
+                  />
+                </div>
+
+                {addLoading ? (
+                  <div className={styles.addSyncBar}>
+                    <LoadingSpinner size={18} />
+                    <span style={{ color: '#6b7280' }}>Searching…</span>
+                  </div>
+                ) : !addQuery.trim() ? (
+                  <p className={styles.addEmptyText}>Type to search your Jira projects</p>
+                ) : addResults.length === 0 ? (
+                  <p className={styles.addEmptyText}>No projects match &ldquo;{addQuery}&rdquo;</p>
                 ) : (
-                  <>Connect Project
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z"
-                        stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="white"/>
-                    </svg>
-                  </>
+                  <ul className={styles.addProjectList} role="list" aria-label="Jira projects">
+                    {addResults.map((project, idx) => (
+                      <li key={project.key} role="listitem">
+                        <button
+                          className={`${styles.addProjectRow}${addSelectedKey === project.key ? ' ' + styles.addProjectRowSelected : ''}`}
+                          onClick={() => handleAddProject(project)}
+                          aria-pressed={addSelectedKey === project.key}
+                          style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #e5e7eb' : 'none' }}
+                        >
+                          <div className={styles.addProjectAvatar} aria-hidden="true">
+                            {project.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className={styles.addProjectInfo}>
+                            <span className={styles.addProjectName}>{project.name}</span>
+                            <span className={styles.addProjectKey}>{project.key}</span>
+                          </div>
+                          <svg className={styles.addProjectChevron} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
-              </button>
-            </div>
-            <p id="jiraInputHint" className={styles.inputHint}>
-              Requires Jira project key (e.g. SAM, SCIL)
-            </p>
-
-            {connectStatus.message && (
-              <p
-                id="jiraConnectStatus"
-                className={`${styles.connectStatus} ${styles[connectStatus.type]}`}
-                role={connectStatus.type === 'error' ? 'alert' : 'status'}
-              >
-                {connectStatus.message}
-              </p>
+              </>
             )}
-
-            <div className={styles.featuresDivider} />
-
-            <div className={styles.features}>
-              <div className={styles.featureItem}>
-                <div className={styles.featureIcon}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <polyline points="23 4 23 10 17 10" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <polyline points="1 20 1 14 7 14" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className={styles.featureText}>
-                  <span className={styles.featureTitle}>Auto-Syncing</span>
-                  <p className={styles.featureDesc}>Real-time updates between tools.</p>
-                </div>
-              </div>
-              <div className={styles.featureItem}>
-                <div className={styles.featureIcon}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className={styles.featureText}>
-                  <span className={styles.featureTitle}>Enterprise Encryption</span>
-                  <p className={styles.featureDesc}>256-bit AES for all data in transit.</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
