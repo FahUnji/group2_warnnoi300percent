@@ -61,7 +61,7 @@ function DashboardPage() {
   useEffect(() => {
     if (!projects.length) return;
     const initial = {};
-    projects.forEach(p => { initial[p.key] = { open: 0, critical: 0, loading: true }; });
+    projects.forEach(p => { initial[p.key] = { total: 0, open: 0, critical: 0, loading: true }; });
     setBugStats(initial);
     projects.forEach(project => {
       fetch(`/api/bugs/${project.key}`)
@@ -69,18 +69,19 @@ function DashboardPage() {
         .then(data => {
           if (data.ok) {
             const bugs = data.bugs;
+            const total = bugs.length;
             const isNotDone = b => (b.status || '').toLowerCase() !== 'done';
             const open = bugs.filter(isNotDone).length;
             const critical = bugs.filter(b =>
               isNotDone(b) &&
               ['critical', 'highest'].includes((b.priority || '').toLowerCase())
             ).length;
-            setBugStats(prev => ({ ...prev, [project.key]: { open, critical, loading: false } }));
+            setBugStats(prev => ({ ...prev, [project.key]: { total, open, critical, loading: false } }));
           } else {
-            setBugStats(prev => ({ ...prev, [project.key]: { open: 0, critical: 0, loading: false } }));
+            setBugStats(prev => ({ ...prev, [project.key]: { total: 0, open: 0, critical: 0, loading: false } }));
           }
         })
-        .catch(() => setBugStats(prev => ({ ...prev, [project.key]: { open: 0, critical: 0, loading: false } })));
+        .catch(() => setBugStats(prev => ({ ...prev, [project.key]: { total: 0, open: 0, critical: 0, loading: false } })));
     });
   }, [projects]);
 
@@ -347,7 +348,7 @@ function DashboardPage() {
             </div>
           ) : (
             projects.map(project => {
-              const stats = bugStats[project.key] || { open: 0, critical: 0, loading: true };
+              const stats = bugStats[project.key] || { total: 0, open: 0, critical: 0, loading: true };
               const hasCritical = !stats.loading && stats.critical > 0;
               const menuOpen = openCardMenu === project.key;
               return (
@@ -361,6 +362,10 @@ function DashboardPage() {
                       <div className={styles.cardHeader}>
                         <span className={styles.projectName}>{project.name}</span>
                         <span className={styles.projectCode}>{project.key}</span>
+                      </div>
+                      <div className={styles.statBox}>
+                        <span className={styles.statLabel}>TOTAL BUGS</span>
+                        <span className={styles.statVal}>{stats.loading ? '—' : stats.total}</span>
                       </div>
                       <div className={styles.statBoxes}>
                         <div className={styles.statBox}>
