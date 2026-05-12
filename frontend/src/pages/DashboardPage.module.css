@@ -1,0 +1,437 @@
+/* DashboardPage.module.css
+   CSS Modules for DashboardPage — Phase 3 Dashboard UI
+   camelCase equivalents of UI/css/dashboard.css kebab-case class names
+   No global resets — those live in index.css
+*/
+
+/* ── Page Layout ── */
+
+.mainContent {
+  padding: 32px 32px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pageHeader {
+  margin-bottom: 24px;
+}
+
+.pageTitle {
+  font-size: 26px;
+  font-weight: 700;
+  color: #065b41;
+  line-height: 1.2;
+}
+
+.pageSubtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* ── Projects Grid ── */
+
+.projectsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+/* ── Grid State Classes ── */
+
+.gridLoading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 14px;
+  grid-column: 1 / -1;
+}
+
+.errorBanner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #b91c1c;
+  grid-column: 1 / -1;
+}
+
+.emptyState {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 32px;
+}
+
+.emptyHeading {
+  font-size: 16px;
+  font-weight: 700;
+  color: #065b41;
+  margin-bottom: 4px;
+}
+
+.emptyBody {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ── Project Card ── */
+
+.projectCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  min-height: 160px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  /* Reset button defaults */
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+  width: 100%;
+}
+
+.projectCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 20px 25px -5px rgba(27,67,50,0.12), 0px 8px 10px -6px rgba(27,67,50,0.1);
+}
+
+.projectCard:active {
+  transform: translateY(0);
+}
+
+.projectCard:focus-visible {
+  outline: 2px solid #1b4332;
+  outline-offset: 2px;
+}
+
+.cardBar {
+  width: 5px;
+  flex-shrink: 0;
+}
+
+.barNormal {
+  background: #065b41;
+}
+
+.barCritical {
+  background: #dc2626;
+}
+
+.cardContent {
+  flex: 1;
+  padding: 20px 20px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.projectName {
+  font-size: 16px;
+  font-weight: 700;
+  color: #065b41;
+  line-height: 1.3;
+}
+
+.projectCode {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.statBoxes {
+  display: flex;
+  gap: 10px;
+}
+
+.statBox {
+  flex: 1;
+  background: #e7f4f0;
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.statVal {
+  font-size: 26px;
+  font-weight: 700;
+  color: #065b41;
+  line-height: 1.1;
+}
+
+.statZero {
+  color: #111827;
+}
+
+.statCritical {
+  color: #dc2626;
+}
+
+/* ── Connect Section ── */
+
+.connectSection {
+  display: flex;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 40px;
+  border-top: 4px solid #065b41;
+}
+
+.connectLeft {
+  width: 320px;
+  flex-shrink: 0;
+  background: #1b4332;
+  padding: 48px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.connectIconWrap {
+  width: 72px;
+  height: 72px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.connectTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.connectSubtitle {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.6;
+}
+
+.connectRight {
+  flex: 1;
+  background: #ffffff;
+  padding: 40px 40px 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.addTitle {
+  font-size: 26px;
+  font-weight: 700;
+  color: #065b41;
+  margin-bottom: 4px;
+}
+
+.addDesc {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 4px;
+}
+
+.inputLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.inputRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.jiraInput {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.jiraInput::placeholder {
+  color: #9ca3af;
+}
+
+.jiraInput:focus {
+  border-color: #065b41;
+  box-shadow: 0 0 0 3px rgba(27,67,50,0.1);
+}
+
+.jiraInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnConnect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #1b4332;
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0px 20px 25px -5px rgba(27,67,50,0.1), 0px 8px 10px -6px rgba(27,67,50,0.1);
+  transition: background 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.btnConnect:hover {
+  background: #1f5040;
+  transform: translateY(-1px);
+}
+
+.btnConnect:active {
+  transform: translateY(0);
+}
+
+.btnConnect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnConnect:focus-visible {
+  outline: 2px solid #1b4332;
+  outline-offset: 2px;
+}
+
+.inputHint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: -4px;
+}
+
+.connectStatus {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 2px;
+}
+
+.loading {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.success {
+  background: rgba(227,239,234,0.6);
+  color: #1b4332;
+  font-weight: 500;
+}
+
+.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.featuresDivider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+.features {
+  display: flex;
+  gap: 40px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.featureIcon {
+  width: 32px;
+  height: 32px;
+  background: #e7f4f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.featureText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.featureTitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #065b41;
+  line-height: 1.4;
+}
+
+.featureDesc {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 900px) {
+  .projectsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .connectLeft {
+    display: none;
+  }
+
+  .mainContent {
+    padding: 24px 16px 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .projectsGrid {
+    grid-template-columns: 1fr;
+  }
+}
