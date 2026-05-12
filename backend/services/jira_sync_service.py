@@ -48,7 +48,7 @@ def _fetch_bugs(project_key: str) -> dict:
         return {"ok": False, "error": exc.detail["error"], "message": exc.detail["message"]}
 
     url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/search/jql"
-    jql = f"project = {project_key} AND issuetype = Bug ORDER BY created DESC"
+    jql = f"project = {project_key} AND (issuetype = Bug OR (issueType in subTaskIssueTypes() AND parent in (project = {project_key} AND issuetype = Bug))) ORDER BY created DESC"
     payload = {
         "jql": jql,
         "maxResults": 1000,

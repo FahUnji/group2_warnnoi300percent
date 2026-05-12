@@ -16,6 +16,7 @@ function NoProjectPage() {
   const [selectedKey, setSelectedKey] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -216,43 +217,71 @@ function NoProjectPage() {
                 </p>
               </div>
             ) : (
-              <ul
-                className={styles.projectList}
-                role="list"
-                aria-label="Jira projects"
-              >
-                {projects.map((project, idx) => (
-                  <li key={project.key} role="listitem">
-                    <button
-                      className={`${styles.projectRow}${selectedKey === project.key ? ' ' + styles.projectRowSelected : ''}`}
-                      onClick={() => handleProjectSelect(project)}
-                      aria-pressed={selectedKey === project.key}
-                      style={{ borderBottom: idx < projects.length - 1 ? '1px solid #c3c6d6' : 'none' }}
-                    >
-                      <div className={styles.projectAvatar} aria-hidden="true">
-                        {project.name.charAt(0).toUpperCase()}
+              <>
+                <div className={styles.searchWrap}>
+                  <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+                    <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <input
+                    className={styles.searchInput}
+                    type="search"
+                    placeholder="Search projects…"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    aria-label="Search projects"
+                    autoComplete="off"
+                  />
+                </div>
+                {searchQuery && (() => {
+                  const q = searchQuery.toLowerCase();
+                  const filtered = projects.filter(p =>
+                    p.name.toLowerCase().includes(q) || p.key.toLowerCase().includes(q)
+                  );
+                  if (filtered.length === 0) {
+                    return (
+                      <div style={{ padding: '20px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '14px', color: '#6b7280' }}>No projects match "{searchQuery}"</p>
                       </div>
-                      <div className={styles.projectInfo}>
-                        <span className={styles.projectName}>{project.name}</span>
-                        <span className={styles.projectKeyBadge}>{project.key}</span>
-                      </div>
-                      {selectedKey !== project.key && (
-                        <svg
-                          className={styles.projectChevron}
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                    );
+                  }
+                  return (
+                    <ul className={styles.projectList} role="list" aria-label="Jira projects">
+                      {filtered.map((project, idx) => (
+                        <li key={project.key} role="listitem">
+                          <button
+                            className={`${styles.projectRow}${selectedKey === project.key ? ' ' + styles.projectRowSelected : ''}`}
+                            onClick={() => handleProjectSelect(project)}
+                            aria-pressed={selectedKey === project.key}
+                            style={{ borderBottom: idx < filtered.length - 1 ? '1px solid #c3c6d6' : 'none' }}
+                          >
+                            <div className={styles.projectAvatar} aria-hidden="true">
+                              {project.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className={styles.projectInfo}>
+                              <span className={styles.projectName}>{project.name}</span>
+                              <span className={styles.projectKeyBadge}>{project.key}</span>
+                            </div>
+                            {selectedKey !== project.key && (
+                              <svg
+                                className={styles.projectChevron}
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                })()}
+              </>
             )}
           </div>
 

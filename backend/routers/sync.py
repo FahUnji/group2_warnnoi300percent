@@ -15,6 +15,7 @@ concatenated into a URL path in an unsafe way.
 """
 from fastapi import APIRouter
 
+from backend.database import get_db
 from backend.services.jira_sync_service import JiraSyncService
 
 router = APIRouter(prefix="/api", tags=["sync"])
@@ -30,6 +31,37 @@ async def trigger_sync(project_key: str):
     """
     service = JiraSyncService()
     return await service.sync_bugs(project_key)
+
+
+@router.get("/bugs/{project_key}")
+async def get_bugs(project_key: str):
+    """
+    Return all bugs stored in SQLite for project_key.
+
+    Success: HTTP 200, {"ok": true, "bugs": [...], "total": N}
+    """
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT issue_key, summary, status, priority, sprint_name, assignee, synced_at"
+            " FROM bugs WHERE project_key = ? ORDER BY issue_key ASC",
+            (project_key,),
+        ).fetchall()
+    finally:
+        conn.close()
+    bugs = [
+        {
+            "issue_key": r["issue_key"],
+            "summary": r["summary"],
+            "status": r["status"],
+            "priority": r["priority"],
+            "sprint_name": r["sprint_name"],
+            "assignee": r["assignee"],
+            "synced_at": r["synced_at"],
+        }
+        for r in rows
+    ]
+    return {"ok": True, "bugs": bugs, "total": len(bugs)}
 
 
 @router.get("/projects")

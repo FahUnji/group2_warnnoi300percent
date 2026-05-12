@@ -14,6 +14,8 @@ function DashboardPage() {
     // Resolve active project from sessionStorage (set during NoProjectPage auto-sync)
     try { return sessionStorage.getItem('active_project_key') || ''; } catch { return ''; }
   });
+  const [bugs, setBugs] = useState([]);
+  const [loadingBugs, setLoadingBugs] = useState(false);
 
   // Show inline fallback when arriving at /dashboard without a project selected
   const [noProjectWarning, setNoProjectWarning] = useState(false);
@@ -36,6 +38,19 @@ function DashboardPage() {
       .catch(() => {});
   }, []);
 
+  async function fetchBugs(key) {
+    if (!key) return;
+    setLoadingBugs(true);
+    try {
+      const resp = await fetch(`/api/bugs/${key}`);
+      const data = await resp.json();
+      if (data.ok) setBugs(data.bugs);
+    } catch {}
+    finally { setLoadingBugs(false); }
+  }
+
+  useEffect(() => { fetchBugs(projectKey); }, [projectKey]);
+
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     sessionStorage.removeItem('jira_user');
@@ -53,7 +68,7 @@ function DashboardPage() {
       if (data.ok) {
         setLastSynced(data.synced_at);
         setSyncSuccess('Sync complete');
-        // Dismiss success message after 2 seconds
+        fetchBugs(projectKey);
         setTimeout(() => setSyncSuccess(''), 2000);
       } else {
         setSyncError('Sync failed. Try again or check your Jira connection.');
@@ -62,6 +77,29 @@ function DashboardPage() {
       setSyncError('Sync failed. Try again or check your Jira connection.');
     } finally {
       setSyncing(false);
+    }
+  }
+
+  const thStyle = { padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: '#434654', fontSize: '11px', letterSpacing: '0.5px', textTransform: 'uppercase', whiteSpace: 'nowrap' };
+  const tdStyle = { padding: '10px 12px', color: '#002d1c', verticalAlign: 'middle' };
+  const badgeStyle = { display: 'inline-block', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' };
+
+  function statusColor(status) {
+    switch ((status || '').toLowerCase()) {
+      case 'done': case 'closed': case 'resolved': return { background: '#d1fae5', color: '#065f46' };
+      case 'in progress': case 'in review': return { background: '#dbeafe', color: '#1e40af' };
+      case 'open': case 'to do': return { background: '#f3f4f6', color: '#374151' };
+      default: return { background: '#f3f4f6', color: '#374151' };
+    }
+  }
+
+  function priorityColor(priority) {
+    switch ((priority || '').toLowerCase()) {
+      case 'highest': case 'critical': return { background: '#fee2e2', color: '#991b1b' };
+      case 'high': return { background: '#ffedd5', color: '#9a3412' };
+      case 'medium': return { background: '#fef9c3', color: '#854d0e' };
+      case 'low': case 'lowest': return { background: '#f0f9ff', color: '#075985' };
+      default: return { background: '#f3f4f6', color: '#374151' };
     }
   }
 
@@ -188,7 +226,52 @@ function DashboardPage() {
         <p style={{ marginBottom: '24px', color: '#8b9196' }}>Connecting to Jira…</p>
       )}
 
-      <p>Bug summary dashboard — coming in Phase 3.</p>
+      {/* Bug list */}
+      {loadingBugs ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280', fontSize: '14px' }}>
+          <LoadingSpinner size={18} /> Loading bugs…
+        </div>
+      ) : bugs.length === 0 && projectKey ? (
+        <p style={{ color: '#6b7280', fontSize: '14px' }}>No bugs found for {projectKey}. Try syncing.</p>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}>
+            <thead>
+              <tr style={{ background: '#f8f9ff', borderBottom: '2px solid #c3c6d6' }}>
+                <th style={thStyle}>Key</th>
+                <th style={thStyle}>Summary</th>
+                <th style={thStyle}>Status</th>
+                <th style={thStyle}>Priority</th>
+                <th style={thStyle}>Sprint</th>
+                <th style={thStyle}>Assignee</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bugs.map((bug, idx) => (
+                <tr key={bug.issue_key} style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8f9ff', borderBottom: '1px solid #e5e7eb' }}>
+                  <td style={tdStyle}>
+                    <span style={{ fontWeight: 600, color: '#065b41', whiteSpace: 'nowrap' }}>{bug.issue_key}</span>
+                  </td>
+                  <td style={{ ...tdStyle, maxWidth: '340px' }}>
+                    <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={bug.summary}>
+                      {bug.summary || '—'}
+                    </span>
+                  </td>
+                  <td style={tdStyle}>
+                    <span style={{ ...badgeStyle, ...statusColor(bug.status) }}>{bug.status || '—'}</span>
+                  </td>
+                  <td style={tdStyle}>
+                    <span style={{ ...badgeStyle, ...priorityColor(bug.priority) }}>{bug.priority || '—'}</span>
+                  </td>
+                  <td style={tdStyle}>{bug.sprint_name || '—'}</td>
+                  <td style={tdStyle}>{bug.assignee || 'Unassigned'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>{bugs.length} issue{bugs.length !== 1 ? 's' : ''}</p>
+        </div>
+      )}
     </div>
   );
 }
