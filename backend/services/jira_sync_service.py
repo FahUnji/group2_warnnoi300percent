@@ -47,21 +47,22 @@ def _fetch_bugs(project_key: str) -> dict:
     except HTTPException as exc:
         return {"ok": False, "error": exc.detail["error"], "message": exc.detail["message"]}
 
-    url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/search"
+    url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/search/jql"
     jql = f"project = {project_key} AND issuetype = Bug ORDER BY created DESC"
-    params = {
+    payload = {
         "jql": jql,
         "maxResults": 1000,
-        "fields": "summary,status,priority,assignee,customfield_10020",
+        "fields": ["summary", "status", "priority", "assignee", "customfield_10020"],
     }
     try:
-        response = requests.get(
+        response = requests.post(
             url,
             headers={
                 "Authorization": f"Bearer {access_token}",
                 "Accept": "application/json",
+                "Content-Type": "application/json",
             },
-            params=params,
+            json=payload,
             timeout=(5, 30),
             verify=True,
         )
