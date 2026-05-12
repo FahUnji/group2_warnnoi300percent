@@ -56,15 +56,18 @@ Plans:
 **Goal**: QA testers can see bug summaries and charts for a selected project
 **Mode**: mvp
 **Depends on**: Phase 2
-**Requirements**: PROJ-01, PROJ-02, SUMM-01, SUMM-02, SUMM-03, CHART-01, CHART-02
+**Requirements**: PROJ-01, PROJ-02, SUMM-01, SUMM-02, SUMM-03, CHART-01, CHART-02, UI-01
 **Success Criteria** (what must be TRUE):
-  1. User can select a Jira project from a dropdown and the dashboard refreshes to show that project's data
-  2. Summary cards show total bug count, open bug count, and critical bug count
-  3. Dashboard shows bug counts grouped by status (Open, In Progress, Closed, etc.)
-  4. Dashboard shows bug counts grouped by priority (Critical, High, Medium, Low)
-  5. Priority and status breakdowns are rendered as visual charts (bar or pie)
-**Plans**: TBD
-**UI hint**: yes
+  1. User sees all synced projects as cards in a grid — each card shows OPEN BUGS count and CRITICAL count with a color-coded left bar
+  2. User can add a new project by entering a Jira project key and clicking Connect Project
+  3. Bug counts are grouped by status (open/to do) and priority (critical/highest) inline on each card
+  4. Priority and status data is visually represented on each card via labeled stat boxes (CHART-01/CHART-02 partial — full charts deferred to Phase 4)
+  5. Dashboard is responsive: 3-col at 900px+, 2-col at 900px, 1-col at 600px
+**Plans**: 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — CSS Module + static structure: create DashboardPage.module.css, rewrite DashboardPage.jsx with new layout (remove bug table, add PageHeader + ProjectsGrid + ConnectSection)
+- [ ] 03-02-PLAN.md — Data flow: wire /api/projects fetch, parallel /api/bugs/{key} stats, handleConnect, handleSync card-stat update
 
 ### Phase 4: Sprint Report
 **Goal**: QA testers can see active-sprint bugs and historical per-sprint trends
@@ -96,6 +99,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Jira Connection | 3/3 | Complete | 2026-05-12 |
 | 2. Data Sync | 0/2 | Planned | - |
-| 3. Dashboard UI | 0/TBD | Not started | - |
+| 3. Dashboard UI | 0/2 | Planned | - |
 | 4. Sprint Report | 0/TBD | Not started | - |
 | 5. Export | 0/TBD | Not started | - |
