@@ -62,6 +62,12 @@ def init_db() -> None:
             )
         """)
         conn.commit()
+        # Migration: add project_name column if not present
+        try:
+            conn.execute("ALTER TABLE jira_projects ADD COLUMN project_name TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # already exists
     finally:
         conn.close()
 

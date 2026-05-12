@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 import styles from './DashboardPage.module.css';
 
@@ -27,6 +28,8 @@ function DashboardPage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [connectingKey, setConnectingKey] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [openCardMenu, setOpenCardMenu] = useState(null);
+  const navigate = useNavigate();
   const searchRef = useRef(null);
   const userMenuRef = useRef(null);
 
@@ -127,6 +130,14 @@ function DashboardPage() {
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
+  // Close card kebab menu on outside click
+  useEffect(() => {
+    if (!openCardMenu) return;
+    function close() { setOpenCardMenu(null); }
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [openCardMenu]);
+
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     sessionStorage.removeItem('jira_user');
@@ -175,6 +186,20 @@ function DashboardPage() {
       setAddSelectedKey('');
     } finally {
       setAddSyncing(false);
+    }
+  }
+
+  async function handleDeleteProject(key) {
+    setOpenCardMenu(null);
+    try {
+      await fetch(`/api/projects/${key}`, { method: 'DELETE' });
+      const updated = projects.filter(p => p.key !== key);
+      setProjects(updated);
+      if (updated.length === 0) {
+        navigate('/no-project', { replace: true });
+      }
+    } catch {
+      // silent — project stays in list
     }
   }
 
@@ -320,36 +345,73 @@ function DashboardPage() {
             projects.map(project => {
               const stats = bugStats[project.key] || { open: 0, critical: 0, loading: true };
               const hasCritical = !stats.loading && stats.critical > 0;
+              const menuOpen = openCardMenu === project.key;
               return (
-                <button
-                  key={project.key}
-                  className={styles.projectCard}
-                  aria-label={`${project.name} — ${stats.loading ? 'loading' : `${stats.open} open bugs, ${stats.critical} critical`}`}
-                >
-                  <div className={`${styles.cardBar} ${hasCritical ? styles.barCritical : styles.barNormal}`} />
-                  <div className={styles.cardContent}>
-                    <div className={styles.cardHeader}>
-                      <span className={styles.projectName}>{project.name}</span>
-                      <span className={styles.projectCode}>{project.key}</span>
-                    </div>
-                    <div className={styles.statBoxes}>
-                      <div className={styles.statBox}>
-                        <span className={styles.statLabel}>OPEN BUGS</span>
-                        <span className={styles.statVal}>{stats.loading ? '—' : stats.open}</span>
+                <div key={project.key} className={styles.projectCardWrap}>
+                  <button
+                    className={styles.projectCard}
+                    aria-label={`${project.name} — ${stats.loading ? 'loading' : `${stats.open} open bugs, ${stats.critical} critical`}`}
+                  >
+                    <div className={`${styles.cardBar} ${hasCritical ? styles.barCritical : styles.barNormal}`} />
+                    <div className={styles.cardContent}>
+                      <div className={styles.cardHeader}>
+                        <span className={styles.projectName}>{project.name}</span>
+                        <span className={styles.projectCode}>{project.key}</span>
                       </div>
-                      <div className={styles.statBox}>
-                        <span className={styles.statLabel}>CRITICAL</span>
-                        <span className={`${styles.statVal} ${
-                          stats.loading ? '' :
-                          stats.critical === 0 ? styles.statZero :
-                          styles.statCritical
-                        }`}>
-                          {stats.loading ? '—' : stats.critical}
-                        </span>
+                      <div className={styles.statBoxes}>
+                        <div className={styles.statBox}>
+                          <span className={styles.statLabel}>OPEN BUGS</span>
+                          <span className={styles.statVal}>{stats.loading ? '—' : stats.open}</span>
+                        </div>
+                        <div className={styles.statBox}>
+                          <span className={styles.statLabel}>CRITICAL</span>
+                          <span className={`${styles.statVal} ${
+                            stats.loading ? '' :
+                            stats.critical === 0 ? styles.statZero :
+                            styles.statCritical
+                          }`}>
+                            {stats.loading ? '—' : stats.critical}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  <button
+                    className={`${styles.cardMenuBtn}${menuOpen ? ' ' + styles.cardMenuBtnOpen : ''}`}
+                    aria-label={`Options for ${project.name}`}
+                    aria-expanded={menuOpen}
+                    aria-haspopup="true"
+                    onMouseDown={e => e.stopPropagation()}
+                    onClick={() => setOpenCardMenu(k => k === project.key ? null : project.key)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <circle cx="12" cy="5" r="1.5"/>
+                      <circle cx="12" cy="12" r="1.5"/>
+                      <circle cx="12" cy="19" r="1.5"/>
+                    </svg>
+                  </button>
+                  {menuOpen && (
+                    <div
+                      className={styles.cardMenuDropdown}
+                      role="menu"
+                      onMouseDown={e => e.stopPropagation()}
+                    >
+                      <button
+                        className={styles.cardMenuDelete}
+                        role="menuitem"
+                        onClick={() => handleDeleteProject(project.key)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M9 6V4h6v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Remove project
+                      </button>
+                    </div>
+                  )}
+                </div>
               );
             })
           )}

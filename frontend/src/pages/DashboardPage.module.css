@@ -831,6 +831,79 @@
   opacity: 1;
 }
 
+/* ── Project Card Kebab Menu ── */
+
+.projectCardWrap {
+  position: relative;
+}
+
+.cardMenuBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #6b7280;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 10;
+}
+
+.projectCardWrap:hover .cardMenuBtn {
+  opacity: 1;
+}
+
+.cardMenuBtn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.cardMenuBtnOpen {
+  opacity: 1 !important;
+  background: #f3f4f6;
+}
+
+.cardMenuDropdown {
+  position: absolute;
+  top: 40px;
+  right: 8px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 50;
+  min-width: 160px;
+  overflow: hidden;
+}
+
+.cardMenuDelete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #dc2626;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.cardMenuDelete:hover {
+  background: #fef2f2;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 900px) {

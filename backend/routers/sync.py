@@ -86,3 +86,20 @@ async def list_projects():
     """
     service = JiraSyncService()
     return await service.list_projects()
+
+
+@router.delete("/projects/{project_key}")
+async def delete_project(project_key: str):
+    """
+    Remove a synced project and all its bugs from local SQLite.
+
+    Success: HTTP 200, {"ok": true}
+    """
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM bugs WHERE project_key = ?", (project_key,))
+        conn.execute("DELETE FROM jira_projects WHERE project_key = ?", (project_key,))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True}
