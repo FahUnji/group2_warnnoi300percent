@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 import styles from './DashboardPage.module.css';
 
@@ -29,7 +28,6 @@ function DashboardPage() {
   const [connectingKey, setConnectingKey] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [openCardMenu, setOpenCardMenu] = useState(null);
-  const navigate = useNavigate();
   const searchRef = useRef(null);
   const userMenuRef = useRef(null);
 
@@ -198,18 +196,14 @@ function DashboardPage() {
     setOpenCardMenu(null);
     try {
       await fetch(`/api/projects/${key}`, { method: 'DELETE' });
-      const updated = projects.filter(p => p.key !== key);
-      setProjects(updated);
-      if (updated.length === 0) {
-        navigate('/no-project', { replace: true });
-      }
+      setProjects(updated => updated.filter(p => p.key !== key));
     } catch {
       // silent — project stays in list
     }
   }
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif', color: '#414944', background: '#f0f2f5', minHeight: '100vh' }}>
+    <div className={styles.pageWrapper}>
 
       {/* Top NavBar */}
       <header className={styles.topnav}>
@@ -326,7 +320,121 @@ function DashboardPage() {
         </div>
       </header>
 
-      <main className={styles.mainContent}>
+      {(!loadingProjects && projects.length === 0) ? (
+
+        <main className={styles.noProjectMain}>
+          <div className={styles.noProjectCard}>
+
+            <div className={styles.emptyHero}>
+              <div className={styles.emptyIconWrap}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 17L12 22L22 17" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 12L12 17L22 12" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h1 className={styles.emptyTitle}>Connect your first JIRA Project</h1>
+              <p className={styles.emptySubtitle}>
+                JIRA Bug Summary bridges the gap between your engineering workflow and automated bug
+                reporting. Connect your Jira instance to start monitoring issues in real-time.
+              </p>
+            </div>
+
+            <div className={styles.noProjectConnectArea}>
+              <span className={styles.noProjectConnectLabel}>SELECT A PROJECT</span>
+
+              {projectsError && (
+                <div className={styles.errorBanner} role="alert">{projectsError}</div>
+              )}
+              {addError && (
+                <div className={styles.errorBanner} role="alert">{addError}</div>
+              )}
+
+              {addSyncing ? (
+                <div className={styles.addSyncBar}>
+                  <LoadingSpinner size={20} />
+                  <span>Syncing {addSelectedKey}…</span>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.addSearchWrap}>
+                    <svg className={styles.addSearchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+                      <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <input
+                      className={styles.addSearchInput}
+                      type="search"
+                      placeholder="Search projects…"
+                      value={addQuery}
+                      onChange={e => setAddQuery(e.target.value)}
+                      aria-label="Search projects"
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  {addLoading ? (
+                    <div className={styles.addSyncBar}>
+                      <LoadingSpinner size={20} />
+                      <span style={{ color: '#6b7280' }}>Searching…</span>
+                    </div>
+                  ) : !addQuery.trim() ? (
+                    <p className={styles.addEmptyText}>Type to search your Jira projects</p>
+                  ) : addResults.length === 0 ? (
+                    <p className={styles.addEmptyText}>No projects match &ldquo;{addQuery}&rdquo;</p>
+                  ) : (
+                    <ul className={styles.addProjectList} role="list" aria-label="Jira projects">
+                      {addResults.map((project, idx) => (
+                        <li key={project.key} role="listitem">
+                          <button
+                            className={`${styles.addProjectRow}${addSelectedKey === project.key ? ' ' + styles.addProjectRowSelected : ''}`}
+                            onClick={() => handleAddProject(project)}
+                            aria-pressed={addSelectedKey === project.key}
+                            style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #c3c6d6' : 'none' }}
+                          >
+                            <div className={styles.addProjectAvatar} aria-hidden="true">
+                              {project.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className={styles.addProjectInfo}>
+                              <span className={styles.addProjectName}>{project.name}</span>
+                              <span className={styles.addProjectKey}>{project.key}</span>
+                            </div>
+                            <svg className={styles.addProjectChevron} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className={styles.stepsGrid}>
+              <div className={styles.step}>
+                <span className={styles.stepNum}>01</span>
+                <h3 className={styles.stepTitle}>Provide Link</h3>
+                <p className={styles.stepDesc}>Paste your Jira project URL or specific board key to initialize the handshake.</p>
+              </div>
+              <div className={styles.step}>
+                <span className={styles.stepNum}>02</span>
+                <h3 className={styles.stepTitle}>Authorize Access</h3>
+                <p className={styles.stepDesc}>Grant JIRA Bug Summary read permissions via API token to sync bug tickets automatically.</p>
+              </div>
+              <div className={styles.step}>
+                <span className={styles.stepNum}>03</span>
+                <h3 className={styles.stepTitle}>Analyze &amp; Track</h3>
+                <p className={styles.stepDesc}>Your dashboard will populate with historical data and real-time bug lifecycle metrics.</p>
+              </div>
+            </div>
+
+          </div>
+        </main>
+
+      ) : (
+
+        <main className={styles.mainContent}>
 
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Active Projects</h1>
@@ -341,11 +449,6 @@ function DashboardPage() {
             </div>
           ) : projectsError ? (
             <div role="alert" className={styles.errorBanner}>{projectsError}</div>
-          ) : projects.length === 0 ? (
-            <div className={styles.emptyState}>
-              <p className={styles.emptyHeading}>No projects synced yet</p>
-              <p className={styles.emptyBody}>Search for a Jira project using the search bar above or the Add New Project section below.</p>
-            </div>
           ) : (
             projects.map(project => {
               const stats = bugStats[project.key] || { total: 0, open: 0, critical: 0, loading: true };
@@ -511,6 +614,8 @@ function DashboardPage() {
         </div>
 
       </main>
+
+      )}
     </div>
   );
 }
