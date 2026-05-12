@@ -46,6 +46,21 @@ def init_db() -> None:
                 added_at    TEXT    DEFAULT (datetime('now'))
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS bugs (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                issue_id    INTEGER NOT NULL,
+                issue_key   TEXT    NOT NULL,
+                project_key TEXT    NOT NULL,
+                summary     TEXT,
+                status      TEXT,
+                priority    TEXT,
+                sprint_name TEXT,
+                assignee    TEXT,
+                synced_at   TEXT    NOT NULL,
+                UNIQUE (issue_id, project_key)
+            )
+        """)
         conn.commit()
     finally:
         conn.close()

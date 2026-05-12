@@ -376,3 +376,147 @@
   .connectRow { flex-direction: column; }
   .emptyTitle { font-size: 24px; }
 }
+
+/* ── Project Search ── */
+.searchWrap {
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px 0 40px;
+  border: 1px solid #c3c6d6;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.searchInput::placeholder { color: #6b7280; }
+.searchInput:focus {
+  border-color: #065b41;
+  box-shadow: 0 0 0 3px rgba(6, 91, 65, 0.12);
+}
+
+/* ── Project List (Phase 2) ── */
+.projectList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid #c3c6d6;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.projectRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.12s;
+}
+
+.projectRow:hover { background: #f3f4f6; }
+.projectRow:focus-visible { outline: 2px solid #1b4332; outline-offset: -2px; }
+
+.projectRowSelected {
+  background: #e7f4f0;
+  border-left: 3px solid #1b4332;
+}
+
+.projectAvatar {
+  width: 32px;
+  height: 32px;
+  background: #e7f4f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1b4332;
+  flex-shrink: 0;
+}
+
+.projectInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.projectName {
+  font-size: 14px;
+  font-weight: 400;
+  color: #002d1c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.projectRowSelected .projectName { font-weight: 700; }
+
+.projectKeyBadge {
+  font-size: 12px;
+  font-weight: 400;
+  color: #434654;
+}
+
+.projectChevron {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.projectRow:hover .projectChevron { opacity: 1; }
+
+/* Sync status bar (shown during auto-sync) */
+.syncStatusBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+/* Error banner */
+.errorBanner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #b91c1c;
+}
+
+/* ── Responsive additions (Phase 2) ── */
+@media (max-width: 768px) {
+  .projectList { max-height: 240px; }
+  .connectArea { padding: 16px; }
+}

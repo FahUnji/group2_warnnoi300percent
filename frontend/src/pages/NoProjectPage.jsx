@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 import styles from './NoProjectPage.module.css';
 
 function NoProjectPage() {
@@ -7,6 +9,15 @@ function NoProjectPage() {
   });
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
+
+  const [projects, setProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [projectsError, setProjectsError] = useState('');
+  const [selectedKey, setSelectedKey] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) return;
@@ -32,23 +43,53 @@ function NoProjectPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMenu]);
 
+  useEffect(() => {
+    setLoadingProjects(true);
+    fetch('/api/projects')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          setProjects(data.projects);
+        } else {
+          setProjectsError('Could not load projects. Check your connection and reload the page.');
+        }
+      })
+      .catch(() => {
+        setProjectsError('Could not load projects. Check your connection and reload the page.');
+      })
+      .finally(() => setLoadingProjects(false));
+  }, []);
+
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     sessionStorage.removeItem('jira_user');
     window.location.href = '/';
   }
 
-  const [projectUrl, setProjectUrl] = useState('');
-  const [status, setStatus] = useState(null);
-
-  function handleConnect(e) {
-    e.preventDefault();
-    if (!projectUrl.trim()) return;
-    setStatus({ type: 'loading', text: 'Connecting…' });
-    // Phase 2 will wire this to the backend
-    setTimeout(() => {
-      setStatus({ type: 'success', text: 'Project connected! Syncing data…' });
-    }, 1200);
+  async function handleProjectSelect(project) {
+    if (syncing) return;
+    setSelectedKey(project.key);
+    sessionStorage.setItem('active_project_key', project.key);
+    setSyncing(true);
+    setSyncError('');
+    try {
+      const resp = await fetch(`/api/sync/${project.key}`, { method: 'POST' });
+      const data = await resp.json();
+      if (data.ok) {
+        // brief success state then navigate (500ms)
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 500);
+      } else {
+        setSyncError('Sync failed. Select the project again to retry.');
+        setSelectedKey('');
+      }
+    } catch {
+      setSyncError('Sync failed. Select the project again to retry.');
+      setSelectedKey('');
+    } finally {
+      setSyncing(false);
+    }
   }
 
   return (
@@ -144,39 +185,103 @@ function NoProjectPage() {
           </div>
 
           <div className={styles.connectArea}>
-            <label htmlFor="jira-project-url" className={styles.connectLabel}>ENTER JIRA PROJECT URL OR KEY</label>
-            <form onSubmit={handleConnect} className={styles.connectRow}>
-              <div className={styles.inputWrap}>
-                <svg className={styles.inputIcon} xmlns="http://www.w3.org/2000/svg" width="20" height="10" viewBox="0 0 24 12" fill="none">
-                  <path d="M10 6H14M4.5 6a3.5 3.5 0 0 0 0 7h4a3.5 3.5 0 0 0 0-7M19.5 6a3.5 3.5 0 0 1 0 7h-4a3.5 3.5 0 0 1 0-7"
-                    stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform="translate(0,-1)"/>
-                </svg>
-                <input
-                  id="jira-project-url"
-                  className={styles.connectInput}
-                  type="url"
-                  placeholder="https://your-domain.atlassian.net/browse/PROJ"
-                  value={projectUrl}
-                  onChange={e => setProjectUrl(e.target.value)}
-                  required
-                />
+            <span className={styles.connectLabel}>SELECT A PROJECT</span>
+
+            {projectsError && (
+              <div className={styles.errorBanner} role="alert">
+                {projectsError}
               </div>
-              <button type="submit" className={styles.connectBtn}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Connect
-              </button>
-            </form>
-            <div className={styles.connectHint}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#6b7280" strokeWidth="2"/>
-                <path d="M12 16v-4M12 8h.01" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Example: engineering.atlassian.net/browse/APP-702
-            </div>
-            {status && (
-              <p className={`${styles.connectStatus} ${styles[status.type]}`}>{status.text}</p>
+            )}
+
+            {syncError && (
+              <div className={styles.errorBanner} role="alert">
+                {syncError}
+              </div>
+            )}
+
+            {syncing ? (
+              <div className={styles.syncStatusBar}>
+                <LoadingSpinner size={20} />
+                <span>Syncing {projects.find(p => p.key === selectedKey)?.name || selectedKey}…</span>
+              </div>
+            ) : loadingProjects ? (
+              <div className={styles.syncStatusBar}>
+                <LoadingSpinner size={24} />
+                <span style={{ color: '#6b7280' }}>Loading projects…</span>
+              </div>
+            ) : projects.length === 0 && !projectsError ? (
+              <div style={{ padding: '24px', textAlign: 'center' }}>
+                <p style={{ fontWeight: 700, color: '#002d1c', marginBottom: '4px' }}>No projects found</p>
+                <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                  Your Jira account has no accessible projects. Check your OAuth permissions and try again.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className={styles.searchWrap}>
+                  <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+                    <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <input
+                    className={styles.searchInput}
+                    type="search"
+                    placeholder="Search projects…"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    aria-label="Search projects"
+                    autoComplete="off"
+                  />
+                </div>
+                {searchQuery && (() => {
+                  const q = searchQuery.toLowerCase();
+                  const filtered = projects.filter(p =>
+                    p.name.toLowerCase().includes(q) || p.key.toLowerCase().includes(q)
+                  );
+                  if (filtered.length === 0) {
+                    return (
+                      <div style={{ padding: '20px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '14px', color: '#6b7280' }}>No projects match "{searchQuery}"</p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <ul className={styles.projectList} role="list" aria-label="Jira projects">
+                      {filtered.map((project, idx) => (
+                        <li key={project.key} role="listitem">
+                          <button
+                            className={`${styles.projectRow}${selectedKey === project.key ? ' ' + styles.projectRowSelected : ''}`}
+                            onClick={() => handleProjectSelect(project)}
+                            aria-pressed={selectedKey === project.key}
+                            style={{ borderBottom: idx < filtered.length - 1 ? '1px solid #c3c6d6' : 'none' }}
+                          >
+                            <div className={styles.projectAvatar} aria-hidden="true">
+                              {project.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className={styles.projectInfo}>
+                              <span className={styles.projectName}>{project.name}</span>
+                              <span className={styles.projectKeyBadge}>{project.key}</span>
+                            </div>
+                            {selectedKey !== project.key && (
+                              <svg
+                                className={styles.projectChevron}
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                })()}
+              </>
             )}
           </div>
 

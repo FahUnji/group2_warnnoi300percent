@@ -1,52 +1,41 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-12T04:07:45Z",
-  "phase": "01",
-  "phase_name": "jira-connection",
-  "phase_dir": ".planning/phases/01-jira-connection",
-  "plan": 3,
-  "task": null,
-  "total_tasks": null,
-  "status": "complete",
+  "timestamp": "2026-05-12T08:07:10Z",
+  "phase": "02",
+  "phase_name": "data-sync",
+  "phase_dir": ".planning/phases/02-data-sync",
+  "plan": 2,
+  "task": "post-uat-fixup",
+  "total_tasks": 1,
+  "status": "paused",
   "completed_tasks": [
-    {"id": "plan-01", "name": "Wave 1 — FastAPI scaffold + jira_config model + SQL migration", "status": "done", "commit": "868bf9c"},
-    {"id": "plan-02", "name": "Wave 2 — JiraService (Fernet + Jira auth) + REST endpoints", "status": "done", "commit": "073c99e"},
-    {"id": "plan-03", "name": "Wave 3 — React frontend (ConnectionForm, StatusBanner, SuccessModal)", "status": "done", "commit": "711b59a"},
-    {"id": "code-review", "name": "Code review — 01-REVIEW.md", "status": "done", "commit": "17dc93d"},
-    {"id": "verification", "name": "Automated verification — 01-VERIFICATION.md (13/13 PASS)", "status": "done", "commit": "ca6470e"},
-    {"id": "cr-fixes", "name": "All CR/WR issues remediated (SSRF, FERNET_KEY, timeout)", "status": "done", "commit": "2da6ea0"},
-    {"id": "sqlite-docker", "name": "SQLite migration + Docker Compose setup", "status": "done", "commit": "c31427c"},
-    {"id": "ui-redesign", "name": "ConnectionPage redesigned to match Figma — single button hero layout", "status": "done", "commit": "45aacf0"},
-    {"id": "footer-fix", "name": "Footer fixed to bottom of screen (flex: 1 on heroGrid)", "status": "done", "commit": "0bc36e8"},
-    {"id": "oauth-3lo", "name": "Replace Basic Auth modal with Atlassian OAuth 2.0 (3LO)", "status": "done", "commit": "cd58d16"},
-    {"id": "auth-me-endpoint", "name": "/api/auth/me — decrypt token, call Atlassian, return user info + has_projects", "status": "done", "commit": "cd58d16"},
-    {"id": "no-project-page", "name": "NoProjectPage.jsx + CSS matching Figma design", "status": "done", "commit": "e3e4861"},
-    {"id": "jira-projects-table", "name": "jira_projects table + count_projects() helper", "status": "done", "commit": "e3e4861"},
-    {"id": "user-info-nav", "name": "NoProjectPage + DashboardPage display user avatar + name from /api/auth/me", "status": "done", "commit": "cd58d16"},
-    {"id": "logout", "name": "POST /api/auth/logout — delete DB token + sessionStorage clear + redirect to /", "status": "done", "commit": "9555147"},
-    {"id": "session-persistence", "name": "ConnectionPage auth check on mount — auto-redirect if token valid + spinner", "status": "done", "commit": "9555147"},
-    {"id": "has-projects-field", "name": "has_projects field added to /api/auth/me response for routing", "status": "done", "commit": "9555147"},
-    {"id": "oauth-credentials", "name": "ATLASSIAN_CLIENT_ID + ATLASSIAN_CLIENT_SECRET confirmed in backend/.env", "status": "done", "commit": null},
-    {"id": "remove-prompt-consent", "name": "Removed prompt=consent — consent screen shows once only", "status": "done", "commit": "68c708b"},
-    {"id": "phase-1-complete", "name": "Phase 1 marked complete in ROADMAP.md + STATE.md", "status": "done", "commit": null}
+    {"id": "02-plan-01", "name": "JiraSyncService — fetch bugs + upsert SQLite", "status": "done", "commit": "56d4124"},
+    {"id": "02-plan-02", "name": "NoProjectPage project picker + DashboardPage Sync Now UI", "status": "done", "commit": "b3325d4"},
+    {"id": "02-phase-complete", "name": "Phase 2 UAT 4/4 passed + phase marked complete", "status": "done", "commit": "3945e14"},
+    {"id": "02-pagination-fix", "name": "Jira API pagination: offset startAt → nextPageToken cursor", "status": "done", "commit": "b3325d4"},
+    {"id": "02-scope-simplify", "name": "Removed subtask fetch (Step 2) — dashboard shows only Bug/Bug Task", "status": "done", "commit": null}
   ],
-  "remaining_tasks": [],
-  "blockers": [],
-  "human_actions_pending": [],
+  "remaining_tasks": [
+    {"id": "commit-scope-change", "name": "Commit jira_sync_service.py scope simplification", "status": "not_started"},
+    {"id": "phase-03-plan", "name": "Plan Phase 3: Dashboard UI (charts + project switcher)", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "backend/.env contains secrets — must never be committed", "type": "technical", "workaround": "File is gitignored; stage only specific files"}
+  ],
+  "human_actions_pending": [
+    {"action": "Re-sync SAM project from UI after backend hot-reloads to confirm 459 issues stored", "context": "jira_sync_service.py changed this session — subtask step removed. DB may still have old 509-issue count. Re-sync confirms 459 Bug/Bug Task only.", "blocking": false}
+  ],
   "decisions": [
     {"decision": "Atlassian OAuth 2.0 (3LO) over Basic Auth modal", "rationale": "Required for future API access + better UX", "phase": "01"},
     {"decision": "Token encrypted with Fernet at rest in SQLite oauth_tokens table", "rationale": "Security requirement from CR", "phase": "01"},
-    {"decision": "User info from https://api.atlassian.com/me (read:me scope)", "rationale": "Standard Atlassian identity endpoint", "phase": "01"},
-    {"decision": "sessionStorage for user display cache, SQLite for auth persistence", "rationale": "sessionStorage cleared on tab close; SQLite token survives browser close for session persistence", "phase": "01"},
-    {"decision": "Logout deletes DB token (not just sessionStorage)", "rationale": "Full logout enables clean account switching on next login", "phase": "01"},
-    {"decision": "has_projects in /api/auth/me response", "rationale": "ConnectionPage needs routing destination without extra API call", "phase": "01"}
+    {"decision": "Dashboard shows only Bug and Bug Task issues — no subtasks", "rationale": "User explicitly requested: display 459 Bug/Bug Task only, no child tickets", "phase": "02"},
+    {"decision": "Single-step JQL fetch: issuetype in (Bug, 'Bug Task') ORDER BY created DESC", "rationale": "Removed two-step fetch + dedup — subtasks excluded by user decision", "phase": "02"},
+    {"decision": "Jira Cloud API pagination via nextPageToken cursor, not startAt offset", "rationale": "POST /search/jql returns HTTP 400 on startAt; only nextPageToken supported. Hard cap 100/page.", "phase": "02"},
+    {"decision": "GET /api/bugs/{project_key} separate from sync endpoint", "rationale": "Dashboard loads cached data without re-syncing; read vs write separation", "phase": "02"}
   ],
   "uncommitted_files": [
-    ".planning/HANDOFF.json",
-    ".planning/ROADMAP.md",
-    ".planning/STATE.md",
-    ".planning/phases/01-jira-connection/.continue-here.md"
+    "backend/services/jira_sync_service.py"
   ],
-  "next_action": "Run /gsd-discuss-phase 2 to plan the Data Sync phase.",
-  "context_notes": "Phase 1 is fully complete. All code done, phase marked complete in ROADMAP.md + STATE.md. Infrastructure: Docker containers running, SQLite at backend/jira.db, OAuth credentials in backend/.env (gitignored). Next phase: Data Sync — pull bug data from Jira and persist in local DB."
+  "next_action": "Commit backend/services/jira_sync_service.py with message 'fix(sync): remove subtask fetch — dashboard shows Bug/Bug Task only'. Then /gsd-plan-phase 3.",
+  "context_notes": "Phase 02 is fully complete (human UAT 4/4 passed, committed). This session: user asked about the 64 subtasks; user then decided dashboard should show only the 459 Bug/Bug Task issues (no child subtasks). Simplified _fetch_bugs() to single-step JQL. One file uncommitted. Phase 03 (Dashboard UI — charts + project switcher) is ready to plan."
 }

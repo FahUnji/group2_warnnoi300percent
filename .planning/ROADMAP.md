@@ -13,7 +13,7 @@ Five vertical slices deliver the complete dashboard: first the Jira connection i
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Jira Connection** - Authenticate to Jira REST API and confirm a live connection
-- [ ] **Phase 2: Data Sync** - Pull bug data from Jira and persist it in MySQL
+- [x] **Phase 2: Data Sync** - Pull bug data from Jira and persist it in SQLite
 - [ ] **Phase 3: Dashboard UI** - Display bug summaries and charts with project switching
 - [ ] **Phase 4: Sprint Report** - Add active-sprint view and per-sprint history
 - [ ] **Phase 5: Export** - Generate downloadable Excel and Word reports
@@ -37,16 +37,20 @@ Plans:
 - [x] 01-PLAN-03.md — React frontend: Vite scaffold, ConnectionForm, StatusBanner, SuccessModal, LoadingSpinner, routing
 
 ### Phase 2: Data Sync
-**Goal**: Bug data from Jira is stored in MySQL and available to the backend
+**Goal**: Bug data from Jira is stored in SQLite and available to the backend
 **Mode**: mvp
 **Depends on**: Phase 1
-**Requirements**: SYNC-01, SYNC-02, SYNC-03, SYNC-04
+**Requirements**: SYNC-01, SYNC-02, SYNC-03
 **Success Criteria** (what must be TRUE):
   1. User can trigger a manual sync via a UI button that calls the backend
-  2. After sync, the MySQL database contains bug records with ID, summary, status, priority, sprint, and assignee fields
+  2. After sync, the SQLite database contains bug records with ID, summary, status, priority, sprint, and assignee fields
   3. Each sync run records a timestamp in the database
   4. The dashboard displays the timestamp of the most recent sync
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 02-01-PLAN.md — Backend sync layer: bugs table migration, JiraSyncService (OAuth + Jira Cloud API), POST /api/sync/{project_key} + GET /api/projects endpoints, router registration
+- [x] 02-02-PLAN.md — Frontend sync UI: NoProjectPage project picker (replaces URL input) with auto-sync, DashboardPage Sync Now button + LastSyncedTimestamp
 
 ### Phase 3: Dashboard UI
 **Goal**: QA testers can see bug summaries and charts for a selected project
@@ -91,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Jira Connection | 3/3 | Complete | 2026-05-12 |
-| 2. Data Sync | 0/TBD | Not started | - |
+| 2. Data Sync | 0/2 | Planned | - |
 | 3. Dashboard UI | 0/TBD | Not started | - |
 | 4. Sprint Report | 0/TBD | Not started | - |
 | 5. Export | 0/TBD | Not started | - |
