@@ -36,50 +36,60 @@ def _get_auth_headers() -> tuple[str, str, str]:
     return access_token, cloud_id, base_url
 
 
+_PAGE_SIZE = 100  # Jira Cloud hard cap per request
+
 def _jira_search(url: str, access_token: str, jql: str) -> dict:
     """
-    Execute a single Jira POST /search/jql call.
+    Paginated Jira POST /search/jql — loops until all pages fetched.
     Returns {"ok": True, "issues": [...]} or {"ok": False, "error": ..., "message": ...}.
     """
-    payload = {
-        "jql": jql,
-        "maxResults": 1000,
-        "fields": ["summary", "status", "priority", "assignee", "customfield_10020"],
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
     }
-    try:
-        response = requests.post(
-            url,
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-            timeout=(5, 30),
-            verify=True,
-        )
-        response.raise_for_status()
-        return {"ok": True, "issues": response.json().get("issues", [])}
-    except requests.exceptions.ConnectionError:
-        return {"ok": False, "error": "unreachable_host", "message": "Cannot reach Jira API. Check your network connection."}
-    except requests.exceptions.Timeout:
-        return {"ok": False, "error": "timeout", "message": "Jira API did not respond in time. Try again."}
-    except requests.exceptions.HTTPError as exc:
-        status = exc.response.status_code if exc.response is not None else 0
-        if status == 401:
-            return {"ok": False, "error": "invalid_credentials", "message": "OAuth token is expired or invalid. Please reconnect."}
-        if status == 403:
-            return {"ok": False, "error": "forbidden", "message": "Access denied. Check your Jira OAuth scopes."}
-        return {"ok": False, "error": "api_error", "message": f"Jira API returned HTTP {status}."}
-    except requests.exceptions.RequestException:
-        return {"ok": False, "error": "unreachable_host", "message": "Cannot reach Jira API. Check your network connection."}
+    all_issues: list = []
+    next_page_token: str | None = None
+
+    while True:
+        payload: dict = {
+            "jql": jql,
+            "maxResults": _PAGE_SIZE,
+            "fields": ["summary", "status", "priority", "assignee", "customfield_10020"],
+        }
+        if next_page_token:
+            payload["nextPageToken"] = next_page_token
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=(5, 30), verify=True)
+            response.raise_for_status()
+            data = response.json()
+        except requests.exceptions.ConnectionError:
+            return {"ok": False, "error": "unreachable_host", "message": "Cannot reach Jira API. Check your network connection."}
+        except requests.exceptions.Timeout:
+            return {"ok": False, "error": "timeout", "message": "Jira API did not respond in time. Try again."}
+        except requests.exceptions.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else 0
+            if status == 401:
+                return {"ok": False, "error": "invalid_credentials", "message": "OAuth token is expired or invalid. Please reconnect."}
+            if status == 403:
+                return {"ok": False, "error": "forbidden", "message": "Access denied. Check your Jira OAuth scopes."}
+            return {"ok": False, "error": "api_error", "message": f"Jira API returned HTTP {status}."}
+        except requests.exceptions.RequestException:
+            return {"ok": False, "error": "unreachable_host", "message": "Cannot reach Jira API. Check your network connection."}
+
+        page = data.get("issues", [])
+        all_issues.extend(page)
+        next_page_token = data.get("nextPageToken")
+        if not page or not next_page_token:
+            break
+
+    return {"ok": True, "issues": all_issues}
 
 
 def _fetch_bugs(project_key: str) -> dict:
     """
-    Blocking function: fetch Bug-type issues + their subtasks via two JQL calls.
-    Step 1: project bugs via issuetype = Bug
-    Step 2: subtasks of those bugs via parent in (key1, key2, ...)
+    Blocking function: fetch Bug and Bug Task issues for a project.
     Returns {"ok": True, "issues": [...]} or {"ok": False, "error": ..., "message": ...}.
     Never logs or returns access_token or cloud_id.
     """
@@ -90,23 +100,11 @@ def _fetch_bugs(project_key: str) -> dict:
 
     url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/search/jql"
 
-    # Step 1: fetch top-level bugs
-    bugs_result = _jira_search(url, access_token, f"project = {project_key} AND issuetype = Bug ORDER BY created DESC")
-    if not bugs_result["ok"]:
-        return bugs_result
-
-    bugs = bugs_result["issues"]
-    bug_keys = [issue["key"] for issue in bugs]
-
-    # Step 2: fetch subtasks whose parent is one of the bugs
-    subtasks = []
-    if bug_keys:
-        keys_jql = ", ".join(bug_keys)
-        subtasks_result = _jira_search(url, access_token, f"parent in ({keys_jql}) ORDER BY created DESC")
-        if subtasks_result["ok"]:
-            subtasks = subtasks_result["issues"]
-
-    return {"ok": True, "issues": bugs + subtasks}
+    return _jira_search(
+        url,
+        access_token,
+        f'project = {project_key} AND issuetype in (Bug, "Bug Task") ORDER BY created DESC',
+    )
 
 
 def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:

@@ -1,65 +1,41 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-12T07:02:08Z",
+  "timestamp": "2026-05-12T08:07:10Z",
   "phase": "02",
   "phase_name": "data-sync",
   "phase_dir": ".planning/phases/02-data-sync",
   "plan": 2,
-  "task": "human-uat",
-  "total_tasks": 4,
+  "task": "post-uat-fixup",
+  "total_tasks": 1,
   "status": "paused",
   "completed_tasks": [
     {"id": "02-plan-01", "name": "JiraSyncService — fetch bugs + upsert SQLite", "status": "done", "commit": "56d4124"},
     {"id": "02-plan-02", "name": "NoProjectPage project picker + DashboardPage Sync Now UI", "status": "done", "commit": "b3325d4"},
-    {"id": "02-search-ux", "name": "NoProjectPage: replace list with search-box-filtered UX (list hidden until typing)", "status": "done", "commit": null},
-    {"id": "02-subtask-jql", "name": "JQL expanded to include Bug subtasks (subTaskIssueTypes)", "status": "done", "commit": null},
-    {"id": "02-bugs-endpoint", "name": "GET /api/bugs/{project_key} endpoint added to sync.py", "status": "done", "commit": null},
-    {"id": "02-bug-table", "name": "DashboardPage: full styled bug table with status/priority badges", "status": "done", "commit": null}
+    {"id": "02-phase-complete", "name": "Phase 2 UAT 4/4 passed + phase marked complete", "status": "done", "commit": "3945e14"},
+    {"id": "02-pagination-fix", "name": "Jira API pagination: offset startAt → nextPageToken cursor", "status": "done", "commit": "b3325d4"},
+    {"id": "02-scope-simplify", "name": "Removed subtask fetch (Step 2) — dashboard shows only Bug/Bug Task", "status": "done", "commit": null}
   ],
   "remaining_tasks": [
-    {"id": "uat-commit", "name": "Commit uncommitted code changes (skip backend/.env)", "status": "not_started"},
-    {"id": "uat-1", "name": "UAT: NoProjectPage renders real Jira project list", "status": "not_started"},
-    {"id": "uat-2", "name": "UAT: Project click → sync status → navigate /dashboard", "status": "not_started"},
-    {"id": "uat-3", "name": "UAT: Sync Now button → spinner → lastSynced updates", "status": "not_started"},
-    {"id": "uat-4", "name": "UAT: Direct /dashboard nav without project → warning banner", "status": "not_started"}
+    {"id": "commit-scope-change", "name": "Commit jira_sync_service.py scope simplification", "status": "not_started"},
+    {"id": "phase-03-plan", "name": "Plan Phase 3: Dashboard UI (charts + project switcher)", "status": "not_started"}
   ],
   "blockers": [
-    {"description": "Human UAT requires live Jira OAuth token (from Phase 1 flow) + running Docker", "type": "human_action", "workaround": "Run docker compose up, complete OAuth via /api/auth/login, then test"},
     {"description": "backend/.env contains secrets — must never be committed", "type": "technical", "workaround": "File is gitignored; stage only specific files"}
   ],
   "human_actions_pending": [
-    {"action": "Commit uncommitted code (4 source files + 3 CSS/module files)", "context": "NoProjectPage search UX, JQL subtask change, GET /api/bugs endpoint, DashboardPage bug table — all uncommitted", "blocking": true},
-    {"action": "Run 4 browser UAT tests from 02-HUMAN-UAT.md", "context": "Requires Docker running and valid OAuth token in DB from Phase 1", "blocking": true}
+    {"action": "Re-sync SAM project from UI after backend hot-reloads to confirm 459 issues stored", "context": "jira_sync_service.py changed this session — subtask step removed. DB may still have old 509-issue count. Re-sync confirms 459 Bug/Bug Task only.", "blocking": false}
   ],
   "decisions": [
     {"decision": "Atlassian OAuth 2.0 (3LO) over Basic Auth modal", "rationale": "Required for future API access + better UX", "phase": "01"},
     {"decision": "Token encrypted with Fernet at rest in SQLite oauth_tokens table", "rationale": "Security requirement from CR", "phase": "01"},
-    {"decision": "sessionStorage for user display cache, SQLite for auth persistence", "rationale": "sessionStorage cleared on tab close; SQLite token survives browser close", "phase": "01"},
-    {"decision": "NoProjectPage: show project list only when search query non-empty", "rationale": "Reduces visual noise on load; user-requested UX improvement", "phase": "02"},
-    {"decision": "JQL includes Bug subtasks via subTaskIssueTypes() + parent constraint", "rationale": "User wants both top-level bugs and bug subtasks; avoids fetching all subtask types", "phase": "02"},
-    {"decision": "GET /api/bugs/{project_key} separate from sync endpoint", "rationale": "Dashboard loads cached data without re-syncing; read vs write separation", "phase": "02"},
-    {"decision": "Bug table uses inline styles (not CSS module)", "rationale": "Consistent with existing DashboardPage style pattern", "phase": "02"}
+    {"decision": "Dashboard shows only Bug and Bug Task issues — no subtasks", "rationale": "User explicitly requested: display 459 Bug/Bug Task only, no child tickets", "phase": "02"},
+    {"decision": "Single-step JQL fetch: issuetype in (Bug, 'Bug Task') ORDER BY created DESC", "rationale": "Removed two-step fetch + dedup — subtasks excluded by user decision", "phase": "02"},
+    {"decision": "Jira Cloud API pagination via nextPageToken cursor, not startAt offset", "rationale": "POST /search/jql returns HTTP 400 on startAt; only nextPageToken supported. Hard cap 100/page.", "phase": "02"},
+    {"decision": "GET /api/bugs/{project_key} separate from sync endpoint", "rationale": "Dashboard loads cached data without re-syncing; read vs write separation", "phase": "02"}
   ],
   "uncommitted_files": [
-    "backend/routers/sync.py",
-    "backend/services/jira_sync_service.py",
-    "frontend/src/pages/DashboardPage.jsx",
-    "frontend/src/pages/NoProjectPage.jsx",
-    "frontend/src/pages/NoProjectPage.module.css",
-    ".planning/HANDOFF.json",
-    ".planning/STATE.md",
-    ".planning/phases/02-data-sync/.continue-here.md",
-    ".planning/phases/02-data-sync/02-01-PLAN.md",
-    ".planning/phases/02-data-sync/02-01-SUMMARY.md",
-    ".planning/phases/02-data-sync/02-02-PLAN.md",
-    ".planning/phases/02-data-sync/02-02-SUMMARY.md",
-    ".planning/phases/02-data-sync/02-CONTEXT.md",
-    ".planning/phases/02-data-sync/02-DISCUSSION-LOG.md",
-    ".planning/phases/02-data-sync/02-HUMAN-UAT.md",
-    ".planning/phases/02-data-sync/02-PATTERNS.md",
-    ".planning/phases/02-data-sync/02-REVIEW.md",
-    ".planning/phases/02-data-sync/02-VERIFICATION.md"
+    "backend/services/jira_sync_service.py"
   ],
-  "next_action": "Commit uncommitted source files: `git add backend/routers/sync.py backend/services/jira_sync_service.py frontend/src/pages/DashboardPage.jsx frontend/src/pages/NoProjectPage.jsx frontend/src/pages/NoProjectPage.module.css` then commit. Then run human UAT from 02-HUMAN-UAT.md.",
-  "context_notes": "Phase 2 code is fully automated-verified (8/8). Session added extra features at user request: search UX on NoProjectPage, JQL subtask inclusion, GET /bugs endpoint, full bug table on Dashboard. All uncommitted. Docker containers should be running (docker compose up from project root). backend/.env has secrets — gitignored, never commit."
+  "next_action": "Commit backend/services/jira_sync_service.py with message 'fix(sync): remove subtask fetch — dashboard shows Bug/Bug Task only'. Then /gsd-plan-phase 3.",
+  "context_notes": "Phase 02 is fully complete (human UAT 4/4 passed, committed). This session: user asked about the 64 subtasks; user then decided dashboard should show only the 459 Bug/Bug Task issues (no child subtasks). Simplified _fetch_bugs() to single-step JQL. One file uncommitted. Phase 03 (Dashboard UI — charts + project switcher) is ready to plan."
 }
