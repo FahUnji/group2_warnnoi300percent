@@ -233,11 +233,11 @@ function NoProjectPage() {
                     autoComplete="off"
                   />
                 </div>
-                {searchQuery && (() => {
+                {(() => {
                   const q = searchQuery.toLowerCase();
-                  const filtered = projects.filter(p =>
-                    p.name.toLowerCase().includes(q) || p.key.toLowerCase().includes(q)
-                  );
+                  const filtered = q
+                    ? projects.filter(p => p.name.toLowerCase().includes(q) || p.key.toLowerCase().includes(q))
+                    : projects;
                   if (filtered.length === 0) {
                     return (
                       <div style={{ padding: '20px', textAlign: 'center' }}>
