@@ -129,13 +129,13 @@ Replaces the existing URL text input and Connect button. Renders the list of Jir
 | Error (fetch failed) | See Copywriting Contract — error banner above the list area |
 | Project selected | Selected row gets `background: #e7f4f0`, left border `3px solid #1b4332`, `font-weight: 700` on project name |
 | Syncing (auto-sync in progress) | Full-width inline status bar replaces list: `<LoadingSpinner size={20} />` + "Syncing {PROJECT_NAME}…" text — 14px, color `#4b5563`, background `#f3f4f6`, border-radius 6px, padding 8px 16px |
-| Sync error | Error banner: background `#fef2f2`, border `1px solid #fecaca`, text `#b91c1c`, 13px |
+| Sync error | Error banner: background `#fef2f2`, border `1px solid #fecaca`, text `#b91c1c`, 12px |
 | Sync success | Brief success flash (background `rgba(227,239,234,0.6)`, text `#1b4332`) then immediate redirect — no manual dismiss needed |
 
 **Project row anatomy:**
 - Height: 48px minimum
 - Padding: 8px 16px
-- Layout: flex row, align-items center, gap 12px
+- Layout: flex row, align-items center, gap 8px
 - Left: project avatar/icon placeholder — 32x32px, background `#e7f4f0`, border-radius 8px, flex-shrink 0
 - Center: project name (14px, 400 weight, `#002d1c`) + project key (12px, 400, `#434654`) stacked vertically
 - Right: chevron icon (16x16px, stroke `#c3c6d6`) — hidden on selected row, shown on hover
