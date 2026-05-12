@@ -66,7 +66,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — CSS Module + static structure: create DashboardPage.module.css, rewrite DashboardPage.jsx with new layout (remove bug table, add PageHeader + ProjectsGrid + ConnectSection)
+- [x] 03-01-PLAN.md — CSS Module + static structure: create DashboardPage.module.css, rewrite DashboardPage.jsx with new layout (remove bug table, add PageHeader + ProjectsGrid + ConnectSection)
 - [ ] 03-02-PLAN.md — Data flow: wire /api/projects fetch, parallel /api/bugs/{key} stats, handleConnect, handleSync card-stat update
 
 ### Phase 4: Sprint Report
@@ -99,6 +99,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Jira Connection | 3/3 | Complete | 2026-05-12 |
 | 2. Data Sync | 0/2 | Planned | - |
-| 3. Dashboard UI | 0/2 | Planned | - |
+| 3. Dashboard UI | 1/2 | In Progress | - |
 | 4. Sprint Report | 0/TBD | Not started | - |
 | 5. Export | 0/TBD | Not started | - |
