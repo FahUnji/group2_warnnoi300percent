@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 complete — Phase 2 Data Sync next
-last_updated: "2026-05-12T04:00:00.000Z"
-last_activity: 2026-05-12 — Phase 1 marked complete (OAuth + auth flow done)
+stopped_at: Phase 2 context gathered — ready to plan
+last_updated: "2026-05-12T04:15:00.000Z"
+last_activity: 2026-05-12 — Phase 2 discuss-phase complete, 02-CONTEXT.md written
 progress:
   total_phases: 5
   completed_phases: 1
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-08)
 
 Phase: 2 of 5 (Data Sync)
 Plan: 0 of TBD — not started
-Status: Phase 1 complete — ready to plan Phase 2
-Last activity: 2026-05-12 — Phase 1 marked complete
+Status: Context gathered — ready to plan
+Last activity: 2026-05-12 — Phase 2 discussion complete (02-CONTEXT.md)
 
 Progress: [██░░░░░░░░] 20%
 
@@ -60,9 +60,9 @@ Progress: [██░░░░░░░░] 20%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Init: Python backend (FastAPI or Flask) + React frontend
-- Init: Jira API token Basic Auth — no OAuth for v1
-- Init: Manual sync only — no auto-sync for v1
+- Phase 1: Atlassian OAuth 2.0 (3LO) for auth — access_token + cloud_id stored encrypted in SQLite
+- Phase 2: Stay with SQLite (not MySQL); OAuth token path for Jira API calls
+- Phase 2: New JiraSyncService; NoProjectPage project picker + auto-sync → Dashboard
 
 ### Pending Todos
 
@@ -82,6 +82,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-12T04:00:00.000Z
-Stopped at: Phase 1 complete — run /gsd-discuss-phase 2 to begin Data Sync
-Resume file: .planning/ROADMAP.md
+Last session: 2026-05-12T04:15:00.000Z
+Stopped at: Phase 2 context gathered — run /gsd-plan-phase 2 to create plans
+Resume file: .planning/phases/02-data-sync/02-CONTEXT.md
