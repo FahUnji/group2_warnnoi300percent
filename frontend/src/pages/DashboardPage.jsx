@@ -51,11 +51,62 @@ function DashboardPage() {
       .catch(() => {});
   }, []);
 
-  // TODO Plan 02: fetch /api/projects on mount
-  useEffect(() => {}, []);
+  // Fetch /api/projects on mount
+  useEffect(() => {
+    setLoadingProjects(true);
+    fetch('/api/projects')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          setProjects(data.projects);
+        } else {
+          setProjectsError('Could not load projects. Check your connection and reload.');
+        }
+      })
+      .catch(() => {
+        setProjectsError('Could not load projects. Check your connection and reload.');
+      })
+      .finally(() => setLoadingProjects(false));
+  }, []);
 
-  // TODO Plan 02: fetch /api/bugs/{key} per project in parallel
-  useEffect(() => {}, [projects]);
+  // Fetch /api/bugs/{key} per project in parallel
+  useEffect(() => {
+    if (!projects.length) return;
+    const initial = {};
+    projects.forEach(p => { initial[p.key] = { open: 0, critical: 0, loading: true }; });
+    setBugStats(initial);
+
+    projects.forEach(project => {
+      fetch(`/api/bugs/${project.key}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) {
+            const bugs = data.bugs;
+            const open = bugs.filter(b =>
+              ['open', 'to do'].includes((b.status || '').toLowerCase())
+            ).length;
+            const critical = bugs.filter(b =>
+              ['critical', 'highest'].includes((b.priority || '').toLowerCase())
+            ).length;
+            setBugStats(prev => ({
+              ...prev,
+              [project.key]: { open, critical, loading: false }
+            }));
+          } else {
+            setBugStats(prev => ({
+              ...prev,
+              [project.key]: { open: 0, critical: 0, loading: false }
+            }));
+          }
+        })
+        .catch(() => {
+          setBugStats(prev => ({
+            ...prev,
+            [project.key]: { open: 0, critical: 0, loading: false }
+          }));
+        });
+    });
+  }, [projects]);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
@@ -74,6 +125,20 @@ function DashboardPage() {
       if (data.ok) {
         setLastSynced(data.synced_at);
         setSyncSuccess('Sync complete');
+        // Re-fetch bugs for the active project and update its card stats
+        if (projectKey) {
+          fetch(`/api/bugs/${projectKey}`)
+            .then(r => r.json())
+            .then(d => {
+              if (d.ok) {
+                const bugs = d.bugs;
+                const open = bugs.filter(b => ['open', 'to do'].includes((b.status || '').toLowerCase())).length;
+                const critical = bugs.filter(b => ['critical', 'highest'].includes((b.priority || '').toLowerCase())).length;
+                setBugStats(prev => ({ ...prev, [projectKey]: { open, critical, loading: false } }));
+              }
+            })
+            .catch(() => {});
+        }
         setTimeout(() => setSyncSuccess(''), 2000);
       } else {
         setSyncError('Sync failed. Try again or check your Jira connection.');
@@ -85,12 +150,38 @@ function DashboardPage() {
     }
   }
 
-  // TODO Plan 02: extract project key from URL or raw key input
-  function extractProjectKey(input) { return input.trim().toUpperCase(); }
+  function extractProjectKey(input) {
+    const trimmed = input.trim();
+    if (trimmed.includes('/')) {
+      const parts = trimmed.split('/').filter(Boolean);
+      return parts[parts.length - 1].toUpperCase();
+    }
+    return trimmed.toUpperCase();
+  }
 
-  // TODO Plan 02: handleConnect full implementation
   async function handleConnect() {
     if (!connectInput.trim() || connecting) return;
+    const key = extractProjectKey(connectInput);
+    setConnecting(true);
+    setConnectStatus({ type: 'loading', message: 'Connecting…' });
+    try {
+      const resp = await fetch(`/api/sync/${key}`, { method: 'POST' });
+      const data = await resp.json();
+      if (data.ok) {
+        setConnectStatus({ type: 'success', message: `Project ${key} synced successfully.` });
+        setConnectInput('');
+        fetch('/api/projects')
+          .then(r => r.json())
+          .then(d => { if (d.ok) setProjects(d.projects); })
+          .catch(() => {});
+      } else {
+        setConnectStatus({ type: 'error', message: `${data.detail || 'Sync failed'}. Check project key and try again.` });
+      }
+    } catch {
+      setConnectStatus({ type: 'error', message: 'Connection failed. Check project key and try again.' });
+    } finally {
+      setConnecting(false);
+    }
   }
 
   return (
