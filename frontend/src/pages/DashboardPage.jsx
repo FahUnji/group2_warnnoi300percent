@@ -69,8 +69,12 @@ function DashboardPage() {
         .then(data => {
           if (data.ok) {
             const bugs = data.bugs;
-            const open = bugs.filter(b => ['open', 'to do'].includes((b.status || '').toLowerCase())).length;
-            const critical = bugs.filter(b => ['critical', 'highest'].includes((b.priority || '').toLowerCase())).length;
+            const isNotDone = b => (b.status || '').toLowerCase() !== 'done';
+            const open = bugs.filter(isNotDone).length;
+            const critical = bugs.filter(b =>
+              isNotDone(b) &&
+              ['critical', 'highest'].includes((b.priority || '').toLowerCase())
+            ).length;
             setBugStats(prev => ({ ...prev, [project.key]: { open, critical, loading: false } }));
           } else {
             setBugStats(prev => ({ ...prev, [project.key]: { open: 0, critical: 0, loading: false } }));
