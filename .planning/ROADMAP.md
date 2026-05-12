@@ -50,7 +50,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Backend sync layer: bugs table migration, JiraSyncService (OAuth + Jira Cloud API), POST /api/sync/{project_key} + GET /api/projects endpoints, router registration
-- [ ] 02-02-PLAN.md — Frontend sync UI: NoProjectPage project picker (replaces URL input) with auto-sync, DashboardPage Sync Now button + LastSyncedTimestamp
+- [x] 02-02-PLAN.md — Frontend sync UI: NoProjectPage project picker (replaces URL input) with auto-sync, DashboardPage Sync Now button + LastSyncedTimestamp
 
 ### Phase 3: Dashboard UI
 **Goal**: QA testers can see bug summaries and charts for a selected project
