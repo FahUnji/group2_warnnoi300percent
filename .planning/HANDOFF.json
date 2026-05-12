@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-12T15:56:19Z",
+  "timestamp": "2026-05-12T16:10:58Z",
   "phase": "03",
   "phase_name": "dashboard-ui",
   "phase_dir": ".planning/phases/03-dashboard-ui",
@@ -18,7 +18,8 @@
     {"id": "03-kebab", "name": "Per-project 3-dot kebab menu with remove action; navigate to /no-project when last removed", "status": "done", "commit": "37bfb5a"},
     {"id": "03-kebab-visible", "name": "Make kebab button always visible (removed hover-only opacity:0)", "status": "done", "commit": "57046df"},
     {"id": "03-docs", "name": "Correct planning docs: OAuth 2.0, SQLite, search-and-select flow, PROJ-03", "status": "done", "commit": "69be528"},
-    {"id": "03-critical-fix", "name": "Fix critical count to exclude resolved bugs (isNotDone predicate)", "status": "done", "commit": "8fdec32"}
+    {"id": "03-critical-fix", "name": "Fix critical count to exclude resolved bugs (isNotDone predicate)", "status": "done", "commit": "8fdec32"},
+    {"id": "03-total-bugs", "name": "Add TOTAL BUGS stat to project cards (unfiltered, full-width above OPEN/CRITICAL row)", "status": "done", "commit": "ab7388c"}
   ],
   "remaining_tasks": [
     {"id": "03-human-uat", "name": "Human UAT: 5 items in 03-HUMAN-UAT.md — run frontend + backend, test visuals and data flow", "status": "not_started"},
@@ -44,7 +45,8 @@
     {"decision": "isNotDone predicate for critical count", "rationale": "critical = bugs with status != done AND priority critical/highest — prevents resolved bugs inflating the critical counter", "phase": "03"},
     {"decision": "Kebab menu as sibling button (wrapper div + absolute position)", "rationale": "Project cards are <button> — nested <button> is invalid HTML; wrapper div + sibling button solves it cleanly", "phase": "03"},
     {"decision": "Always-visible 3-dot button (no hover-only)", "rationale": "User preference — hover-only was too hard to discover for QA users", "phase": "03"},
-    {"decision": "Privacy-by-default project search (no auto-load on mount)", "rationale": "Prevents leaking full Jira project list; user must type before results appear", "phase": "03"}
+    {"decision": "Privacy-by-default project search (no auto-load on mount)", "rationale": "Prevents leaking full Jira project list; user must type before results appear", "phase": "03"},
+    {"decision": "TOTAL BUGS = bugs.length (no filter)", "rationale": "total is unfiltered — all synced bugs regardless of status/priority; matches dashboard.html mockup layout", "phase": "03"}
   ],
   "uncommitted_files": [],
   "next_action": "Run human UAT (5 items in 03-HUMAN-UAT.md) with backend+frontend running. After approval, run /gsd-code-review 3 --fix to fix 3 blockers, then mark phase complete.",
