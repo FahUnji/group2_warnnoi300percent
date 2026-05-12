@@ -45,7 +45,6 @@ async def atlassian_login():
         "redirect_uri": redirect_uri,
         "state": state,
         "response_type": "code",
-        "prompt": "consent",
     }
     url = ATLASSIAN_AUTH_URL + "?" + urllib.parse.urlencode(params)
     return RedirectResponse(url)
