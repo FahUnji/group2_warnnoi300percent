@@ -7,20 +7,21 @@
 
 ### Jira Authentication
 
-- [ ] **JIRA-01**: System reads Jira connection config (base URL, email, API token) from environment variables or config file
-- [ ] **JIRA-02**: System authenticates to Jira REST API using Basic Auth (email + API token)
-- [ ] **JIRA-03**: System validates Jira connection and shows clear error if credentials are invalid
+- [x] **JIRA-01**: System connects to Jira via Atlassian OAuth 2.0 (3LO) — user authorizes via Atlassian consent screen; access token + cloud_id stored encrypted in SQLite
+- [x] **JIRA-02**: System authenticates Jira REST API calls using OAuth Bearer token (not Basic Auth)
+- [x] **JIRA-03**: System validates Jira connection and shows clear error if token is invalid or expired
 
 ### Data Sync
 
-- [ ] **SYNC-01**: User can trigger manual sync of bug data from Jira to MySQL via button
-- [ ] **SYNC-02**: Sync fetches all issues of type "Bug" for the selected project (fields: ID, summary, status, priority, sprint, assignee)
-- [ ] **SYNC-03**: Synced bug records are stored in MySQL with a sync timestamp
+- [x] **SYNC-01**: Sync is triggered automatically when user selects a project — fetches all Bug-type issues and stores them locally
+- [x] **SYNC-02**: Sync fetches all issues of type "Bug" and "Bug Task" for the selected project (fields: ID, summary, status, priority, sprint, assignee)
+- [x] **SYNC-03**: Synced bug records are stored in SQLite with a sync timestamp
 
 ### Project Selection
 
-- [ ] **PROJ-01**: User can select from multiple Jira projects via a project list page
-- [ ] **PROJ-02**: Dashboard data refreshes when project selection changes
+- [x] **PROJ-01**: User searches for Jira projects via debounced search input (300ms); results load from live Jira API only after typing — no auto-load on mount (privacy by default)
+- [x] **PROJ-02**: Dashboard shows all synced projects as cards; each card displays open bug count and critical bug count
+- [x] **PROJ-03**: User can remove a project from the dashboard via 3-dot kebab menu → Remove project; when last project is removed, user is redirected to the no-project page
 
 ### Bug Summary Report
 
@@ -51,7 +52,7 @@
 
 ### Automation
 
-- **AUTO-01**: Scheduled auto-sync (cron) to keep MySQL data fresh without manual trigger
+- **AUTO-01**: Scheduled auto-sync (cron) to keep local SQLite data fresh without manual trigger
 - **AUTO-02**: Email notification when critical bug count exceeds threshold
 
 ### Advanced Filtering
@@ -65,23 +66,24 @@
 | Feature | Reason |
 |---------|--------|
 | Write to Jira (create/edit bugs) | Read-only dashboard — not a Jira replacement |
-| Dashboard user login/auth | Internal QA tool — no auth needed for v1 |
 | Real-time websocket updates | Manual sync sufficient for v1 |
 | Mobile app | Web dashboard only |
 | Last sync timestamp display (SYNC-04) | Removed from spec — not needed for v1 |
+| Basic Auth / API token entry form | Replaced by OAuth 2.0 flow — no manual credential entry |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| JIRA-01 | Phase 1 | Pending |
-| JIRA-02 | Phase 1 | Pending |
-| JIRA-03 | Phase 1 | Pending |
-| SYNC-01 | Phase 2 | Pending |
-| SYNC-02 | Phase 2 | Pending |
-| SYNC-03 | Phase 2 | Pending |
-| PROJ-01 | Phase 3 | Pending |
-| PROJ-02 | Phase 3 | Pending |
+| JIRA-01 | Phase 1 | Done |
+| JIRA-02 | Phase 1 | Done |
+| JIRA-03 | Phase 1 | Done |
+| SYNC-01 | Phase 2 | Done |
+| SYNC-02 | Phase 2 | Done |
+| SYNC-03 | Phase 2 | Done |
+| PROJ-01 | Phase 3 | Done |
+| PROJ-02 | Phase 3 | Done |
+| PROJ-03 | Phase 3 | Done |
 | SUMM-01 | Phase 3 | Pending |
 | SUMM-02 | Phase 3 | Pending |
 | SUMM-03 | Phase 3 | Pending |
@@ -94,10 +96,10 @@
 | UI-01 | Phase 3 | Pending |
 
 **Coverage:**
-- v1 requirements: 18 total
-- Mapped to phases: 18
+- v1 requirements: 19 total (PROJ-03 added)
+- Mapped to phases: 19
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-08 after roadmap creation — traceability confirmed*
+*Last updated: 2026-05-12 — corrected auth (OAuth not Basic Auth), storage (SQLite not MySQL), project flow (search-and-select + remove); marked Phases 1–2 and PROJ-01/02/03 done*
