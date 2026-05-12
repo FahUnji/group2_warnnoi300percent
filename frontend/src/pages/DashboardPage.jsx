@@ -30,8 +30,10 @@ function DashboardPage() {
   const [openCardMenu, setOpenCardMenu] = useState(null);
   const [removingKey, setRemovingKey] = useState(null);
   const [isLeavingDashboard, setIsLeavingDashboard] = useState(false);
+  const [showAddDropdown, setShowAddDropdown] = useState(false);
   const searchRef = useRef(null);
   const userMenuRef = useRef(null);
+  const addSearchRef = useRef(null);
 
   useEffect(() => {
     if (user) return;
@@ -112,8 +114,10 @@ function DashboardPage() {
   useEffect(() => {
     if (!addQuery.trim()) {
       setAddResults([]);
+      setShowAddDropdown(false);
       return;
     }
+    setShowAddDropdown(true);
     const timer = setTimeout(() => {
       setAddLoading(true);
       fetch(`/api/projects/search?q=${encodeURIComponent(addQuery)}`)
@@ -130,6 +134,7 @@ function DashboardPage() {
     function onClickOutside(e) {
       if (searchRef.current && !searchRef.current.contains(e.target)) setShowDropdown(false);
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
+      if (addSearchRef.current && !addSearchRef.current.contains(e.target)) setShowAddDropdown(false);
     }
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
@@ -375,58 +380,58 @@ function DashboardPage() {
                   <span>Syncing {addSelectedKey}…</span>
                 </div>
               ) : (
-                <>
-                  <div className={styles.addSearchWrap}>
-                    <svg className={styles.addSearchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
-                      <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    <input
-                      className={styles.addSearchInput}
-                      type="search"
-                      placeholder="Search projects…"
-                      value={addQuery}
-                      onChange={e => setAddQuery(e.target.value)}
-                      aria-label="Search projects"
-                      autoComplete="off"
-                    />
-                  </div>
-
-                  {addLoading ? (
-                    <div className={styles.addSyncBar}>
-                      <LoadingSpinner size={20} />
-                      <span style={{ color: '#6b7280' }}>Searching…</span>
+                <div className={styles.addSearchWrap} ref={addSearchRef}>
+                  <svg className={styles.addSearchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+                    <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <input
+                    className={styles.addSearchInput}
+                    type="search"
+                    placeholder="Search projects…"
+                    value={addQuery}
+                    onChange={e => setAddQuery(e.target.value)}
+                    aria-label="Search projects"
+                    autoComplete="off"
+                    onFocus={() => addQuery.trim() && setShowAddDropdown(true)}
+                  />
+                  {addQuery.trim() && showAddDropdown && (
+                    <div className={styles.addDropdown}>
+                      {addLoading ? (
+                        <div className={styles.addDropdownLoading}>
+                          <LoadingSpinner size={16} />
+                          <span>Searching…</span>
+                        </div>
+                      ) : addResults.length === 0 ? (
+                        <p className={styles.addDropdownEmpty}>No projects match &ldquo;{addQuery}&rdquo;</p>
+                      ) : (
+                        <ul className={styles.addProjectList} role="list" aria-label="Jira projects">
+                          {addResults.map((project, idx) => (
+                            <li key={project.key} role="listitem">
+                              <button
+                                className={`${styles.addProjectRow}${addSelectedKey === project.key ? ' ' + styles.addProjectRowSelected : ''}`}
+                                onClick={() => handleAddProject(project)}
+                                aria-pressed={addSelectedKey === project.key}
+                                style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #c3c6d6' : 'none' }}
+                              >
+                                <div className={styles.addProjectAvatar} aria-hidden="true">
+                                  {project.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className={styles.addProjectInfo}>
+                                  <span className={styles.addProjectName}>{project.name}</span>
+                                  <span className={styles.addProjectKey}>{project.key}</span>
+                                </div>
+                                <svg className={styles.addProjectChevron} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
-                  ) : !addQuery.trim() ? (
-                    <p className={styles.addEmptyText}>Type to search your Jira projects</p>
-                  ) : addResults.length === 0 ? (
-                    <p className={styles.addEmptyText}>No projects match &ldquo;{addQuery}&rdquo;</p>
-                  ) : (
-                    <ul className={styles.addProjectList} role="list" aria-label="Jira projects">
-                      {addResults.map((project, idx) => (
-                        <li key={project.key} role="listitem">
-                          <button
-                            className={`${styles.addProjectRow}${addSelectedKey === project.key ? ' ' + styles.addProjectRowSelected : ''}`}
-                            onClick={() => handleAddProject(project)}
-                            aria-pressed={addSelectedKey === project.key}
-                            style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #c3c6d6' : 'none' }}
-                          >
-                            <div className={styles.addProjectAvatar} aria-hidden="true">
-                              {project.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className={styles.addProjectInfo}>
-                              <span className={styles.addProjectName}>{project.name}</span>
-                              <span className={styles.addProjectKey}>{project.key}</span>
-                            </div>
-                            <svg className={styles.addProjectChevron} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
                   )}
-                </>
+                </div>
               )}
             </div>
 
@@ -576,58 +581,58 @@ function DashboardPage() {
                 <span>Syncing {addSelectedKey}…</span>
               </div>
             ) : (
-              <>
-                <div className={styles.addSearchWrap}>
-                  <svg className={styles.addSearchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
-                    <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  <input
-                    className={styles.addSearchInput}
-                    type="search"
-                    placeholder="Search projects…"
-                    value={addQuery}
-                    onChange={e => setAddQuery(e.target.value)}
-                    aria-label="Search projects to add"
-                    autoComplete="off"
-                  />
-                </div>
-
-                {addLoading ? (
-                  <div className={styles.addSyncBar}>
-                    <LoadingSpinner size={18} />
-                    <span style={{ color: '#6b7280' }}>Searching…</span>
+              <div className={styles.addSearchWrap} ref={addSearchRef}>
+                <svg className={styles.addSearchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+                  <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                <input
+                  className={styles.addSearchInput}
+                  type="search"
+                  placeholder="Search projects…"
+                  value={addQuery}
+                  onChange={e => setAddQuery(e.target.value)}
+                  aria-label="Search projects to add"
+                  autoComplete="off"
+                  onFocus={() => addQuery.trim() && setShowAddDropdown(true)}
+                />
+                {addQuery.trim() && showAddDropdown && (
+                  <div className={styles.addDropdown}>
+                    {addLoading ? (
+                      <div className={styles.addDropdownLoading}>
+                        <LoadingSpinner size={16} />
+                        <span>Searching…</span>
+                      </div>
+                    ) : addResults.length === 0 ? (
+                      <p className={styles.addDropdownEmpty}>No projects match &ldquo;{addQuery}&rdquo;</p>
+                    ) : (
+                      <ul className={styles.addProjectList} role="list" aria-label="Jira projects">
+                        {addResults.map((project, idx) => (
+                          <li key={project.key} role="listitem">
+                            <button
+                              className={`${styles.addProjectRow}${addSelectedKey === project.key ? ' ' + styles.addProjectRowSelected : ''}`}
+                              onClick={() => handleAddProject(project)}
+                              aria-pressed={addSelectedKey === project.key}
+                              style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #e5e7eb' : 'none' }}
+                            >
+                              <div className={styles.addProjectAvatar} aria-hidden="true">
+                                {project.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className={styles.addProjectInfo}>
+                                <span className={styles.addProjectName}>{project.name}</span>
+                                <span className={styles.addProjectKey}>{project.key}</span>
+                              </div>
+                              <svg className={styles.addProjectChevron} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                ) : !addQuery.trim() ? (
-                  <p className={styles.addEmptyText}>Type to search your Jira projects</p>
-                ) : addResults.length === 0 ? (
-                  <p className={styles.addEmptyText}>No projects match &ldquo;{addQuery}&rdquo;</p>
-                ) : (
-                  <ul className={styles.addProjectList} role="list" aria-label="Jira projects">
-                    {addResults.map((project, idx) => (
-                      <li key={project.key} role="listitem">
-                        <button
-                          className={`${styles.addProjectRow}${addSelectedKey === project.key ? ' ' + styles.addProjectRowSelected : ''}`}
-                          onClick={() => handleAddProject(project)}
-                          aria-pressed={addSelectedKey === project.key}
-                          style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #e5e7eb' : 'none' }}
-                        >
-                          <div className={styles.addProjectAvatar} aria-hidden="true">
-                            {project.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className={styles.addProjectInfo}>
-                            <span className={styles.addProjectName}>{project.name}</span>
-                            <span className={styles.addProjectKey}>{project.key}</span>
-                          </div>
-                          <svg className={styles.addProjectChevron} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
