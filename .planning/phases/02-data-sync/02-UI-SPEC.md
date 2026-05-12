@@ -1,7 +1,7 @@
 ---
 phase: 2
 slug: data-sync
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-12
@@ -59,7 +59,7 @@ Declared values (multiples of 4):
 Exceptions:
 - Nav bar height: 64px (already established in `NoProjectPage.module.css`)
 - Project list item height: 48px minimum (touch-friendly click target)
-- Sync button min-height: 40px
+- Sync button min-height: 48px
 
 ---
 
@@ -145,7 +145,7 @@ Replaces the existing URL text input and Connect button. Renders the list of Jir
 
 **Section label above list:**
 - Text: "SELECT A PROJECT" (see Copywriting Contract)
-- Style: 11px, weight 700, color `#065b41`, letter-spacing 0.55px, line-height 16px — matches `.connectLabel` exactly
+- Style: 12px, weight 700, color `#065b41`, letter-spacing 0.55px, line-height 16px — matches `.connectLabel` exactly
 
 ### 2. SyncButton (new — inside DashboardPage)
 
@@ -153,7 +153,7 @@ A compact button placed in the DashboardPage header area, to the right of the pa
 
 | State | Visual |
 |-------|--------|
-| Idle | Background `#1b4332`, text `#ffffff`, 14px, weight 700, border-radius 10px, padding 8px 16px, min-height 40px; label: "Sync Now" |
+| Idle | Background `#1b4332`, text `#ffffff`, 14px, weight 700, border-radius 10px, padding 8px 16px, min-height 48px; label: "Sync Now" |
 | Hover | Background `#1f5040`, translateY(-1px) |
 | Active | translateY(0) |
 | Loading | Disabled, opacity 0.7, cursor not-allowed; shows `<LoadingSpinner size={16} />` inline left of label text "Syncing…" |
@@ -265,11 +265,11 @@ Destructive actions in Phase 2: none. Sign-out exists but is unchanged from Phas
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-05-12
