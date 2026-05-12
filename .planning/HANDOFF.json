@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-12T02:53:50Z",
+  "timestamp": "2026-05-12T03:29:49Z",
   "phase": "01",
   "phase_name": "jira-connection",
   "phase_dir": ".planning/phases/01-jira-connection",
@@ -18,16 +18,18 @@
     {"id": "sqlite-docker", "name": "SQLite migration + Docker Compose setup", "status": "done", "commit": "c31427c"},
     {"id": "ui-redesign", "name": "ConnectionPage redesigned to match Figma — single button hero layout", "status": "done", "commit": "45aacf0"},
     {"id": "footer-fix", "name": "Footer fixed to bottom of screen (flex: 1 on heroGrid)", "status": "done", "commit": "0bc36e8"},
-    {"id": "oauth-3lo", "name": "Replace Basic Auth modal with Atlassian OAuth 2.0 (3LO)", "status": "done", "commit": null},
-    {"id": "auth-me-endpoint", "name": "/api/auth/me — decrypt token, call Atlassian, return user info + has_projects", "status": "done", "commit": null},
-    {"id": "no-project-page", "name": "NoProjectPage.jsx + CSS matching Figma design", "status": "done", "commit": null},
-    {"id": "jira-projects-table", "name": "jira_projects table + count_projects() helper", "status": "done", "commit": null},
-    {"id": "user-info-nav", "name": "NoProjectPage + DashboardPage display user avatar + name from /api/auth/me", "status": "done", "commit": null},
-    {"id": "logout", "name": "POST /api/auth/logout — delete DB token + sessionStorage clear + redirect to /", "status": "done", "commit": null},
-    {"id": "session-persistence", "name": "ConnectionPage auth check on mount — auto-redirect if token valid + spinner", "status": "done", "commit": null},
-    {"id": "has-projects-field", "name": "has_projects field added to /api/auth/me response for routing", "status": "done", "commit": null}
+    {"id": "oauth-3lo", "name": "Replace Basic Auth modal with Atlassian OAuth 2.0 (3LO)", "status": "done", "commit": "cd58d16"},
+    {"id": "auth-me-endpoint", "name": "/api/auth/me — decrypt token, call Atlassian, return user info + has_projects", "status": "done", "commit": "cd58d16"},
+    {"id": "no-project-page", "name": "NoProjectPage.jsx + CSS matching Figma design", "status": "done", "commit": "e3e4861"},
+    {"id": "jira-projects-table", "name": "jira_projects table + count_projects() helper", "status": "done", "commit": "e3e4861"},
+    {"id": "user-info-nav", "name": "NoProjectPage + DashboardPage display user avatar + name from /api/auth/me", "status": "done", "commit": "cd58d16"},
+    {"id": "logout", "name": "POST /api/auth/logout — delete DB token + sessionStorage clear + redirect to /", "status": "done", "commit": "9555147"},
+    {"id": "session-persistence", "name": "ConnectionPage auth check on mount — auto-redirect if token valid + spinner", "status": "done", "commit": "9555147"},
+    {"id": "has-projects-field", "name": "has_projects field added to /api/auth/me response for routing", "status": "done", "commit": "9555147"},
+    {"id": "oauth-credentials", "name": "ATLASSIAN_CLIENT_ID + ATLASSIAN_CLIENT_SECRET confirmed in backend/.env, container force-recreated", "status": "done", "commit": null}
   ],
   "remaining_tasks": [
+    {"id": "atlassian-dev-mode", "name": "Add test user in Atlassian developer console (Distribution tab) — unblocks OAuth login", "status": "not_started"},
     {"id": "rescope-uat", "name": "Re-scope UAT — 3 new OAuth tests replacing old Basic Auth modal tests", "status": "not_started"},
     {"id": "run-uat", "name": "Run re-scoped UAT and confirm pass", "status": "not_started"},
     {"id": "phase-approval", "name": "Mark Phase 1 complete in ROADMAP.md + STATE.md", "status": "not_started"},
@@ -35,12 +37,23 @@
   ],
   "blockers": [
     {
+      "description": "Atlassian OAuth app is in Development mode — only app owner can log in. User sees 'This application is in development - only the owner of this application may grant it access to their account.'",
+      "type": "human_action",
+      "workaround": "Go to developer.atlassian.com/console/myapps/ → open the OAuth app → Distribution tab → Testing section → add your Atlassian email as allowed user"
+    },
+    {
       "description": "UAT tests (01-HUMAN-UAT.md) test removed Basic Auth modal — must be re-scoped before running",
       "type": "technical",
       "workaround": "Re-scope to 3 tests: (1) ConnectionPage renders 'Continue with Atlassian' button, (2) button redirects to Atlassian OAuth URL, (3) after OAuth → /no-project shows user name + avatar in navbar"
     }
   ],
-  "human_actions_pending": [],
+  "human_actions_pending": [
+    {
+      "action": "Add your Atlassian email as a tester in the OAuth app's Distribution tab",
+      "context": "App is in Development mode — go to developer.atlassian.com/console/myapps/ → open app → Distribution → Testing → add email",
+      "blocking": true
+    }
+  ],
   "decisions": [
     {"decision": "Atlassian OAuth 2.0 (3LO) over Basic Auth modal", "rationale": "Required for future API access + better UX; prompt=consent enables account switching", "phase": "01"},
     {"decision": "Token encrypted with Fernet at rest in SQLite oauth_tokens table", "rationale": "Security requirement from CR", "phase": "01"},
@@ -51,13 +64,10 @@
     {"decision": "has_projects in /api/auth/me response", "rationale": "ConnectionPage needs routing destination without extra API call", "phase": "01"}
   ],
   "uncommitted_files": [
-    "backend/models/oauth_token.py",
-    "backend/routers/auth.py",
-    "frontend/src/pages/ConnectionPage.jsx",
-    "frontend/src/pages/DashboardPage.jsx",
-    "frontend/src/pages/NoProjectPage.jsx",
-    "frontend/src/pages/NoProjectPage.module.css"
+    ".planning/HANDOFF.json",
+    ".planning/phases/01-jira-connection/.continue-here.md",
+    "frontend/src/pages/ConnectionPage.jsx"
   ],
-  "next_action": "Re-scope 01-HUMAN-UAT.md with 3 new OAuth tests, run them, then mark Phase 1 complete in ROADMAP.md + STATE.md",
-  "context_notes": "Two sessions of auth work. Session N: OAuth 2.0 (3LO) replacing Basic Auth modal, /api/auth/me, user info in nav. Session N+1: logout (POST /api/auth/logout deletes DB token), session persistence (ConnectionPage auto-redirects on mount if token valid, spinner prevents login page flash). All features confirmed working end-to-end with real Atlassian account. Only UAT re-scope + phase close remain before Phase 2."
+  "next_action": "User completes human action: add test email in Atlassian developer console Distribution tab. Then test OAuth login end-to-end. Then re-scope + run UAT. Then mark Phase 1 complete.",
+  "context_notes": "OAuth credentials already existed in backend/.env from a previous session. This session: confirmed env vars loaded in container (force-recreate). User attempted login — blocked by Atlassian dev-mode restriction. Fix is purely a console setting, no code change needed. Once user adds their email in Distribution tab, OAuth login should complete end-to-end."
 }
