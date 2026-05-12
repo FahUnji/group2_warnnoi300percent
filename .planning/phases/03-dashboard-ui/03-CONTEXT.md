@@ -1,12 +1,14 @@
 # Phase 3: Dashboard UI - Context
 
 **Gathered:** 2026-05-12
-**Status:** Ready for planning
+**Status:** Ready for planning (updated to match dashboard.html mockup)
 
 <domain>
 ## Phase Boundary
 
-Replace the Phase 2 raw bug table dashboard with a proper visual dashboard. Delivers: (1) project cards grid at the top — one card per synced project, click to select active project; (2) three summary cards (total bugs, open, critical) for the selected project; (3) two pie charts (status breakdown, priority breakdown) for the selected project. Bug table is REMOVED. No new pages or routes — all changes go into `DashboardPage.jsx`.
+Replace the Phase 2 raw bug table dashboard with the visual design from `UI/html/dashboard.html`. Delivers: (1) "Active Projects" page — card grid showing all synced projects, each card with inline OPEN BUGS + CRITICAL counts and a color-coded left bar; (2) "Add New Project" connect section at the bottom of the same page. No pie charts. No separate summary cards row. Bug table is REMOVED. All changes go into `DashboardPage.jsx` and a new `DashboardPage.module.css`.
+
+**Reference mockup:** `UI/html/dashboard.html` + `UI/css/dashboard.css` — implement exactly this design in React.
 
 </domain>
 
@@ -14,30 +16,36 @@ Replace the Phase 2 raw bug table dashboard with a proper visual dashboard. Deli
 ## Implementation Decisions
 
 ### Chart Library
-- **D-01:** Use **Recharts** for all charts. Install via `npm install recharts`. Use `<PieChart>` + `<Pie>` + `<Cell>` components. No other chart library needed.
+- **D-01:** **No chart library needed.** Recharts is NOT required. Phase 3 does not have pie charts. Remove recharts from the plan entirely.
 
-### Chart Types
-- **D-02:** Both status breakdown and priority breakdown render as **pie charts**. One pie for status (Open/In Progress/Closed/etc.), one pie for priority (Critical/High/Medium/Low).
-
-### Project Switcher
-- **D-03:** Dashboard top section shows a **card grid of all synced projects**. Each project has its own card showing the project name (and optionally the project key). Clicking a card sets it as the active project — the summary cards and charts below update immediately to show that project's data. No redirect to NoProjectPage for switching.
-- **D-04:** The active project card is highlighted with the accent color (`#1b4332` background or border). Only one project can be active at a time.
-- **D-05:** Projects available in the grid come from calling `GET /api/projects` (already exists from Phase 2 — returns list of synced `jira_projects` rows). projectKey is stored in `sessionStorage('active_project_key')` — pre-select that project on mount.
-
-### Summary Cards
-- **D-06:** Three summary cards displayed as a row below the project grid: **Total Bugs**, **Open Bugs**, **Critical Bugs**. Counts are computed on the frontend from the bug list returned by `GET /api/bugs/{project_key}`. No new backend endpoint needed for summaries.
-
-### Bug Table
-- **D-07:** **Remove the existing raw bug issue table** from DashboardPage. Phase 3 replaces it with the chart + summary card layout. The Sync button and last-synced timestamp line are kept.
+### Project Cards (replaces D-02, D-03, D-04 from original)
+- **D-02:** Each project card shows **inline stats** — two stat boxes: OPEN BUGS count + CRITICAL count. Computed from `GET /api/bugs/{project_key}` for that card's project. No click-to-select charts mechanism.
+- **D-03:** Each card has a **colored left bar** (5px wide): `#dc2626` red if critical count > 0; `#065b41` green if critical = 0.
+- **D-04:** Cards use hover animation (`translateY(-2px)` + green shadow). No "active selected" highlight — all cards are equal. Clicking a card saves `sessionStorage('active_project_key')` for continuity but does NOT change page content in Phase 3.
 
 ### Data Flow
-- **D-08:** On project card click: fetch `GET /api/bugs/{project_key}` → compute summary counts → compute status/priority distributions → render cards + charts. Same endpoint used in Phase 2, no backend changes needed.
+- **D-05:** On mount: `GET /api/projects` → for each project in parallel: `GET /api/bugs/{project_key}` → compute openCount (status 'open'/'to do') + criticalCount (priority 'critical'/'highest') → render card with stats + bar color. No separate summary row endpoint needed.
+
+### No Summary Cards Row
+- **D-06:** **No separate summary cards row.** Stats are inline on each project card. The three-card row (Total/Open/Critical) is NOT built in Phase 3.
+
+### Bug Table
+- **D-07:** **Remove the existing raw bug issue table** from DashboardPage. Keep: Sync button, last-synced timestamp. Remove: bug `<table>` element and all table-related state.
+
+### Add New Project Section
+- **D-08:** "Add New Project" connect section at the bottom of DashboardPage. Two-panel layout:
+  - Left panel (dark #1b4332): Jira icon + "Connect to Jira" title + subtitle.
+  - Right panel (white): "Add New Project" heading, description text, project key input field, "Connect" button.
+  - On Connect click: extract project key from input (accept raw key like `SAM` or extract from URL like `https://company.atlassian.net/projects/SAM`), POST `/api/sync/{project_key}`, show loading/error/success inline, on success: re-fetch projects and re-fetch bugs for new project, add new card to grid.
+  - Input placeholder: `https://your-company.atlassian.net/projects/ABC` (matches mockup).
+
+### CSS
+- **D-09:** Create `frontend/src/pages/DashboardPage.module.css`. All new styles use CSS Modules classes. Do NOT use inline styles for new sections. Follow class names and structure from `UI/css/dashboard.css` exactly where possible.
 
 ### Claude's Discretion
-- Pie chart color scheme for slices — use the established color tokens where possible (red for Critical, etc.) but Claude can pick a tasteful palette
-- Exact card layout spacing and responsive behavior within the established CSS Modules + color token system
-- Whether to show a legend beside or below each pie chart
-- Empty state when no bugs exist for the selected project
+- Loading state while fetching per-project bug counts (spinner or skeleton)
+- Error state per card if bug fetch fails for one project
+- Empty state when GET /api/projects returns 0 projects
 
 </decisions>
 
@@ -46,13 +54,17 @@ Replace the Phase 2 raw bug table dashboard with a proper visual dashboard. Deli
 
 **Downstream agents MUST read these before planning or implementing.**
 
+### Mockup to implement (PRIMARY reference)
+- `UI/html/dashboard.html` — exact HTML structure to replicate in React
+- `UI/css/dashboard.css` — exact CSS to replicate in CSS Modules
+- `UI/css/shared.css` — shared NavBar styles (already in app from Phase 1/2)
+
 ### Existing Dashboard Implementation (to modify)
-- `frontend/src/pages/DashboardPage.jsx` — current Phase 2 implementation; remove bug table, add project grid + summary cards + pie charts
+- `frontend/src/pages/DashboardPage.jsx` — current Phase 2 implementation; remove bug table, rewrite content area
 - `frontend/src/App.jsx` — routing; no new routes needed for Phase 3
 
 ### Phase 2 Context (decisions to carry forward)
 - `.planning/phases/02-data-sync/02-CONTEXT.md` — D-01 thru D-11: SQLite, OAuth token auth, bug schema, project flow
-- `.planning/phases/02-data-sync/02-UI-SPEC.md` — color tokens, typography scale, spacing scale, design system rules
 
 ### Requirements
 - `.planning/REQUIREMENTS.md` — PROJ-01, PROJ-02, SUMM-01, SUMM-02, SUMM-03, CHART-01, CHART-02, UI-01 are the governing requirements
@@ -60,11 +72,12 @@ Replace the Phase 2 raw bug table dashboard with a proper visual dashboard. Deli
 
 ### Existing Backend Endpoints (no changes needed)
 - `GET /api/projects` — returns list of synced projects (from `jira_projects` table)
-- `GET /api/bugs/{project_key}` — returns full bug list for a project; frontend aggregates for charts
+- `GET /api/bugs/{project_key}` — returns full bug list for a project; frontend computes open + critical counts
+- `POST /api/sync/{project_key}` — triggers Jira sync; used by "Add New Project" connect button
 
 ### Existing Component Patterns
 - `frontend/src/components/LoadingSpinner/LoadingSpinner.jsx` — reuse for loading states
-- `frontend/src/pages/NoProjectPage.jsx` — reference for project card styling pattern
+- `frontend/src/pages/NoProjectPage.jsx` — reference for fetch pattern + error handling
 
 </canonical_refs>
 
@@ -74,45 +87,46 @@ Replace the Phase 2 raw bug table dashboard with a proper visual dashboard. Deli
 ### Reusable Assets
 - `DashboardPage.jsx` → `handleSync()` + Sync button: keep unchanged
 - `DashboardPage.jsx` → last-synced timestamp block: keep unchanged
-- `DashboardPage.jsx` → `statusColor()` + `priorityColor()` helpers: reuse for pie chart slice colors
-- `LoadingSpinner` component: reuse for loading states when fetching bug data
-- `sessionStorage('active_project_key')`: already set by NoProjectPage — read on mount to pre-select project card
+- `LoadingSpinner` component: reuse for loading states
+- `fetch()` pattern: follow existing fetch pattern in DashboardPage/NoProjectPage
 
 ### Established Patterns
-- **CSS Modules** (`*.module.css`) for all component styling — do not use inline styles for new components
-- **Color tokens from UI-SPEC** — use `#1b4332` accent, `#f8f9ff` secondary bg, `#002d1c` text primary, `#c3c6d6` borders
-- **No component library** — no shadcn, no MUI; plain CSS + Recharts only
+- **CSS Modules** (`*.module.css`) for all component styling — do not use inline styles for new sections
+- **Color tokens**: `#1b4332` accent, `#065b41` brand green, `#e7f4f0` brand surface, `#f0f2f5` page bg
+- **No component library** — no shadcn, no MUI; plain CSS Modules only
 - **Inline SVG** for icons (no external icon lib)
-- **`fetch()`** with no wrapper — follow existing fetch pattern in DashboardPage
+- **`fetch()`** with no wrapper
 
 ### Integration Points
-- `DashboardPage.jsx`: remove `<table>` bug list; add project grid + summary cards + pie charts above sync controls
-- `frontend/package.json`: add `recharts` dependency
-- `frontend/src/pages/DashboardPage.module.css` (create if not exists): CSS Modules styles for new dashboard sections
+- `DashboardPage.jsx`: remove `<table>` bug list; add projects grid + connect section
+- `frontend/src/pages/DashboardPage.module.css` (create new): CSS Modules for all new sections
+- `frontend/package.json`: NO recharts install needed
 
 </code_context>
 
 <specifics>
 ## Specific Ideas
 
-- Project cards: shown as a card grid at the top of the page. Each card shows project name + project key. Active card highlighted with `#1b4332` border or background tint.
-- Summary cards: 3 cards in a row — "Total Bugs", "Open Bugs", "Critical Bugs" with large count numbers.
-- Charts: two side-by-side pie charts. Left: "By Status". Right: "By Priority".
-- On mount: read `sessionStorage('active_project_key')`, find matching project card, auto-select it, load its bugs.
+- Page title: "Active Projects" (h1, 26px bold #065b41). Subtitle: "Currently monitoring {N} project(s)." (14px #6b7280).
+- Project grid: CSS grid repeat(3, 1fr), gap 16px, margin-bottom 32px. Responsive: 2 col at 900px, 1 col at 600px.
+- Project card: white bg, 1px border #e5e7eb, border-radius 10px, flex row, min-height 160px. Left bar 5px wide. Card content padding 20px 20px 20px 18px.
+- Stat boxes: flex row, gap 10px. Each stat-box: #e7f4f0 bg, border-radius 6px, padding 10px 14px. Label 10px uppercase. Value 26px bold (#065b41 normal, #dc2626 if critical).
+- Connect section: border-top 4px solid #065b41. Left panel #1b4332 (320px, white text). Right panel white, padding 40px 40px 40px 48px.
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-- **Drill-down into individual bug details** — v2, out of scope (PROJECT.md Out of Scope)
-- **Search/filter bugs** — v2 requirement (FILT-01/02/03), Phase 4+
+- **Clicking a card navigates to bug detail page** — Phase 4+ (bug-report.html equivalent)
+- **Search/filter bugs** — v2 requirement (FILT-01/02/03)
 - **Export from dashboard** — Phase 5 (EXPORT-01/02)
 - **Sprint view** — Phase 4 (SPRINT-01/02)
+- **Pie charts / status+priority breakdown** — deferred from original Phase 3 plan; may be added in Phase 4
 
 </deferred>
 
 ---
 
 *Phase: 3-dashboard-ui*
-*Context gathered: 2026-05-12*
+*Context updated: 2026-05-12 — revised to match UI/html/dashboard.html mockup*
