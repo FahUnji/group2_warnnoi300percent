@@ -36,19 +36,11 @@ def _get_auth_headers() -> tuple[str, str, str]:
     return access_token, cloud_id, base_url
 
 
-def _fetch_bugs(project_key: str) -> dict:
+def _jira_search(url: str, access_token: str, jql: str) -> dict:
     """
-    Blocking function: call Jira search API for Bug-type issues.
+    Execute a single Jira POST /search/jql call.
     Returns {"ok": True, "issues": [...]} or {"ok": False, "error": ..., "message": ...}.
-    Never logs or returns access_token or cloud_id.
     """
-    try:
-        access_token, cloud_id, _base_url = _get_auth_headers()
-    except HTTPException as exc:
-        return {"ok": False, "error": exc.detail["error"], "message": exc.detail["message"]}
-
-    url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/search/jql"
-    jql = f"project = {project_key} AND (issuetype = Bug OR (issueType in subTaskIssueTypes() AND parent in (project = {project_key} AND issuetype = Bug))) ORDER BY created DESC"
     payload = {
         "jql": jql,
         "maxResults": 1000,
@@ -67,8 +59,7 @@ def _fetch_bugs(project_key: str) -> dict:
             verify=True,
         )
         response.raise_for_status()
-        data = response.json()
-        return {"ok": True, "issues": data.get("issues", [])}
+        return {"ok": True, "issues": response.json().get("issues", [])}
     except requests.exceptions.ConnectionError:
         return {"ok": False, "error": "unreachable_host", "message": "Cannot reach Jira API. Check your network connection."}
     except requests.exceptions.Timeout:
@@ -79,10 +70,43 @@ def _fetch_bugs(project_key: str) -> dict:
             return {"ok": False, "error": "invalid_credentials", "message": "OAuth token is expired or invalid. Please reconnect."}
         if status == 403:
             return {"ok": False, "error": "forbidden", "message": "Access denied. Check your Jira OAuth scopes."}
-        # Do NOT include cloud_id or token in error message
         return {"ok": False, "error": "api_error", "message": f"Jira API returned HTTP {status}."}
     except requests.exceptions.RequestException:
         return {"ok": False, "error": "unreachable_host", "message": "Cannot reach Jira API. Check your network connection."}
+
+
+def _fetch_bugs(project_key: str) -> dict:
+    """
+    Blocking function: fetch Bug-type issues + their subtasks via two JQL calls.
+    Step 1: project bugs via issuetype = Bug
+    Step 2: subtasks of those bugs via parent in (key1, key2, ...)
+    Returns {"ok": True, "issues": [...]} or {"ok": False, "error": ..., "message": ...}.
+    Never logs or returns access_token or cloud_id.
+    """
+    try:
+        access_token, cloud_id, _base_url = _get_auth_headers()
+    except HTTPException as exc:
+        return {"ok": False, "error": exc.detail["error"], "message": exc.detail["message"]}
+
+    url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/search/jql"
+
+    # Step 1: fetch top-level bugs
+    bugs_result = _jira_search(url, access_token, f"project = {project_key} AND issuetype = Bug ORDER BY created DESC")
+    if not bugs_result["ok"]:
+        return bugs_result
+
+    bugs = bugs_result["issues"]
+    bug_keys = [issue["key"] for issue in bugs]
+
+    # Step 2: fetch subtasks whose parent is one of the bugs
+    subtasks = []
+    if bug_keys:
+        keys_jql = ", ".join(bug_keys)
+        subtasks_result = _jira_search(url, access_token, f"parent in ({keys_jql}) ORDER BY created DESC")
+        if subtasks_result["ok"]:
+            subtasks = subtasks_result["issues"]
+
+    return {"ok": True, "issues": bugs + subtasks}
 
 
 def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
