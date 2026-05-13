@@ -38,7 +38,7 @@ function DashboardPage() {
   useEffect(() => {
     if (user) return;
     fetch('/api/auth/me')
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         if (data.ok && data.user) {
           sessionStorage.setItem('jira_user', JSON.stringify(data.user));
@@ -46,14 +46,14 @@ function DashboardPage() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     setLoadingProjects(true);
     fetch('/api/projects')
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
-        if (data.ok) setProjects(data.projects);
+        if (data.ok && Array.isArray(data.projects)) setProjects(data.projects);
         else setProjectsError('Could not load projects. Check your connection and reload.');
       })
       .catch(() => setProjectsError('Could not load projects. Check your connection and reload.'))
@@ -67,7 +67,7 @@ function DashboardPage() {
     setBugStats(initial);
     projects.forEach(project => {
       fetch(`/api/bugs/${project.key}`)
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
         .then(data => {
           if (data.ok) {
             const bugs = data.bugs;
@@ -97,7 +97,7 @@ function DashboardPage() {
     const timer = setTimeout(() => {
       setSearchLoading(true);
       fetch(`/api/projects/search?q=${encodeURIComponent(searchQuery)}`)
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
         .then(data => {
           if (data.ok) {
             setSearchResults(data.projects);
@@ -121,7 +121,7 @@ function DashboardPage() {
     const timer = setTimeout(() => {
       setAddLoading(true);
       fetch(`/api/projects/search?q=${encodeURIComponent(addQuery)}`)
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
         .then(data => { if (data.ok) setAddResults(data.projects); })
         .catch(() => {})
         .finally(() => setAddLoading(false));
@@ -160,11 +160,13 @@ function DashboardPage() {
     setConnectingKey(project.key);
     try {
       const resp = await fetch(`/api/sync/${project.key}`, { method: 'POST' });
+      if (!resp.ok) throw new Error();
       const data = await resp.json();
       if (data.ok) {
         const r = await fetch('/api/projects');
+        if (!r.ok) throw new Error();
         const d = await r.json();
-        if (d.ok) setProjects(d.projects);
+        if (d.ok && Array.isArray(d.projects)) setProjects(d.projects);
       }
     } catch {
       // silent — user can retry via connect form
@@ -180,13 +182,15 @@ function DashboardPage() {
     setAddError('');
     try {
       const resp = await fetch(`/api/sync/${project.key}`, { method: 'POST' });
+      if (!resp.ok) throw new Error();
       const data = await resp.json();
       if (data.ok) {
         setAddQuery('');
         setAddResults([]);
         const r = await fetch('/api/projects');
+        if (!r.ok) throw new Error();
         const d = await r.json();
-        if (d.ok) setProjects(d.projects);
+        if (d.ok && Array.isArray(d.projects)) setProjects(d.projects);
       } else {
         setAddError('Sync failed. Select the project again to retry.');
         setAddSelectedKey('');
