@@ -1,23 +1,24 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T05:41:01Z",
+  "timestamp": "2026-05-13T06:15:03Z",
   "phase": "04",
   "phase_name": "sprint-report",
   "phase_dir": ".planning/phases/04-sprint-report",
   "plan": null,
   "task": null,
-  "total_tasks": null,
-  "status": "awaiting_review_and_verification",
+  "total_tasks": 8,
+  "status": "paused",
   "completed_tasks": [
     {"id": 1, "name": "04-01 Wave 1: sprints table migration + jira_sprint_service.py + GET /api/sprints endpoint + SprintPage.jsx + SprintPage.module.css", "status": "done", "commit": "6e9c2a0"},
     {"id": 2, "name": "04-02 Wave 2: App.jsx /sprint route + DashboardPage sidebar Sprint link + sidebar CSS", "status": "done", "commit": "933bd72"},
-    {"id": 3, "name": "Hotfix: BugReportPage donut chart hover tooltip — added missing .donutTooltip CSS class, fixed cursor:pointer, added hover stroke-width enlargement", "status": "done", "commit": "d4ff9cb"}
+    {"id": 3, "name": "Hotfix: BugReportPage donut chart hover tooltip — added missing .donutTooltip CSS class, fixed cursor:pointer, added hover stroke-width enlargement", "status": "done", "commit": "d4ff9cb"},
+    {"id": 4, "name": "Sprint sync fixes: state=active,closed,future param; join on sprint_name (sprint_id NULL for 71% of bugs); graceful degradation with cached fallback; POST /api/sync also syncs sprints; stale banner in SprintPage", "status": "done", "commit": "c045b02"}
   ],
   "remaining_tasks": [
-    {"id": 4, "name": "Code review gate: /gsd-code-review 4", "status": "not_started"},
-    {"id": 5, "name": "Verification: verifier agent or /gsd-verify-work 4", "status": "not_started"},
-    {"id": 6, "name": "Mark Phase 04 complete in ROADMAP + STATE", "status": "not_started"},
-    {"id": 7, "name": "Human UAT: browser test /sprint?project=KEY (sidebar nav, sprint cards expand/collapse, pagination) + /bug-report?project=KEY (donut tooltip hover)", "status": "not_started"}
+    {"id": 5, "name": "Code review gate: /gsd-code-review 4", "status": "not_started"},
+    {"id": 6, "name": "Verification: verifier agent or /gsd-verify-work 4", "status": "not_started"},
+    {"id": 7, "name": "Mark Phase 04 complete in ROADMAP + STATE", "status": "not_started"},
+    {"id": 8, "name": "Human UAT (non-blocking): browser test /sprint?project=KEY + /bug-report?project=KEY tooltip", "status": "not_started"}
   ],
   "blockers": [
     {
@@ -28,8 +29,8 @@
   ],
   "human_actions_pending": [
     {
-      "action": "Browser UAT: navigate to /sprint?project=KEY (sprint cards, sidebar, pagination, active sprint auto-expand) AND /bug-report?project=KEY (hover donut arcs to verify tooltip shows label + percent)",
-      "context": "SprintPage is new UI. Donut tooltip hotfix needs visual confirmation — tooltip logic was correct in JSX but CSS was absent.",
+      "action": "Browser UAT: /sprint?project=KEY (sprint cards, sidebar, pagination, active sprint auto-expand, completed sprints visible) AND /bug-report?project=KEY (hover donut arcs → tooltip shows label + %)",
+      "context": "Sprint page had sync bugs — fixed this session. Need visual confirmation sprints load correctly. Donut tooltip hotfix needs visual confirmation.",
       "blocking": false
     }
   ],
@@ -39,11 +40,14 @@
     {"decision": "Client-side pagination at 10 sprints/page", "rationale": "D-13 explicit requirement", "phase": "04"},
     {"decision": "use_worktrees=false set in config.json", "rationale": "WSL2/Windows paths caused nested worktree commit pollution in previous run", "phase": "04"},
     {"decision": ".claude/worktrees/ added to .gitignore and tracked files removed", "rationale": "Was missing; caused worktree directory tree to be tracked and committed", "phase": "04"},
-    {"decision": "BugReportPage donut tooltip: .donutTooltip CSS was entirely absent — added class (position:fixed, z-index:999) + cursor:pointer + hover stroke-width to match bug-report.html mockup", "rationale": "Hotfix; JSX logic was correct, only CSS was missing", "phase": "04"}
+    {"decision": "BugReportPage donut tooltip: .donutTooltip CSS was entirely absent — added class (position:fixed, z-index:999) + cursor:pointer + hover stroke-width to match bug-report.html mockup", "rationale": "Hotfix; JSX logic was correct, only CSS was missing", "phase": "04"},
+    {"decision": "Sprint stats join changed from sprint_id to sprint_name", "rationale": "71% of bugs have sprint_id=NULL (customfield_10020[0].id not always present); sprint_name is reliably populated in both tables", "phase": "04"},
+    {"decision": "Graceful degradation added to _fetch_sprints_and_store", "rationale": "If Jira API fails but cached data exists, return it with stale:true so page is still useful", "phase": "04"}
   ],
   "uncommitted_files": [
-    "backend/.env (secrets — never commit)"
+    "backend/.env (secrets — never commit)",
+    ".planning/**/*.md (CRLF normalization only — no content changes, do not commit)"
   ],
   "next_action": "Run /gsd-code-review 4, then spawn verifier agent for Phase 04 goal verification, then mark phase 04 complete in ROADMAP + STATE",
-  "context_notes": "Phase 04 both plans executed cleanly (6e9c2a0, 933bd72). This session hotfixed BugReportPage donut chart tooltip (commit d4ff9cb) — .donutTooltip CSS class was completely absent; added it + cursor:pointer + hover stroke enlargement matching UI/css/bug-report.css. Code review and verification for Phase 04 have NOT run yet. npm install EACCES pre-existing — use Docker. SprintPage.jsx = 536 lines, active sprint auto-expands, pagination 10/page, export stubs."
+  "context_notes": "Phase 04 execution complete (commits 6e9c2a0, 933bd72). This session fixed two bugs: (1) BugReportPage donut tooltip CSS was absent — added .donutTooltip class (d4ff9cb). (2) Sprint page sync not working — fixed Jira API state filter, changed SQL join from sprint_id to sprint_name, added graceful stale fallback, Dashboard sync now also fires sprint sync (c045b02). DB had 1330 bugs, 379 with sprint_id set, 0 in sprints table — sprints table will populate on first Refresh Data click. Code review and verification have NOT run. CRLF line ending changes in .planning/ files are unstaged and should NOT be committed."
 }
