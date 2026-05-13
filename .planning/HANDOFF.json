@@ -1,38 +1,60 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T02:33:16Z",
-  "phase": "03",
-  "phase_name": "dashboard-ui",
-  "phase_dir": ".planning/phases/03-dashboard-ui",
+  "timestamp": "2026-05-13T08:57:42Z",
+  "phase": "05",
+  "phase_name": "export",
+  "phase_dir": ".planning/phases/05-export",
   "plan": null,
   "task": null,
   "total_tasks": null,
-  "status": "phase_complete",
+  "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "CR-02: resp.ok guards on all 7 fetch call-sites + Array.isArray guards", "status": "done", "commit": "2bcac70"},
-    {"id": 2, "name": "WR-01: user added to auth/me useEffect deps array", "status": "done", "commit": "2bcac70"},
-    {"id": 3, "name": "Phase 3 marked complete in ROADMAP.md + STATE.md", "status": "done", "commit": "eaeca2d"}
+    {"id": 1, "name": "Sprint page: reconnect link on invalid_credentials error (errorCode state)", "status": "done", "commit": "bab988b"},
+    {"id": 2, "name": "Switch sprint data source: Agile Board API → Jira Fix Versions API (/rest/api/3/project/{key}/versions)", "status": "done", "commit": "bab988b"},
+    {"id": 3, "name": "Sprint page state logic: active/upcoming/released/archived inferred from version fields", "status": "done", "commit": "bab988b"},
+    {"id": 4, "name": "Sprint page UI fixes: 1-digit severity, green 100% progress (#065B41), dynamic username from /api/auth/me", "status": "done", "commit": "bab988b"},
+    {"id": 5, "name": "DashboardPage + BugReportPage sidebar: Sprint labels consistent", "status": "done", "commit": "bab988b"},
+    {"id": 6, "name": "Jira user avatar: BugReportPage + SprintPage conditional avatar/SVG fallback (matching DashboardPage)", "status": "done", "commit": "pending"}
   ],
   "remaining_tasks": [
-    {"id": 4, "name": "Phase 4 planning: /gsd-plan-phase 4", "status": "not_started"}
+    {"id": 7, "name": "Browser UAT: avatar shows on all 3 pages + Sprint page fix versions correct", "status": "not_started"},
+    {"id": 8, "name": "Plan Phase 05: Export (.xlsx + .docx) via /gsd-plan-phase 5", "status": "not_started"},
+    {"id": 9, "name": "Execute Phase 05: backend openpyxl + python-docx endpoints + frontend wiring", "status": "not_started"},
+    {"id": 10, "name": "Code review + verify Phase 05", "status": "not_started"}
   ],
   "blockers": [
     {
-      "description": "npm install fails on WSL NTFS mount (EACCES permissions)",
+      "description": "npm install fails on WSL NTFS mount (EACCES) — pre-existing",
       "type": "technical",
-      "workaround": "Use Docker (docker-compose up) or run npm from native Linux path outside /mnt/d/"
+      "workaround": "Use Docker (docker-compose up)"
     }
   ],
-  "human_actions_pending": [],
+  "human_actions_pending": [
+    {
+      "action": "Browser UAT: verify Jira profile avatar shows on Dashboard, BugReport, Sprint pages after login",
+      "context": "Conditional render added to BugReport+Sprint this session. DashboardPage already had it. Backend /api/auth/me returns avatar from Jira avatarUrls.48x48. Hard refresh (Ctrl+Shift+R) may be needed.",
+      "blocking": false
+    },
+    {
+      "action": "Browser UAT: Sprint page — verify fix versions load, states correct (active/upcoming/completed/archived), 100% bar green",
+      "context": "Changes committed in bab988b+045292d.",
+      "blocking": false
+    }
+  ],
   "decisions": [
-    {"decision": "CR-01 not applicable — extractProjectKey removed in Session 2; project keys come from API search results only", "rationale": "03-REVIEW.md was written against earlier code version", "phase": "03"},
-    {"decision": "CR-03 not applicable — handleSync/setSyncSuccess removed; animation timers in handleDeleteProject don't fire setState after unmount", "rationale": "03-REVIEW.md was written against earlier code version", "phase": "03"},
-    {"decision": "Phase 3 closed without human UAT sign-off in browser", "rationale": "npm install blocked by WSL NTFS; core UI verified via code review and static analysis", "phase": "03"}
+    {"decision": "Sprint page data from fix versions API not Agile Board API", "rationale": "SAM project has no Scrum board; fix versions exist and are the correct release tracking mechanism", "phase": "04"},
+    {"decision": "State: archived→archived, released→released, startDate<=today→active, else→upcoming", "rationale": "Jira versions have no native active state; infer from startDate", "phase": "04"},
+    {"decision": "sprint_name column reused for fix version name in bugs table", "rationale": "Avoids schema migration; LEFT JOIN on name still works", "phase": "04"},
+    {"decision": "100% progress color: #065B41", "rationale": "User specified exact color; matches done-state green", "phase": "04"},
+    {"decision": "use_worktrees=false permanent", "rationale": "WSL2 NTFS path pollution causes worktree files tracked in commits", "phase": "04"},
+    {"decision": "Export stubs only in Phase 04 (Phase 05 deferred)", "rationale": "Export buttons exist as no-ops in BugReport and Sprint pages; real endpoints in Phase 05", "phase": "04"},
+    {"decision": "Avatar: conditional img+SVG fallback (user?.avatar ? <img 24x24 borderRadius 50%> : <svg>)", "rationale": "DashboardPage pattern applied to all post-login pages; backend already returned avatar field", "phase": "04"}
   ],
   "uncommitted_files": [
-    "CRLF to LF line-ending changes across worktree + planning dirs (cosmetic, safe to discard with git checkout)",
-    "backend/.env (secrets — never commit)"
+    "frontend/src/pages/BugReportPage.jsx",
+    "frontend/src/pages/SprintPage.jsx",
+    "backend/services/jira_sprint_service.py"
   ],
-  "next_action": "Run /gsd-plan-phase 4 to plan Sprint Report phase",
-  "context_notes": "Phase 3 dashboard UI complete and polished. DashboardPage.jsx: single /dashboard route, 3-way ternary (loading/empty/has-projects), fadeInUp entry animations, cardExit/fadeOutUp exit animations, overlay add-project dropdown (no layout shift), kebab card menus, navbar debounced project search. All fetch calls now guard resp.ok before calling .json(). Phase 4 (Sprint Report) needs: Jira sprint API integration, /api/sprint/{project_key} backend endpoint, sprint bug list view + per-sprint history aggregation UI."
+  "next_action": "Commit avatar fix (BugReportPage + SprintPage). Browser UAT avatar + Sprint page. Then /gsd-plan-phase 5.",
+  "context_notes": "Phase 04 fully closed. Second session May 13: fixed Jira user avatar on all post-login pages. BugReportPage and SprintPage were showing static SVG person icon in navbar; updated both to conditionally render user.avatar (24x24 circular img) with SVG fallback — matching DashboardPage pattern exactly. Backend /api/auth/me already returned avatar from Jira avatarUrls.48x48. No backend changes needed. Phase 05 Export is next: export buttons already stubbed as no-ops in BugReport and Sprint pages; backend needs openpyxl + python-docx added to requirements."
 }

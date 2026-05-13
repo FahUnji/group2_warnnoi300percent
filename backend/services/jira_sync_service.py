@@ -6,8 +6,10 @@ Security notes (ASVS L1):
 - All SQL uses sqlite3 '?' parameterized queries — no f-strings in SQL statements.
 - Jira API errors are mapped to safe error codes; cloud_id and token are never leaked.
 - HTTP calls use explicit timeout=(5, 30) to prevent indefinite hang on large result sets.
+- project_key is validated against _PROJECT_KEY_RE before use in JQL to prevent injection.
 """
 import asyncio
+import re
 from datetime import datetime, timezone
 
 import requests
@@ -16,6 +18,14 @@ from fastapi import HTTPException
 from backend.database import get_db
 from backend.models.oauth_token import load_oauth_token
 from backend.services.jira_service import _decrypt_token
+
+_PROJECT_KEY_RE = re.compile(r'^[A-Z][A-Z0-9_]{0,9}$')
+
+
+def _validate_project_key(project_key: str) -> None:
+    """Raise ValueError if project_key is not a safe Jira project key."""
+    if not _PROJECT_KEY_RE.match(project_key):
+        raise ValueError(f"Invalid project key: {project_key!r}")
 
 
 def _get_auth_headers() -> tuple[str, str, str]:
@@ -55,7 +65,7 @@ def _jira_search(url: str, access_token: str, jql: str) -> dict:
         payload: dict = {
             "jql": jql,
             "maxResults": _PAGE_SIZE,
-            "fields": ["summary", "status", "priority", "assignee", "customfield_10020"],
+            "fields": ["summary", "status", "priority", "assignee", "fixVersions"],
         }
         if next_page_token:
             payload["nextPageToken"] = next_page_token
@@ -94,6 +104,11 @@ def _fetch_bugs(project_key: str) -> dict:
     Never logs or returns access_token or cloud_id.
     """
     try:
+        _validate_project_key(project_key)
+    except ValueError as exc:
+        return {"ok": False, "error": "invalid_project_key", "message": str(exc)}
+
+    try:
         access_token, cloud_id, _base_url = _get_auth_headers()
     except HTTPException as exc:
         return {"ok": False, "error": exc.detail["error"], "message": exc.detail["message"]}
@@ -116,8 +131,9 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
     rows = []
     for issue in issues:
         fields = issue.get("fields", {})
-        sprint_raw = fields.get("customfield_10020")
-        sprint_name = sprint_raw[0]["name"] if sprint_raw else None
+        fix_versions = fields.get("fixVersions") or []
+        sprint_name = fix_versions[0].get("name") if fix_versions else None
+        sprint_id = int(fix_versions[0].get("id", 0)) if fix_versions else None
         assignee_field = fields.get("assignee")
         assignee = assignee_field.get("displayName") if assignee_field else None
         status_field = fields.get("status", {})
@@ -130,6 +146,7 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
             status_field.get("name") if status_field else None,
             priority_field.get("name") if priority_field else None,
             sprint_name,
+            sprint_id,
             assignee,
             synced_at,
         ))
@@ -146,8 +163,8 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
         conn.execute("DELETE FROM bugs WHERE project_key = ?", (project_key,))
         conn.executemany(
             "INSERT INTO bugs"
-            " (issue_id, issue_key, project_key, summary, status, priority, sprint_name, assignee, synced_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " (issue_id, issue_key, project_key, summary, status, priority, sprint_name, sprint_id, assignee, synced_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             rows,
         )
         conn.commit()
