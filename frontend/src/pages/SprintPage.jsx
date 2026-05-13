@@ -66,7 +66,7 @@ function SprintPage() {
       const resp = await fetch(`/api/sprints/${encodeURIComponent(projectKey)}`);
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        setError(err.message || `HTTP ${resp.status} — could not load sprints.`);
+        setError(err.detail?.message || err.message || `HTTP ${resp.status} — could not load sprints.`);
         return;
       }
       const data = await resp.json();

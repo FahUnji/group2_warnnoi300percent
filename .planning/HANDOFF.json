@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T07:24:53Z",
+  "timestamp": "2026-05-13T07:57:00Z",
   "phase": "04",
   "phase_name": "sprint-report",
   "phase_dir": ".planning/phases/04-sprint-report",
@@ -21,13 +21,16 @@
     {"id": 10, "name": "Fix CR-03: reset stale on fetch start + stale banner shows even when error present", "status": "done", "commit": "f1cd4ca"},
     {"id": 11, "name": "Verification: gaps found (missing sidebar + sprint_name join note)", "status": "done", "commit": "4643d1e"},
     {"id": 12, "name": "Restore Dashboard sidebar with Dashboard/BugReport/Sprint nav links", "status": "done", "commit": "8205df5"},
-    {"id": 13, "name": "Mark Phase 04 complete in STATE.md — advance to Phase 05", "status": "done", "commit": "d9b4347"}
+    {"id": 13, "name": "Mark Phase 04 complete in STATE.md — advance to Phase 05", "status": "done", "commit": "d9b4347"},
+    {"id": 14, "name": "Post-phase session: Fix no_board error code + graceful empty-list return in jira_sprint_service", "status": "done", "commit": "uncommitted"},
+    {"id": 15, "name": "Post-phase session: Add View Sprints to DashboardPage project card dropdown; remove sidebar", "status": "done", "commit": "uncommitted"},
+    {"id": 16, "name": "Post-phase session: Fix SprintPage error extraction (err.detail?.message) for FastAPI format", "status": "done", "commit": "uncommitted"}
   ],
   "remaining_tasks": [
-    {"id": 14, "name": "Plan Phase 05: Export (.xlsx + .docx)", "status": "not_started"},
-    {"id": 15, "name": "Execute Phase 05: Export backend + frontend wiring", "status": "not_started"},
-    {"id": 16, "name": "Code review Phase 05", "status": "not_started"},
-    {"id": 17, "name": "Verify Phase 05 + mark complete", "status": "not_started"}
+    {"id": 17, "name": "Commit post-phase fixes (3 files: jira_sprint_service.py, DashboardPage.jsx, SprintPage.jsx)", "status": "not_started"},
+    {"id": 18, "name": "UAT: verify Sprint page loads, no-board projects show empty gracefully, View Sprints nav works", "status": "not_started"},
+    {"id": 19, "name": "Plan Phase 05: Export (.xlsx + .docx)", "status": "not_started"},
+    {"id": 20, "name": "Execute Phase 05: Export backend + frontend wiring", "status": "not_started"}
   ],
   "blockers": [
     {
@@ -38,24 +41,26 @@
   ],
   "human_actions_pending": [
     {
-      "action": "Browser UAT: verify Sprint page shows active+completed sprints; verify Refresh Data on Sprint page pulls from Jira; verify Dashboard sidebar shows Sprint link; verify BugReport Refresh Data syncs Jira",
-      "context": "All sync + sidebar fixes applied. Need visual confirmation before shipping Phase 05.",
+      "action": "Browser UAT: reload Sprint page — verify no HTTP 400, no-board projects show 'No sprints found', View Sprints button navigates correctly from Dashboard project card",
+      "context": "Three post-phase fixes applied but not yet confirmed working in browser. Token had ~44min remaining at check time.",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "Sprint stats join on sprint_name (not sprint_id)", "rationale": "71% of bugs have sprint_id=NULL — sprint_name is reliable in both tables. Verifier flagged as regression but is intentional documented decision.", "phase": "04"},
+    {"decision": "Sprint stats join on sprint_name (not sprint_id)", "rationale": "71% of bugs have sprint_id=NULL — sprint_name is reliable in both tables", "phase": "04"},
     {"decision": "state=active,closed,future in Jira Board Sprint API", "rationale": "Without it Jira omits closed sprints", "phase": "04"},
     {"decision": "Graceful stale fallback in _fetch_sprints_and_store", "rationale": "If Jira unreachable, serve cached data with stale:true banner", "phase": "04"},
-    {"decision": "fetchStats + fetchSprints both call POST /api/sync first", "rationale": "Refresh Data must pull from Jira, not just re-read stale local DB", "phase": "04"},
-    {"decision": "Dashboard sidebar restored with Sprint link using projects[0].key per D-07", "rationale": "Was deleted by aade1e1 commit — sidebar required for navigation to Sprint page", "phase": "04"},
+    {"decision": "no_board returns ok:true with empty sprint list", "rationale": "Projects without Agile boards (SAM/MLO may not have Scrum boards) are valid — show empty state, not HTTP 400", "phase": "04"},
+    {"decision": "View Sprints in project card dropdown (not sidebar)", "rationale": "Sidebar removed earlier; dropdown reuses existing cardMenuSync CSS class (green)", "phase": "04"},
     {"decision": "Export stubs only (Phase 5 deferred)", "rationale": "Export buttons exist in UI as no-ops; real implementation is Phase 05", "phase": "04"},
     {"decision": "use_worktrees=false permanent", "rationale": "WSL2 NTFS path pollution causes worktree files tracked in commits", "phase": "04"}
   ],
   "uncommitted_files": [
-    "backend/.env (secrets — never commit)",
+    "backend/services/jira_sprint_service.py — no_board error code + graceful empty-list return",
+    "frontend/src/pages/DashboardPage.jsx — View Sprints button added to project card dropdown; sidebar removed",
+    "frontend/src/pages/SprintPage.jsx — error message extraction fixed: err.detail?.message || err.message",
     ".planning/**/*.md (CRLF normalization only — do not commit unless content changed)"
   ],
-  "next_action": "Run /gsd-plan-phase 5 to plan Export phase (.xlsx + .docx downloads)",
-  "context_notes": "Phase 04 fully closed this session. Hotfix code review found 3 blockers (all fixed): KeyError on HTTPException.detail, missing encodeURIComponent in BugReportPage, stale banner hidden by error flag. Verifier found Dashboard sidebar missing (restored from commit 59c7e42). Sprint_name join is intentional — verifier WR-06 note is a false alarm. Phase 05 (Export) is next — Export buttons exist as stubs in both BugReport and Sprint pages, ready to wire up."
+  "next_action": "Commit the 3 uncommitted files, then run browser UAT, then /gsd-plan-phase 5",
+  "context_notes": "Phase 04 was marked complete at d9b4347. This session added post-phase fixes: (1) jira_sprint_service.py — projects without Agile boards returned 400; now returns ok:true with empty sprints. (2) DashboardPage.jsx — added View Sprints to project card dropdown (sidebar was already removed). (3) SprintPage.jsx — error text was always showing generic fallback because err.message doesn't exist on FastAPI HTTPException responses (wrapped in detail). All three fixes uncommitted. UAT still pending."
 }

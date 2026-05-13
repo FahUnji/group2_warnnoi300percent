@@ -35,7 +35,7 @@ def _fetch_board_id(project_key: str, access_token: str, cloud_id: str) -> dict:
         if not values:
             return {
                 "ok": False,
-                "error": "api_error",
+                "error": "no_board",
                 "message": f"No Jira board found for project {project_key}.",
             }
         return {"ok": True, "board_id": values[0]["id"]}
@@ -249,6 +249,9 @@ def _fetch_sprints_and_store(project_key: str) -> dict:
         cached = _get_sprint_stats(project_key)
         if cached:
             return {"ok": True, "sprints": cached, "synced_at": None, "stale": True}
+        if board_result.get("error") == "no_board":
+            # No Agile board configured for this project — empty list is valid
+            return {"ok": True, "sprints": [], "synced_at": None, "stale": False}
         return board_result
 
     sprint_result = _fetch_sprint_list(board_result["board_id"], access_token, cloud_id)
