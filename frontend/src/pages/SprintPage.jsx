@@ -3,6 +3,12 @@ import styles from './SprintPage.module.css';
 
 const SPRINTS_PER_PAGE = 10;
 
+function sprintBadgeLabel(state) {
+  if (state === 'active') return 'ACTIVE';
+  if (state === 'future') return 'UPCOMING';
+  return 'COMPLETED';
+}
+
 function SprintPage() {
   const projectKey = new URLSearchParams(window.location.search).get('project') || '';
 
@@ -418,6 +424,7 @@ function SprintPage() {
                 {pagedSprints.map(s => {
                   const isExpanded = expandedIds.has(s.sprint_id);
                   const isActive = s.state === 'active';
+                  const isDone = !isActive; // covers 'closed' and 'future' — both use gray styles
                   const pct = calcProgress(s.found, s.resolved);
                   const dateRange = (s.start_date || s.end_date)
                     ? `${formatDate(s.start_date)} – ${formatDate(s.end_date)}`
@@ -442,7 +449,7 @@ function SprintPage() {
                             )}
                           </div>
                           <span className={`${styles.badge} ${isActive ? styles.badgeActive : styles.badgeDone}`}>
-                            {isActive ? 'ACTIVE' : 'COMPLETED'}
+                            {sprintBadgeLabel(s.state)}
                           </span>
                         </div>
 
@@ -466,7 +473,7 @@ function SprintPage() {
                           </div>
                           <div className={styles.progressTrack}>
                             <div
-                              className={`${styles.progressFill}${!isActive ? ' ' + styles.progressFillDone : ''}`}
+                              className={`${styles.progressFill}${isDone ? ' ' + styles.progressFillDone : ''}`}
                               style={{ width: `${pct}%` }}
                             />
                           </div>
