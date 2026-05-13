@@ -232,13 +232,18 @@ async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
                 " FROM bugs WHERE project_key = ? AND sprint_name = ? ORDER BY issue_key ASC",
                 (project_key, sprint_name),
             ).fetchall()
+            sprints_meta_rows = conn.execute(
+                "SELECT sprint_name, state, start_date, end_date"
+                " FROM sprints WHERE project_key = ? AND sprint_name = ? LIMIT 1",
+                (project_key, sprint_name),
+            ).fetchall()
         else:
-            sprint_names = [
-                r["sprint_name"] for r in conn.execute(
-                    "SELECT sprint_name FROM sprints WHERE project_key = ? ORDER BY sprint_id DESC",
-                    (project_key,),
-                ).fetchall()
-            ]
+            sprints_meta_rows = conn.execute(
+                "SELECT sprint_name, state, start_date, end_date"
+                " FROM sprints WHERE project_key = ? ORDER BY sprint_id DESC",
+                (project_key,),
+            ).fetchall()
+            sprint_names = [r["sprint_name"] for r in sprints_meta_rows]
             rows = conn.execute(
                 "SELECT issue_key, summary, status, priority, assignee, sprint_name"
                 " FROM bugs WHERE project_key = ? ORDER BY sprint_name, issue_key ASC",
@@ -246,6 +251,9 @@ async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
             ).fetchall()
     finally:
         conn.close()
+
+    # sprint metadata lookup: {sprint_name -> row}
+    sprint_meta_by_name = {r["sprint_name"]: r for r in sprints_meta_rows}
 
     headers = ["ID", "Summary", "Status", "Priority", "Assignee", "Fix Version"]
 
@@ -263,7 +271,6 @@ async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
             key = bug["sprint_name"] or "No Sprint"
             bugs_by_sprint.setdefault(key, []).append(bug)
 
-        # Sheet order: known sprint names (sprint_id DESC), unknown sprint names, "No Sprint" last
         known_set = set(sprint_names)
         unknown = [k for k in bugs_by_sprint if k not in known_set and k != "No Sprint"]
         sheet_order = sprint_names + sorted(unknown) + (["No Sprint"] if "No Sprint" in bugs_by_sprint else [])
@@ -275,14 +282,44 @@ async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
         wb = Workbook()
         wb.remove(wb.active)  # remove default empty sheet
         for sn in sheet_order:
-            sheet_title = re.sub(r'[\\/*?:\[\]]', '-', sn)[:31]  # strip Excel-invalid chars, max 31
+            sheet_title = re.sub(r'[\\/*?:\[\]]', '-', sn)[:31]
             ws = wb.create_sheet(title=sheet_title)
+
+            # --- Sprint metadata block ---
+            meta = sprint_meta_by_name.get(sn)
+            ws.append(["Sprint", sn])
+            ws.append(["Status", meta["state"] if meta else "unknown"])
+            ws.append(["Start Date", meta["start_date"] or "N/A" if meta else "N/A"])
+            ws.append(["Release Date", meta["end_date"] or "N/A" if meta else "N/A"])
+            for row_cells in ws.iter_rows(min_row=1, max_row=4, min_col=1, max_col=1):
+                for cell in row_cells:
+                    cell.font = cell.font.copy(bold=True)
+            ws.append([])  # blank row
+
+            # --- Stats block (always shown, even if all zeros) ---
+            sprint_bugs = bugs_by_sprint.get(sn, [])
+            stats = _compute_stats(sprint_bugs)
+            pc = stats["priority_counts"]
+            ws.append(["Total Bugs", stats["total"]])
+            ws.append(["Open", stats["open_count"]])
+            ws.append(["Resolved", stats["resolved_count"]])
+            ws.append(["Critical", pc["critical"]])
+            ws.append(["High", pc["high"]])
+            ws.append(["Medium", pc["medium"]])
+            ws.append(["Low", pc["low"]])
+            for row_cells in ws.iter_rows(min_row=6, max_row=12, min_col=1, max_col=1):
+                for cell in row_cells:
+                    cell.font = cell.font.copy(bold=True)
+            ws.append([])  # blank row
+
+            # --- Bug table ---
             ws.append(headers)
-            for cell in ws[1]:
+            for cell in ws[ws.max_row]:
                 cell.font = cell.font.copy(bold=True)
-            for bug in bugs_by_sprint.get(sn, []):
+            for bug in sprint_bugs:
                 ws.append([bug["issue_key"], bug["summary"], bug["status"],
                             bug["priority"], bug["assignee"], bug["sprint_name"]])
+
         buf = io.BytesIO()
         wb.save(buf)
         buf.seek(0)
