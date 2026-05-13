@@ -232,7 +232,17 @@ def _fetch_sprints_and_store(project_key: str) -> dict:
         cached = _get_sprint_stats(project_key)
         if cached:
             return {"ok": True, "sprints": cached, "synced_at": None, "stale": True}
-        return {"ok": False, "error": exc.detail["error"], "message": exc.detail["message"]}
+        detail = exc.detail if isinstance(exc.detail, dict) else {}
+        return {
+            "ok": False,
+            "error": detail.get("error", "not_configured"),
+            "message": detail.get("message", "Jira is not configured."),
+        }
+    except Exception:
+        cached = _get_sprint_stats(project_key)
+        if cached:
+            return {"ok": True, "sprints": cached, "synced_at": None, "stale": True}
+        return {"ok": False, "error": "auth_error", "message": "Authentication failed."}
 
     board_result = _fetch_board_id(project_key, access_token, cloud_id)
     if not board_result["ok"]:
