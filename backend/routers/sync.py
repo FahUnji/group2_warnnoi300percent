@@ -110,6 +110,7 @@ async def delete_project(project_key: str):
         raise HTTPException(status_code=400, detail={"ok": False, "error": "invalid_project_key", "message": str(exc)})
     conn = get_db()
     try:
+        conn.execute("DELETE FROM sprints WHERE project_key = ?", (project_key,))
         conn.execute("DELETE FROM bugs WHERE project_key = ?", (project_key,))
         conn.execute("DELETE FROM jira_projects WHERE project_key = ?", (project_key,))
         conn.commit()
