@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T13:15:40Z",
+  "timestamp": "2026-05-13T15:57:38Z",
   "phase": "05",
   "phase_name": "export",
   "phase_dir": ".planning/phases/05-export",
@@ -9,14 +9,20 @@
   "total_tasks": 0,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "BugReportPage .root bg: #f8f9ff → #f0f2f5", "status": "done", "commit": "uncommitted"},
-    {"id": 2, "name": "SprintPage inline bg: #f8f9ff → #f0f2f5", "status": "done", "commit": "uncommitted"},
-    {"id": 3, "name": "ConnectionPage .pageWrapper bg: #ffffff → #f0f2f5", "status": "done", "commit": "uncommitted"},
-    {"id": 4, "name": "DashboardPage .noProjectMain bg: #f8f9ff → #f0f2f5", "status": "done", "commit": "uncommitted"},
-    {"id": 5, "name": "DashboardPage .addSearchInput bg: #ffffff → #f0f2f5 (select project field)", "status": "done", "commit": "uncommitted"}
+    {"id": 1, "name": "Bug report docx: title + metadata + 3-col stats table", "status": "done", "commit": "uncommitted"},
+    {"id": 2, "name": "Bug report docx: priority donut chart (page colors #ba1a1a/#f57c00/#fbc02d/#b2c5ff)", "status": "done", "commit": "uncommitted"},
+    {"id": 3, "name": "Bug report docx: status donut chart (#d1d5db/#f59e0b/#065b41) + legend tables side by side", "status": "done", "commit": "uncommitted"},
+    {"id": 4, "name": "Sprint docx: per-sprint card table (bordered, colored rows) replacing plain paragraphs", "status": "done", "commit": "uncommitted"},
+    {"id": 5, "name": "Sprint docx: dark green header, state badge colors, severity grid with tinted cells + colored values", "status": "done", "commit": "uncommitted"},
+    {"id": 6, "name": "Bug fix: stray tblPr.append(tblBorders) removed from _set_cell_bg, restored to _remove_table_borders", "status": "done", "commit": "uncommitted"}
   ],
   "remaining_tasks": [],
   "blockers": [
+    {
+      "description": "Backend NOT yet restarted after export.py changes this session",
+      "type": "human_action",
+      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
+    },
     {
       "description": "Docker CLI not in WSL — use powershell.exe workaround",
       "type": "technical",
@@ -28,11 +34,6 @@
       "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
     },
     {
-      "description": "Backend NOT yet restarted after export.py + sync.py changes from previous session",
-      "type": "human_action",
-      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
-    },
-    {
       "description": ".planning/*.md files show as modified in git status — CRLF-only noise, do NOT stage",
       "type": "advisory",
       "workaround": "Never stage .planning/ unless content was intentionally edited"
@@ -41,26 +42,29 @@
   "human_actions_pending": [
     {
       "action": "Restart backend: powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\"",
-      "context": "sync.py + export.py modified in previous session; uvicorn blind to NTFS — restart still required",
+      "context": "export.py heavily modified this session — uvicorn blind to NTFS, changes not live until restart",
       "blocking": true
     },
     {
-      "action": "Manual UAT: verify #f0f2f5 bg on BugReportPage, SprintPage, ConnectionPage, Dashboard no-project state, addSearchInput",
-      "context": "CSS-only changes, Vite HMR auto-applied",
+      "action": "UAT: test Bug Report → Export as Word (.docx) — verify stats table, dual donut charts, legend tables, bug list",
+      "context": "New docx layout with matplotlib charts — must verify charts render correctly in Word",
+      "blocking": false
+    },
+    {
+      "action": "UAT: test Sprint → Export as Word (.docx) — verify colored card per sprint, severity grid, bug list",
+      "context": "New card-based sprint section with cell background colors via XML manipulation",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "All page bg colors unified to #f0f2f5 (dashboard color) — BugReport, Sprint, ConnectionPage, noProjectMain", "rationale": "User requested bg consistency across all pages", "phase": "05"},
-    {"decision": "noProjectCard (white card) stays #ffffff — only .noProjectMain outer bg changed", "rationale": "User confirmed card stays same, only page bg + select field should be #f0f2f5", "phase": "05"},
-    {"decision": ".addSearchInput bg #ffffff → #f0f2f5 — the 'select a project' search field inside noProjectCard", "rationale": "User specified this field specifically should be #f0f2f5", "phase": "05"}
+    {"decision": "Bug report docx: dual donut charts (priority + status) side by side in 2-col layout table, matching BugReportPage UI", "rationale": "User requested docx match page visual — donut charts are main visual on BugReportPage", "phase": "05"},
+    {"decision": "Sprint docx: card table per sprint (NOT donut charts) — user explicitly rejected charts for sprint", "rationale": "User said 'no need donut chart, should be card of each sprints' — sprint page shows card rows not charts", "phase": "05"},
+    {"decision": "Sprint card colors: dark green header (#1b4332), state-specific badge bg, tinted severity cells, colored stat values", "rationale": "User requested color in table to match page's visual style", "phase": "05"},
+    {"decision": "_set_cell_bg uses tcPr + w:shd XML element for cell background — python-docx has no native API", "rationale": "Standard python-docx XML manipulation pattern for cell shading", "phase": "05"}
   ],
   "uncommitted_files": [
-    "frontend/src/pages/BugReportPage.module.css",
-    "frontend/src/pages/SprintPage.jsx",
-    "frontend/src/pages/ConnectionPage.module.css",
-    "frontend/src/pages/DashboardPage.module.css"
+    "backend/routers/export.py"
   ],
-  "next_action": "Restart backend (still pending from previous session), then UAT all pages for bg color consistency.",
-  "context_notes": "Session 3 of post-phase UI polish. All 5 phases remain complete. This session: bg color unification across all pages to match dashboard #f0f2f5. Previous session (committed in e6ae6ad): sidebar project names, card sizing, dashboard copy. backend/services/jira_sprint_service.py shows modified — pre-existing, not from this session."
+  "next_action": "Restart backend, then UAT both docx exports (bug report + sprint). If charts fail to render, check matplotlib Agg backend is active.",
+  "context_notes": "Session 4 of post-phase UI polish. All 5 phases complete. This session: rewrote both docx exports to match page visuals. Bug report gets dual matplotlib donuts + stats table. Sprint gets colored card tables (no charts). One bug encountered and fixed: stray tblPr.append line leaked from _remove_table_borders into _set_cell_bg during edit — caused NameError on export. jira_sprint_service.py shows modified — pre-existing, not from this session."
 }
