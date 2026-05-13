@@ -224,27 +224,61 @@ async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
             status_code=400,
             detail={"ok": False, "error": "invalid_project_key", "message": str(exc)},
         )
-    if not sprint_name:
-        raise HTTPException(
-            status_code=400,
-            detail={"ok": False, "error": "missing_sprint_name", "message": "sprint_name query parameter is required"},
-        )
     conn = get_db()
     try:
-        rows = conn.execute(
-            "SELECT issue_key, summary, status, priority, assignee, sprint_name"
-            " FROM bugs WHERE project_key = ? AND sprint_name = ? ORDER BY issue_key ASC",
-            (project_key, sprint_name),
-        ).fetchall()
+        if sprint_name:
+            rows = conn.execute(
+                "SELECT issue_key, summary, status, priority, assignee, sprint_name"
+                " FROM bugs WHERE project_key = ? AND sprint_name = ? ORDER BY issue_key ASC",
+                (project_key, sprint_name),
+            ).fetchall()
+        else:
+            sprint_names = [
+                r["sprint_name"] for r in conn.execute(
+                    "SELECT sprint_name FROM sprints WHERE project_key = ? ORDER BY sprint_id DESC",
+                    (project_key,),
+                ).fetchall()
+            ]
+            rows = conn.execute(
+                "SELECT issue_key, summary, status, priority, assignee, sprint_name"
+                " FROM bugs WHERE project_key = ? ORDER BY sprint_name, issue_key ASC",
+                (project_key,),
+            ).fetchall()
     finally:
         conn.close()
+
     headers = ["ID", "Summary", "Status", "Priority", "Assignee", "Fix Version"]
-    data_rows = [
-        [r["issue_key"], r["summary"], r["status"], r["priority"], r["assignee"], r["sprint_name"]]
-        for r in rows
-    ]
-    buf = _build_xlsx_buf(data_rows, headers)
-    filename = f"{project_key}-{_slugify(sprint_name)}-{date.today()}.xlsx"
+
+    if sprint_name:
+        data_rows = [
+            [r["issue_key"], r["summary"], r["status"], r["priority"], r["assignee"], r["sprint_name"]]
+            for r in rows
+        ]
+        buf = _build_xlsx_buf(data_rows, headers)
+        filename = f"{project_key}-{_slugify(sprint_name)}-{date.today()}.xlsx"
+    else:
+        # One sheet per sprint
+        bugs_by_sprint: dict = {}
+        for bug in rows:
+            key = bug["sprint_name"] or "No Sprint"
+            bugs_by_sprint.setdefault(key, []).append(bug)
+
+        wb = Workbook()
+        wb.remove(wb.active)  # remove default empty sheet
+        for sn in sprint_names:
+            sheet_title = sn[:31]  # Excel sheet name max 31 chars
+            ws = wb.create_sheet(title=sheet_title)
+            ws.append(headers)
+            for cell in ws[1]:
+                cell.font = cell.font.copy(bold=True)
+            for bug in bugs_by_sprint.get(sn, []):
+                ws.append([bug["issue_key"], bug["summary"], bug["status"],
+                            bug["priority"], bug["assignee"], bug["sprint_name"]])
+        buf = io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+        filename = f"{project_key}-all-sprints-{date.today()}.xlsx"
+
     return StreamingResponse(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

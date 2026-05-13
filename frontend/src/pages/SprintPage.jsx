@@ -156,21 +156,9 @@ function SprintPage() {
     setExportOpen(false);
     setExportLoading(true);
     try {
-      let url;
-      let downloadName;
       const today = new Date().toISOString().slice(0, 10);
-      if (format === 'docx') {
-        // Word export always includes all sprints
-        url = `/api/export/sprint/docx?project_key=${encodeURIComponent(projectKey)}`;
-        downloadName = `${projectKey}-all-sprints-${today}.docx`;
-      } else {
-        const targetSprint = sprints.find(s => s.state === 'active') || sprints[0];
-        if (!targetSprint) return;
-        const sprintParam = encodeURIComponent(targetSprint.sprint_name);
-        url = `/api/export/sprint/${format}?project_key=${encodeURIComponent(projectKey)}&sprint_name=${sprintParam}`;
-        const slug = targetSprint.sprint_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        downloadName = `${projectKey}-${slug}-${today}.${format}`;
-      }
+      const url = `/api/export/sprint/${format}?project_key=${encodeURIComponent(projectKey)}`;
+      const downloadName = `${projectKey}-all-sprints-${today}.${format}`;
       const r = await fetch(url);
       if (!r.ok) {
         const err = await r.json().catch(() => ({}));
