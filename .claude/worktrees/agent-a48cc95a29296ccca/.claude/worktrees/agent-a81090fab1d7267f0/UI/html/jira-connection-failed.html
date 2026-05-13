@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JIRA Bug Summary – Connection Failed</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/jira-connection-failed.css" />
+</head>
+<body>
+
+  <!-- ── Full-screen gray overlay ── -->
+  <div class="modal-overlay">
+    <dialog class="modal" open aria-labelledby="modal-title">
+
+      <!-- Close -->
+      <button class="modal-close" onclick="location.href='no-project.html'" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="#6b7280" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <!-- Icon: broken link on pink square -->
+      <div class="modal-icon-wrap modal-icon-error">
+        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#e53935" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="#e53935" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="3" y1="3" x2="21" y2="21" stroke="#e53935" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- Title & desc -->
+      <h2 class="modal-title" id="modal-title">Connection Failed</h2>
+      <p class="modal-desc">
+        We couldn't verify your Jira credentials. Please check<br>
+        your URL and API token and try again.
+      </p>
+
+      <!-- Try Again button -->
+      <a href="no-project.html" class="btn-primary">Try Again</a>
+
+      <!-- View Documentation link -->
+      <a href="#" class="doc-link">
+        VIEW DOCUMENTATION
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+
+      <!-- Technical Details box -->
+      <div class="tech-box">
+        <div class="tech-box-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <rect x="4" y="4" width="16" height="16" rx="2" stroke="#065b41" stroke-width="2"/>
+            <rect x="9" y="9" width="6" height="6" stroke="#065b41" stroke-width="2"/>
+            <path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2" stroke="#065b41" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="tech-label">TECHNICAL DETAILS</span>
+        </div>
+        <pre class="tech-pre">Error Code: 401_UNAUTHORIZED
+Service:    JIRA_AUTH_GATEWAY
+Trace ID:   bt-pro-jx-88219g</pre>
+      </div>
+
+    </dialog>
+  </div>
+
+</body>
+</html>
