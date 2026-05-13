@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-13T11:00:00Z",
+  "phase": "05",
+  "phase_name": "export",
+  "phase_dir": ".planning/phases/05-export",
+  "plan": "02",
+  "task": null,
+  "total_tasks": 2,
+  "status": "complete",
+  "completed_tasks": [
+    {"id": 1, "name": "Phase 05-01: Backend export router (4 StreamingResponse endpoints)", "status": "done", "commit": "ad9229b"},
+    {"id": 2, "name": "Phase 05-02: Frontend export wiring on BugReportPage + SprintPage", "status": "done", "commit": "fe6449c"}
+  ],
+  "remaining_tasks": [],
+  "blockers": [
+    {
+      "description": "npm install EACCES on WSL NTFS mount (pre-existing, non-blocking)",
+      "type": "technical",
+      "workaround": "Use Docker (docker-compose up --build). Backend must be rebuilt after requirements.txt changes."
+    },
+    {
+      "description": "Docker WSL integration disabled — docker CLI not available in WSL shell",
+      "type": "technical",
+      "workaround": "Run docker commands via: powershell.exe -Command \"cd 'C:\\Users\\ps\\Desktop\\workshop_AI\\group2_warnnoi300percent'; docker-compose ...\""
+    },
+    {
+      "description": "Many .planning/ files show as modified in git status — NTFS CRLF/LF artifact, not real changes",
+      "type": "technical",
+      "workaround": "Ignore. Run git diff to confirm only line-ending diffs."
+    }
+  ],
+  "human_actions_pending": [
+    {
+      "action": "Test export downloads in browser",
+      "context": "Frontend wiring is complete but download flow needs manual verification in browser at http://localhost:3000",
+      "blocking": false
+    }
+  ],
+  "decisions": [
+    {"decision": "Excel export = single sheet, columns: ID|Summary|Status|Priority|Assignee|Fix Version", "rationale": "Raw data so user can filter/sort in Excel", "phase": "05"},
+    {"decision": "Word BugReport = title+metadata+stats+donut chart (matplotlib, wedgeprops width=0.5)+bug table", "rationale": "Locked in discuss-phase", "phase": "05"},
+    {"decision": "Word Sprint = title+metadata+fix version info+stats+bug table, NO chart", "rationale": "Sprint report is release-centric", "phase": "05"},
+    {"decision": "No get_current_user auth dep on export endpoints — ambient OAuth", "rationale": "Matches all other routers in codebase", "phase": "05"},
+    {"decision": "matplotlib.use('Agg') required for server-side rendering", "rationale": "Non-interactive backend; no display available in container", "phase": "05"}
+  ],
+  "uncommitted_files": [],
+  "next_action": "Project is 100% complete (5/5 phases). Next step: run /gsd-audit-milestone or manual UAT testing of export downloads.",
+  "context_notes": "All 5 phases delivered: (1) Jira OAuth connection, (2) data sync, (3) dashboard UI, (4) sprint report, (5) export. Backend was rebuilt today to fix missing matplotlib module. Export handlers wired on BugReportPage and SprintPage — fetch blob, trigger download, show Exporting... state, surface errors via existing banner."
+}
