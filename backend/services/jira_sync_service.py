@@ -65,7 +65,7 @@ def _jira_search(url: str, access_token: str, jql: str) -> dict:
         payload: dict = {
             "jql": jql,
             "maxResults": _PAGE_SIZE,
-            "fields": ["summary", "status", "priority", "assignee", "customfield_10020"],
+            "fields": ["summary", "status", "priority", "assignee", "fixVersions"],
         }
         if next_page_token:
             payload["nextPageToken"] = next_page_token
@@ -131,13 +131,9 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
     rows = []
     for issue in issues:
         fields = issue.get("fields", {})
-        sprint_raw = fields.get("customfield_10020")
-        if isinstance(sprint_raw, list) and sprint_raw:
-            sprint_name = sprint_raw[0].get("name")
-            sprint_id = sprint_raw[0].get("id")
-        else:
-            sprint_name = None
-            sprint_id = None
+        fix_versions = fields.get("fixVersions") or []
+        sprint_name = fix_versions[0].get("name") if fix_versions else None
+        sprint_id = int(fix_versions[0].get("id", 0)) if fix_versions else None
         assignee_field = fields.get("assignee")
         assignee = assignee_field.get("displayName") if assignee_field else None
         status_field = fields.get("status", {})

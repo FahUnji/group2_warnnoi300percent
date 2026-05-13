@@ -419,9 +419,10 @@
   margin-bottom: 6px;
 }
 
-.progressLabel { font-size: 12px; color: #6b7280; }
-.progressPct   { font-size: 12px; font-weight: 600; color: #F57C00; }
-.progressPctFull   { font-size: 12px; font-weight: 600; color: #065b41; }
+.progressLabel        { font-size: 12px; color: #6b7280; }
+.progressPct          { font-size: 12px; font-weight: 600; color: #F57C00; }
+.progressPctFull      { font-size: 12px; font-weight: 600; color: #065b41; }
+.progressPctComplete  { font-size: 12px; font-weight: 600; color: #065B41; }
 
 .progressTrack {
   height: 6px;
@@ -436,7 +437,8 @@
   border-radius: 3px;
   transition: width 0.4s ease;
 }
-.progressFillDone { background: #065B41; }
+.progressFillDone     { background: #065B41; }
+.progressFillComplete { background: #065B41; }
 
 /* Chevron */
 .chevron {
@@ -504,6 +506,21 @@
   padding: 12px 16px;
   font-size: 14px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reconnectLink {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.reconnectLink:hover {
+  color: #b91c1c;
 }
 
 /* ── Stale data warning ── */

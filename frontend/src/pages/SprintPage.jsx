@@ -6,8 +6,9 @@ const SPRINTS_PER_PAGE = 10;
 
 function sprintBadgeLabel(state) {
   if (state === 'active') return 'ACTIVE';
-  if (state === 'future') return 'UPCOMING';
-  return 'COMPLETED';
+  if (state === 'upcoming') return 'UPCOMING';
+  if (state === 'released') return 'COMPLETED';
+  return 'ARCHIVED';
 }
 
 function SprintPage() {
@@ -17,6 +18,7 @@ function SprintPage() {
   const [sprints, setSprints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
   const [projectName, setProjectName] = useState('');
   const [syncedAt, setSyncedAt] = useState(null);
   const [expandedIds, setExpandedIds] = useState(new Set());
@@ -24,6 +26,9 @@ function SprintPage() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [stale, setStale] = useState(false);
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('jira_user') || 'null'); } catch { return null; }
+  });
 
   const exportRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -41,6 +46,19 @@ function SprintPage() {
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (user) return;
+    fetch('/api/auth/me')
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(data => {
+        if (data.ok && data.user) {
+          sessionStorage.setItem('jira_user', JSON.stringify(data.user));
+          setUser(data.user);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
 
   // Fetch project name from /api/projects
   useEffect(() => {
@@ -60,18 +78,20 @@ function SprintPage() {
   async function fetchSprints() {
     setLoading(true);
     setError('');
+    setErrorCode('');
     setStale(false);
     try {
       await fetch(`/api/sync/${encodeURIComponent(projectKey)}`, { method: 'POST' }).catch(() => {});
       const resp = await fetch(`/api/sprints/${encodeURIComponent(projectKey)}`);
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
+        setErrorCode(err.detail?.error || '');
         setError(err.detail?.message || err.message || `HTTP ${resp.status} — could not load sprints.`);
         return;
       }
       const data = await resp.json();
       if (data.ok && Array.isArray(data.sprints)) {
-        const stateOrder = { active: 0, closed: 1, future: 2 };
+        const stateOrder = { active: 0, upcoming: 1, released: 2, archived: 3 };
         const sorted = [...data.sprints].sort((a, b) => {
           const oa = stateOrder[a.state] ?? 3;
           const ob = stateOrder[b.state] ?? 3;
@@ -278,7 +298,7 @@ function SprintPage() {
                   <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               </div>
-              <span className={styles.navUsername}>BugTrack Pro</span>
+              <span className={styles.navUsername}>{user?.name || 'Account'}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
                 <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -420,7 +440,12 @@ function SprintPage() {
 
           {/* Error banner */}
           {error && (
-            <div className={styles.errorBanner} role="alert">{error}</div>
+            <div className={styles.errorBanner} role="alert">
+              {error}
+              {errorCode === 'invalid_credentials' && (
+                <a href="/" className={styles.reconnectLink}>Reconnect</a>
+              )}
+            </div>
           )}
 
           {/* Stale data warning */}
@@ -446,7 +471,7 @@ function SprintPage() {
                 {pagedSprints.map(s => {
                   const isExpanded = expandedIds.has(s.sprint_id);
                   const isActive = s.state === 'active';
-                  const isDone = !isActive; // covers 'closed' and 'future' — both use gray styles
+                  const isDone = s.state !== 'active';
                   const pct = calcProgress(s.found, s.resolved);
                   const dateRange = (s.start_date || s.end_date)
                     ? `${formatDate(s.start_date)} – ${formatDate(s.end_date)}`
@@ -489,13 +514,13 @@ function SprintPage() {
                         <div className={styles.sprintProgressWrap}>
                           <div className={styles.progressLabels}>
                             <span className={styles.progressLabel}>Progress</span>
-                            <span className={isActive ? styles.progressPct : styles.progressPctFull}>
+                            <span className={pct === 100 ? styles.progressPctComplete : isActive ? styles.progressPct : styles.progressPctFull}>
                               {pct}%
                             </span>
                           </div>
                           <div className={styles.progressTrack}>
                             <div
-                              className={`${styles.progressFill}${isDone ? ' ' + styles.progressFillDone : ''}`}
+                              className={`${styles.progressFill}${pct === 100 ? ' ' + styles.progressFillComplete : isDone ? ' ' + styles.progressFillDone : ''}`}
                               style={{ width: `${pct}%` }}
                             />
                           </div>
@@ -521,28 +546,28 @@ function SprintPage() {
                             <div className={styles.severityIndicator} style={{ background: '#dc2626' }} />
                             <div className={styles.severityBody}>
                               <span className={styles.severityLabel}>Critical</span>
-                              <span className={styles.severityVal}>{String(s.critical).padStart(2, '0')}</span>
+                              <span className={styles.severityVal}>{s.critical}</span>
                             </div>
                           </div>
                           <div className={styles.severityItem}>
                             <div className={styles.severityIndicator} style={{ background: '#f59e0b' }} />
                             <div className={styles.severityBody}>
                               <span className={styles.severityLabel}>High</span>
-                              <span className={styles.severityVal}>{String(s.high).padStart(2, '0')}</span>
+                              <span className={styles.severityVal}>{s.high}</span>
                             </div>
                           </div>
                           <div className={styles.severityItem}>
                             <div className={styles.severityIndicator} style={{ background: '#eab308' }} />
                             <div className={styles.severityBody}>
                               <span className={styles.severityLabel}>Medium</span>
-                              <span className={styles.severityVal}>{String(s.medium).padStart(2, '0')}</span>
+                              <span className={styles.severityVal}>{s.medium}</span>
                             </div>
                           </div>
                           <div className={styles.severityItem}>
                             <div className={styles.severityIndicator} style={{ background: '#a5b4fc' }} />
                             <div className={styles.severityBody}>
                               <span className={styles.severityLabel}>Low</span>
-                              <span className={styles.severityVal}>{String(s.low).padStart(2, '0')}</span>
+                              <span className={styles.severityVal}>{s.low}</span>
                             </div>
                           </div>
                         </div>

@@ -1,10 +1,10 @@
 """
-JiraSprintService — fetches sprint data from Jira Board API and aggregates bug counts.
+JiraSprintService — fetches Jira release (fix version) data and aggregates bug counts.
 
 Security: access_token never logged or returned. SQL uses parameterized queries only.
 """
 import asyncio
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import requests
 from fastapi import HTTPException
@@ -13,32 +13,21 @@ from backend.database import get_db
 from backend.services.jira_sync_service import _get_auth_headers
 
 
-def _fetch_board_id(project_key: str, access_token: str, cloud_id: str) -> dict:
+def _fetch_versions(project_key: str, access_token: str, cloud_id: str) -> dict:
     """
-    GET /rest/agile/1.0/board?projectKeyOrId={project_key}
-    Returns {"ok": True, "board_id": int} or {"ok": False, "error": ..., "message": ...}
-    Picks the first board returned.
+    GET /rest/api/3/project/{project_key}/versions
+    Returns {"ok": True, "versions": [...]} or {"ok": False, "error": ..., "message": ...}
+    Each version: {id, name, released, archived, releaseDate, startDate}
     """
-    url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/agile/1.0/board"
+    url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/project/{project_key}/versions"
     headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
     try:
-        resp = requests.get(
-            url,
-            headers=headers,
-            params={"projectKeyOrId": project_key},
-            timeout=(5, 15),
-            verify=True,
-        )
+        resp = requests.get(url, headers=headers, timeout=(5, 15), verify=True)
         resp.raise_for_status()
-        data = resp.json()
-        values = data.get("values", [])
-        if not values:
-            return {
-                "ok": False,
-                "error": "no_board",
-                "message": f"No Jira board found for project {project_key}.",
-            }
-        return {"ok": True, "board_id": values[0]["id"]}
+        versions = resp.json()
+        if not isinstance(versions, list):
+            versions = versions.get("values", [])
+        return {"ok": True, "versions": versions}
     except requests.exceptions.ConnectionError:
         return {
             "ok": False,
@@ -70,73 +59,31 @@ def _fetch_board_id(project_key: str, access_token: str, cloud_id: str) -> dict:
         return {"ok": False, "error": "unreachable_host", "message": "Cannot reach Jira API."}
 
 
-def _fetch_sprint_list(board_id: int, access_token: str, cloud_id: str) -> dict:
-    """
-    GET /rest/agile/1.0/board/{board_id}/sprint
-    Returns {"ok": True, "sprints": [{"id", "name", "state", "startDate", "endDate"}, ...]}
-    Fetches all pages (maxResults=50, startAt increments).
-    """
-    url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/agile/1.0/board/{board_id}/sprint"
-    headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
-    all_sprints = []
-    start_at = 0
-    max_results = 50
-    try:
-        while True:
-            resp = requests.get(
-                url,
-                headers=headers,
-                params={"startAt": start_at, "maxResults": max_results, "state": "active,closed,future"},
-                timeout=(5, 15),
-                verify=True,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            page = data.get("values", [])
-            all_sprints.extend(page)
-            if data.get("isLast", True) or not page:
-                break
-            start_at += len(page)
-        return {"ok": True, "sprints": all_sprints}
-    except requests.exceptions.ConnectionError:
-        return {
-            "ok": False,
-            "error": "unreachable_host",
-            "message": "Cannot reach Jira API. Check your network connection.",
-        }
-    except requests.exceptions.Timeout:
-        return {
-            "ok": False,
-            "error": "timeout",
-            "message": "Jira API did not respond in time. Try again.",
-        }
-    except requests.exceptions.HTTPError as exc:
-        status = exc.response.status_code if exc.response is not None else 0
-        if status == 401:
-            return {
-                "ok": False,
-                "error": "invalid_credentials",
-                "message": "OAuth token is expired or invalid. Please reconnect.",
-            }
-        if status == 403:
-            return {
-                "ok": False,
-                "error": "forbidden",
-                "message": "Access denied. Check your Jira OAuth scopes.",
-            }
-        return {"ok": False, "error": "api_error", "message": f"Jira API returned HTTP {status}."}
-    except requests.exceptions.RequestException:
-        return {"ok": False, "error": "unreachable_host", "message": "Cannot reach Jira API."}
+def _version_state(v: dict) -> str:
+    if v.get("archived"):
+        return "archived"
+    if v.get("released"):
+        return "released"
+    start = v.get("startDate")
+    if start:
+        try:
+            if date.fromisoformat(start) <= date.today():
+                return "active"
+        except ValueError:
+            pass
+    return "upcoming"
 
 
-def _upsert_sprints(project_key: str, sprints: list, synced_at: str) -> None:
+def _upsert_sprints(project_key: str, versions: list, synced_at: str) -> None:
     """
-    Upsert sprints into the sprints table. Uses parameterized queries only.
-    On conflict (sprint_id, project_key), updates name/state/dates/synced_at.
+    Upsert versions into the sprints table (reused for releases).
+    sprint_id = version id, sprint_name = version name, state = released/unreleased/archived.
+    Uses parameterized queries only.
     """
     conn = get_db()
     try:
-        for s in sprints:
+        conn.execute("DELETE FROM sprints WHERE project_key = ?", (project_key,))
+        for v in versions:
             conn.execute(
                 "INSERT INTO sprints (sprint_id, sprint_name, state, start_date, end_date, project_key, synced_at)"
                 " VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -147,11 +94,11 @@ def _upsert_sprints(project_key: str, sprints: list, synced_at: str) -> None:
                 "   end_date    = excluded.end_date,"
                 "   synced_at   = excluded.synced_at",
                 (
-                    s["id"],
-                    s.get("name", ""),
-                    s.get("state", ""),
-                    s.get("startDate"),
-                    s.get("endDate"),
+                    int(v["id"]),
+                    v.get("name", ""),
+                    _version_state(v),
+                    v.get("startDate"),
+                    v.get("releaseDate"),
                     project_key,
                     synced_at,
                 ),
@@ -163,24 +110,8 @@ def _upsert_sprints(project_key: str, sprints: list, synced_at: str) -> None:
 
 def _get_sprint_stats(project_key: str) -> list:
     """
-    Aggregate bug counts per sprint_name from bugs table.
+    Aggregate bug counts per release (sprint_name) from bugs table.
     Joins with sprints table on (sprint_name, project_key).
-    Returns list of sprint dicts with bug count fields.
-
-    Each dict:
-    {
-      "sprint_id": int,
-      "sprint_name": str,
-      "state": str,          # "active" | "closed" | "future"
-      "start_date": str,
-      "end_date": str,
-      "found": int,          # total bugs with this sprint_name
-      "resolved": int,       # bugs where LOWER(status) IN ('done','resolved','closed')
-      "critical": int,
-      "high": int,
-      "medium": int,
-      "low": int,
-    }
     """
     conn = get_db()
     try:
@@ -222,7 +153,7 @@ def _get_sprint_stats(project_key: str) -> list:
 
 def _fetch_sprints_and_store(project_key: str) -> dict:
     """
-    Orchestrates: get auth -> find board -> fetch sprints -> upsert -> return sprint stats.
+    Orchestrates: get auth -> fetch Jira versions -> upsert -> return stats.
     Falls back to cached DB data if Jira API is unreachable or fails.
     Returns {"ok": True, "sprints": [...], "synced_at": "...", "stale": bool} or {"ok": False, ...}
     """
@@ -244,25 +175,19 @@ def _fetch_sprints_and_store(project_key: str) -> dict:
             return {"ok": True, "sprints": cached, "synced_at": None, "stale": True}
         return {"ok": False, "error": "auth_error", "message": "Authentication failed."}
 
-    board_result = _fetch_board_id(project_key, access_token, cloud_id)
-    if not board_result["ok"]:
+    version_result = _fetch_versions(project_key, access_token, cloud_id)
+    if not version_result["ok"]:
         cached = _get_sprint_stats(project_key)
         if cached:
             return {"ok": True, "sprints": cached, "synced_at": None, "stale": True}
-        if board_result.get("error") == "no_board":
-            # No Agile board configured for this project — empty list is valid
-            return {"ok": True, "sprints": [], "synced_at": None, "stale": False}
-        return board_result
+        return version_result
 
-    sprint_result = _fetch_sprint_list(board_result["board_id"], access_token, cloud_id)
-    if not sprint_result["ok"]:
-        cached = _get_sprint_stats(project_key)
-        if cached:
-            return {"ok": True, "sprints": cached, "synced_at": None, "stale": True}
-        return sprint_result
+    versions = version_result["versions"]
+    if not versions:
+        return {"ok": True, "sprints": [], "synced_at": None, "stale": False}
 
     synced_at = datetime.now(timezone.utc).isoformat()
-    _upsert_sprints(project_key, sprint_result["sprints"], synced_at)
+    _upsert_sprints(project_key, versions, synced_at)
 
     stats = _get_sprint_stats(project_key)
     return {"ok": True, "sprints": stats, "synced_at": synced_at, "stale": False}
