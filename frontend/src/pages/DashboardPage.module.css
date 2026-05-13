@@ -958,6 +958,25 @@
   animation: slideDown 0.12s ease both;
 }
 
+.cardMenuSync {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #065b41;
+  text-align: left;
+  transition: background 0.1s;
+}
+.cardMenuSync:hover { background: #e7f4f0; }
+.cardMenuSync:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .cardMenuDelete {
   display: flex;
   align-items: center;

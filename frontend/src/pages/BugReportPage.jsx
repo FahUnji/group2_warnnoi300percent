@@ -74,6 +74,8 @@ function BugReportPage() {
     setLoading(true);
     setError('');
     try {
+      // Sync from Jira before reading local DB
+      await fetch(`/api/sync/${projectKey}`, { method: 'POST' }).catch(() => {});
       const r = await fetch(`/api/bugs/${projectKey}`);
       const data = await r.json();
       if (!r.ok) {
