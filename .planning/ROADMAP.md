@@ -77,8 +77,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Dashboard shows the list of bugs assigned to the current active sprint
   2. Dashboard shows per-sprint history with bugs opened and closed per sprint
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Backend sprint data layer (sprints table, Jira Board API, GET /api/sprints/{project_key}) + SprintPage.jsx full UI vertical slice
+- [ ] 04-02-PLAN.md — App routing (/sprint route) + Dashboard sidebar Sprint link integration
 
 ### Phase 5: Export
 **Goal**: Users can download the current bug report as Excel or Word
