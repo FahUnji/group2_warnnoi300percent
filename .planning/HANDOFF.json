@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T12:56:11Z",
+  "timestamp": "2026-05-13T13:15:40Z",
   "phase": "05",
   "phase_name": "export",
   "phase_dir": ".planning/phases/05-export",
@@ -9,15 +9,11 @@
   "total_tasks": 0,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Add GET /api/projects/{project_key} endpoint (returns project_name + site_name)", "status": "done", "commit": "uncommitted"},
-    {"id": 2, "name": "BugReportPage sidebar: projectKey short + projectFullName below (fetched from new endpoint)", "status": "done", "commit": "uncommitted"},
-    {"id": 3, "name": "SprintPage sidebar: projectKey short + projectName below (already had projectName)", "status": "done", "commit": "uncommitted"},
-    {"id": 4, "name": "Sidebar sizing: BugReportPage matched to SprintPage (256px, #c3c6d6 border, 14px gap, 16px font)", "status": "done", "commit": "uncommitted"},
-    {"id": 5, "name": "Both sidebars: text-overflow ellipsis on projectName + projectSub (1 line, truncate)", "status": "done", "commit": "uncommitted"},
-    {"id": 6, "name": "SprintPage: added projectInfo CSS class + wired in JSX for min-width:0 truncation", "status": "done", "commit": "uncommitted"},
-    {"id": 7, "name": "export.py bugs: add project_name row to xlsx + paragraph to docx (after project_key)", "status": "done", "commit": "uncommitted"},
-    {"id": 8, "name": "Dashboard cards bigger: min-height 160→200, statVal 26→32px, padding/gap enlarged", "status": "done", "commit": "uncommitted"},
-    {"id": 9, "name": "Dashboard addDesc text: kept base sentence + added detail matching html mockup style", "status": "done", "commit": "uncommitted"}
+    {"id": 1, "name": "BugReportPage .root bg: #f8f9ff → #f0f2f5", "status": "done", "commit": "uncommitted"},
+    {"id": 2, "name": "SprintPage inline bg: #f8f9ff → #f0f2f5", "status": "done", "commit": "uncommitted"},
+    {"id": 3, "name": "ConnectionPage .pageWrapper bg: #ffffff → #f0f2f5", "status": "done", "commit": "uncommitted"},
+    {"id": 4, "name": "DashboardPage .noProjectMain bg: #f8f9ff → #f0f2f5", "status": "done", "commit": "uncommitted"},
+    {"id": 5, "name": "DashboardPage .addSearchInput bg: #ffffff → #f0f2f5 (select project field)", "status": "done", "commit": "uncommitted"}
   ],
   "remaining_tasks": [],
   "blockers": [
@@ -32,7 +28,7 @@
       "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
     },
     {
-      "description": "Backend NOT yet restarted after export.py + sync.py changes this session",
+      "description": "Backend NOT yet restarted after export.py + sync.py changes from previous session",
       "type": "human_action",
       "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
     },
@@ -45,37 +41,26 @@
   "human_actions_pending": [
     {
       "action": "Restart backend: powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\"",
-      "context": "sync.py + export.py modified this session; uvicorn blind to NTFS — restart required",
+      "context": "sync.py + export.py modified in previous session; uvicorn blind to NTFS — restart still required",
       "blocking": true
     },
     {
-      "action": "Manual UAT: verify sidebar project name displays correctly on BugReportPage + SprintPage",
-      "context": "projectFullName fetched from GET /api/projects/{project_key} — needs live test",
-      "blocking": false
-    },
-    {
-      "action": "Manual UAT: verify dashboard cards visually bigger, addDesc text correct",
+      "action": "Manual UAT: verify #f0f2f5 bg on BugReportPage, SprintPage, ConnectionPage, Dashboard no-project state, addSearchInput",
       "context": "CSS-only changes, Vite HMR auto-applied",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "Sidebar shows project_key (short) on top, full project_name below — NOT site_name/cloud instance", "rationale": "User confirmed: 'Manao Meal' not 'Manao Software'", "phase": "05"},
-    {"decision": "BugReportPage fetches project meta from new GET /api/projects/{project_key}; SprintPage already had projectName from /api/projects list", "rationale": "Reuse existing data where available", "phase": "05"},
-    {"decision": "Truncation needs projectInfo container with min-width:0 and flex:1 — added to both pages", "rationale": "Flex child won't truncate without min-width:0 on container", "phase": "05"},
-    {"decision": "Sprint page base for sidebar sizing: 256px width, #c3c6d6 border, gap:14px", "rationale": "User said keep sprint as base", "phase": "05"},
-    {"decision": "export.py: project_name row only added if project_name is non-empty (conditional)", "rationale": "Avoid blank row if DB has no project_name yet", "phase": "05"}
+    {"decision": "All page bg colors unified to #f0f2f5 (dashboard color) — BugReport, Sprint, ConnectionPage, noProjectMain", "rationale": "User requested bg consistency across all pages", "phase": "05"},
+    {"decision": "noProjectCard (white card) stays #ffffff — only .noProjectMain outer bg changed", "rationale": "User confirmed card stays same, only page bg + select field should be #f0f2f5", "phase": "05"},
+    {"decision": ".addSearchInput bg #ffffff → #f0f2f5 — the 'select a project' search field inside noProjectCard", "rationale": "User specified this field specifically should be #f0f2f5", "phase": "05"}
   ],
   "uncommitted_files": [
-    "backend/routers/sync.py",
-    "backend/routers/export.py",
-    "frontend/src/pages/BugReportPage.jsx",
     "frontend/src/pages/BugReportPage.module.css",
     "frontend/src/pages/SprintPage.jsx",
-    "frontend/src/pages/SprintPage.module.css",
-    "frontend/src/pages/DashboardPage.jsx",
+    "frontend/src/pages/ConnectionPage.module.css",
     "frontend/src/pages/DashboardPage.module.css"
   ],
-  "next_action": "Restart backend (docker restart), then manual UAT: check sidebar names on both pages, dashboard card size.",
-  "context_notes": "Post-phase UI polish session. All 5 phases remain complete. Changes are UI quality fixes: project name display, sidebar consistency, card sizing, description copy. backend/services/jira_sprint_service.py was already modified before this session — pre-existing change, not from this session."
+  "next_action": "Restart backend (still pending from previous session), then UAT all pages for bg color consistency.",
+  "context_notes": "Session 3 of post-phase UI polish. All 5 phases remain complete. This session: bg color unification across all pages to match dashboard #f0f2f5. Previous session (committed in e6ae6ad): sidebar project names, card sizing, dashboard copy. backend/services/jira_sprint_service.py shows modified — pre-existing, not from this session."
 }

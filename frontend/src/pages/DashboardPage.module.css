@@ -789,7 +789,7 @@
   font-family: inherit;
   font-size: 14px;
   color: #111827;
-  background: #ffffff;
+  background: #f0f2f5;
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -1033,7 +1033,7 @@
 
 .noProjectMain {
   min-height: calc(100vh - 60px);
-  background: #f8f9ff;
+  background: #f0f2f5;
   display: flex;
   align-items: center;
   justify-content: center;

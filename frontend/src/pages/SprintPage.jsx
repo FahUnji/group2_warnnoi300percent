@@ -265,7 +265,7 @@ function SprintPage() {
   }
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", background: '#f8f9ff', minHeight: '100vh' }}>
+    <div style={{ fontFamily: "'Inter', sans-serif", background: '#f0f2f5', minHeight: '100vh' }}>
 
       {/* Top NavBar */}
       <header className={styles.topnav}>
