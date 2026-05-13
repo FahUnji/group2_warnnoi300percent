@@ -75,8 +75,8 @@ function BugReportPage() {
     setError('');
     try {
       // Sync from Jira before reading local DB
-      await fetch(`/api/sync/${projectKey}`, { method: 'POST' }).catch(() => {});
-      const r = await fetch(`/api/bugs/${projectKey}`);
+      await fetch(`/api/sync/${encodeURIComponent(projectKey)}`, { method: 'POST' }).catch(() => {});
+      const r = await fetch(`/api/bugs/${encodeURIComponent(projectKey)}`);
       const data = await r.json();
       if (!r.ok) {
         setError(data?.message || 'Failed to load bug report.');
