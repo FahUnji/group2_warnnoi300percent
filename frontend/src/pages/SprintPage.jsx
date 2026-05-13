@@ -60,6 +60,7 @@ function SprintPage() {
   async function fetchSprints() {
     setLoading(true);
     setError('');
+    setStale(false);
     try {
       await fetch(`/api/sync/${encodeURIComponent(projectKey)}`, { method: 'POST' }).catch(() => {});
       const resp = await fetch(`/api/sprints/${encodeURIComponent(projectKey)}`);
@@ -423,7 +424,7 @@ function SprintPage() {
           )}
 
           {/* Stale data warning */}
-          {stale && !error && (
+          {stale && (
             <div className={styles.staleBanner} role="status">
               Showing cached data — could not reach Jira. Click Refresh Data to retry.
             </div>
