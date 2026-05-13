@@ -192,13 +192,7 @@ function BugReportPage() {
           <span className={styles.navBrand}>JIRA Bug Summary</span>
         </div>
         <div className={styles.topnavRight}>
-          <div className={styles.searchWrap}>
-            <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none">
-              <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
-              <path d="M21 21L16.65 16.65" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <input className={styles.searchInput} type="text" placeholder="Search bugs, users, tasks..." />
-          </div>
+
           <button className={styles.navBtn} aria-label="Notifications">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -299,7 +293,7 @@ function BugReportPage() {
             <div className={styles.pageHeaderLeft}>
               <h1 className={styles.pageTitle}>Bug Report Summary</h1>
               <p className={styles.pageSubtitle}>
-                {projectKey ? `Real-time status of ${projectKey} Jira Instance` : 'No project selected'}
+                {projectKey ? `Real-time status of ${projectKey} project` : 'No project selected'} 
               </p>
             </div>
             <div className={styles.pageHeaderRight}>
