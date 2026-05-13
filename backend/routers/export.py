@@ -266,7 +266,7 @@ async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
         wb = Workbook()
         wb.remove(wb.active)  # remove default empty sheet
         for sn in sprint_names:
-            sheet_title = sn[:31]  # Excel sheet name max 31 chars
+            sheet_title = re.sub(r'[\\/*?:\[\]]', '-', sn)[:31]  # strip Excel-invalid chars, max 31
             ws = wb.create_sheet(title=sheet_title)
             ws.append(headers)
             for cell in ws[1]:
