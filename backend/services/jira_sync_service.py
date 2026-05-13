@@ -134,8 +134,10 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
         sprint_raw = fields.get("customfield_10020")
         if isinstance(sprint_raw, list) and sprint_raw:
             sprint_name = sprint_raw[0].get("name")
+            sprint_id = sprint_raw[0].get("id")
         else:
             sprint_name = None
+            sprint_id = None
         assignee_field = fields.get("assignee")
         assignee = assignee_field.get("displayName") if assignee_field else None
         status_field = fields.get("status", {})
@@ -148,6 +150,7 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
             status_field.get("name") if status_field else None,
             priority_field.get("name") if priority_field else None,
             sprint_name,
+            sprint_id,
             assignee,
             synced_at,
         ))
@@ -164,8 +167,8 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
         conn.execute("DELETE FROM bugs WHERE project_key = ?", (project_key,))
         conn.executemany(
             "INSERT INTO bugs"
-            " (issue_id, issue_key, project_key, summary, status, priority, sprint_name, assignee, synced_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " (issue_id, issue_key, project_key, summary, status, priority, sprint_name, sprint_id, assignee, synced_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             rows,
         )
         conn.commit()

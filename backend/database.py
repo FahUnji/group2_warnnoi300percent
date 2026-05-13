@@ -56,6 +56,7 @@ def init_db() -> None:
                 status      TEXT,
                 priority    TEXT,
                 sprint_name TEXT,
+                sprint_id   INTEGER,
                 assignee    TEXT,
                 synced_at   TEXT    NOT NULL,
                 UNIQUE (issue_id, project_key)
@@ -84,6 +85,12 @@ def init_db() -> None:
         # Migration: add synced_at column to sprints if not present
         try:
             conn.execute("ALTER TABLE sprints ADD COLUMN synced_at TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # already exists
+        # Migration: add sprint_id column to bugs if not present
+        try:
+            conn.execute("ALTER TABLE bugs ADD COLUMN sprint_id INTEGER")
             conn.commit()
         except sqlite3.OperationalError:
             pass  # already exists

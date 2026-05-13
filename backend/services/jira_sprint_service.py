@@ -193,7 +193,7 @@ def _get_sprint_stats(project_key: str) -> list:
             "  SUM(CASE WHEN LOWER(b.priority) = 'medium' THEN 1 ELSE 0 END) AS medium,"
             "  SUM(CASE WHEN LOWER(b.priority) IN ('low','lowest') THEN 1 ELSE 0 END) AS low"
             " FROM sprints s"
-            " LEFT JOIN bugs b ON b.sprint_name = s.sprint_name AND b.project_key = s.project_key"
+            " LEFT JOIN bugs b ON b.sprint_id = s.sprint_id AND b.project_key = s.project_key"
             " WHERE s.project_key = ?"
             " GROUP BY s.sprint_id"
             " ORDER BY s.sprint_id DESC",
