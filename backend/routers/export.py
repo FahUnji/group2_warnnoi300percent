@@ -257,15 +257,24 @@ async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
         buf = _build_xlsx_buf(data_rows, headers)
         filename = f"{project_key}-{_slugify(sprint_name)}-{date.today()}.xlsx"
     else:
-        # One sheet per sprint
+        # One sheet per sprint — order by sprint_id DESC, then unrecognised, then No Sprint
         bugs_by_sprint: dict = {}
         for bug in rows:
             key = bug["sprint_name"] or "No Sprint"
             bugs_by_sprint.setdefault(key, []).append(bug)
 
+        # Sheet order: known sprint names (sprint_id DESC), unknown sprint names, "No Sprint" last
+        known_set = set(sprint_names)
+        unknown = [k for k in bugs_by_sprint if k not in known_set and k != "No Sprint"]
+        sheet_order = sprint_names + sorted(unknown) + (["No Sprint"] if "No Sprint" in bugs_by_sprint else [])
+
+        if not sheet_order:
+            sheet_order = ["No Data"]
+            bugs_by_sprint["No Data"] = []
+
         wb = Workbook()
         wb.remove(wb.active)  # remove default empty sheet
-        for sn in sprint_names:
+        for sn in sheet_order:
             sheet_title = re.sub(r'[\\/*?:\[\]]', '-', sn)[:31]  # strip Excel-invalid chars, max 31
             ws = wb.create_sheet(title=sheet_title)
             ws.append(headers)
