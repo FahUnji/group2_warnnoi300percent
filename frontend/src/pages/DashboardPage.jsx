@@ -206,7 +206,10 @@ function DashboardPage() {
   async function handleDeleteProject(key) {
     setOpenCardMenu(null);
     try {
-      await fetch(`/api/projects/${key}`, { method: 'DELETE' });
+      const resp = await fetch(`/api/projects/${key}`, { method: 'DELETE' });
+      if (!resp.ok) {
+        return;
+      }
       const remaining = projects.filter(p => p.key !== key);
       setRemovingKey(key);
       if (remaining.length === 0) {
