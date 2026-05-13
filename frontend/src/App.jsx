@@ -1,12 +1,14 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ConnectionPage from './pages/ConnectionPage';
 import DashboardPage from './pages/DashboardPage';
+import SprintPage from './pages/SprintPage';
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<ConnectionPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/sprint" element={<SprintPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
