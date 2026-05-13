@@ -4,8 +4,6 @@
   z-index: 1000;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   padding: 0 24px;
@@ -14,10 +12,54 @@
   overflow: visible;
 }
 
-.left {
+/* ── Three-section layout ── */
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 36px;
+}
+
+.navCenter {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── Hamburger ── */
+
+.menuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.menuBtn:hover {
+  background: #f0f7f4;
+}
+
+/* ── Logo ── */
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
   flex-shrink: 0;
 }
 
@@ -37,11 +79,6 @@
   font-weight: 700;
   color: #065b41;
   white-space: nowrap;
-}
-
-.right {
-  display: flex;
-  align-items: center;
 }
 
 /* ── User menu ── */
@@ -157,10 +194,11 @@
 
 /* ── Responsive ── */
 
-/* Tablet (≤768px): hide brand text */
+/* Tablet (≤768px): hide brand + username, collapse user button */
 @media (max-width: 768px) {
   .topnav {
     padding: 0 16px;
+    gap: 0;
   }
 
   .brand {
@@ -181,9 +219,34 @@
   .userBtn > svg:last-child {
     display: none;
   }
+
+  /* Show hamburger on tablet/mobile for sidebar pages */
+  .menuBtn {
+    display: flex;
+  }
+
+  /* Center the logo when hamburger is shown */
+  .hasSidebar .navCenter {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    flex: unset;
+    pointer-events: none;
+  }
+
+  /* Keep navLeft/navRight above the absolutely-positioned center */
+  .hasSidebar .navLeft,
+  .hasSidebar .navRight {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hasSidebar .navRight {
+    margin-left: auto;
+  }
 }
 
-/* Mobile (≤480px): tighten padding only, keep 60px height for layout compat */
+/* Mobile (≤480px): tighter padding */
 @media (max-width: 480px) {
   .topnav {
     padding: 0 12px;

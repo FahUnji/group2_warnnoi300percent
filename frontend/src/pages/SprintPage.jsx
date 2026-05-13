@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar/Navbar';
+import Sidebar from '../components/Sidebar/Sidebar';
 import styles from './SprintPage.module.css';
 
 const SPRINTS_PER_PAGE = 10;
@@ -30,6 +31,9 @@ function SprintPage() {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('jira_user') || 'null'); } catch { return null; }
   });
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   const exportRef = useRef(null);
 
@@ -183,6 +187,11 @@ function SprintPage() {
     window.location.href = '/';
   }
 
+  function handleBackToDashboard() {
+    setIsLeaving(true);
+    setTimeout(() => { window.location.href = '/dashboard'; }, 280);
+  }
+
   // Pagination
   const totalPages = Math.ceil(sprints.length / SPRINTS_PER_PAGE);
   const pagedSprints = sprints.slice(
@@ -263,61 +272,12 @@ function SprintPage() {
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: '#f0f2f5', minHeight: '100vh' }}>
 
-      {/* Top NavBar */}
-      <Navbar user={user} onLogout={handleLogout} />
+      <Navbar user={user} onLogout={handleLogout} onMenuToggle={() => setSidebarOpen(v => !v)} menuOpen={sidebarOpen} onLogoClick={handleBackToDashboard} />
 
       <div className={styles.layout}>
+        <Sidebar projectKey={projectKey} projectName={projectName} activePage="sprint" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {/* Sidebar */}
-        <aside className={styles.sidebar}>
-          <div className={styles.sidebarProject}>
-            <div className={styles.projectIcon}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <div className={styles.projectInfo}>
-              <span className={styles.projectName}>{projectKey}</span>
-              <span className={styles.projectSub}>{projectName || 'Jira Cloud Instance'}</span>
-            </div>
-          </div>
-
-          <nav className={styles.sidebarNav}>
-            <a href="/dashboard" className={styles.navLink}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="14" y="3" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="14" y="14" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="3" y="14" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Dashboard
-            </a>
-            <a
-              href={projectKey ? `/bug-report?project=${projectKey}` : '/bug-report'}
-              className={styles.navLink}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <polyline points="14 2 14 8 20 8" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="16" y1="13" x2="8" y2="13" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="16" y1="17" x2="8" y2="17" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Bug Report
-            </a>
-            <a href="#" className={`${styles.navLink} ${styles.navLinkActive}`} aria-current="page">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="16" y1="2" x2="16" y2="6" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="8" y1="2" x2="8" y2="6" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="3" y1="10" x2="21" y2="10" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Sprint
-            </a>
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className={styles.mainContent}>
+        <main className={`${styles.mainContent}${isLeaving ? ' ' + styles.mainContentLeaving : ''}`}>
 
           {/* Page header */}
           <div className={styles.pageHeader}>
