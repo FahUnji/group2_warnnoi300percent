@@ -1,50 +1,57 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T12:11:19Z",
+  "timestamp": "2026-05-13T12:30:00Z",
   "phase": "05",
   "phase_name": "export",
   "phase_dir": ".planning/phases/05-export",
   "plan": "02",
   "task": null,
-  "total_tasks": 2,
+  "total_tasks": 0,
   "status": "complete",
   "completed_tasks": [
-    {"id": 1, "name": "Phase 05-01: Backend export router (4 StreamingResponse endpoints)", "status": "done", "commit": "ad9229b"},
-    {"id": 2, "name": "Phase 05-02: Frontend export wiring on BugReportPage + SprintPage", "status": "done", "commit": "fe6449c"},
-    {"id": 3, "name": "Post-phase: BugReportPage animations (fadeInUp/slideDown/donut arc draw)", "status": "done", "commit": "0a2193b"},
-    {"id": 4, "name": "Post-phase: Word sprint export includes all sprints (one section per sprint)", "status": "done", "commit": "0a2193b"},
-    {"id": 5, "name": "Post-phase: Excel sprint export includes all sprints (one sheet per sprint)", "status": "done", "commit": "85c64fb"},
-    {"id": 6, "name": "Post-phase: Fix Excel sheet title crash on sprint names with '/'", "status": "done", "commit": "b3d486d"}
+    {"id": 1, "name": "Phase 05-01: Backend export router (4 endpoints)", "status": "done", "commit": "ad9229b"},
+    {"id": 2, "name": "Phase 05-02: Frontend export wiring BugReportPage + SprintPage", "status": "done", "commit": "fe6449c"},
+    {"id": 3, "name": "Post: BugReportPage animations + Word all-sprints export", "status": "done", "commit": "0a2193b"},
+    {"id": 4, "name": "Post: Excel sprint export one-sheet-per-sprint", "status": "done", "commit": "85c64fb"},
+    {"id": 5, "name": "Post: Fix Excel sheet title crash on '/' in sprint names", "status": "done", "commit": "b3d486d"},
+    {"id": 6, "name": "Post: Sprint xlsx missing data — add No Sprint + unknown sprint sheets", "status": "done", "commit": "ed126d8"},
+    {"id": 7, "name": "Post: Sprint xlsx metadata/stats/date block per sheet", "status": "done", "commit": "a7b1825"},
+    {"id": 8, "name": "Post: Bug report xlsx summary stats + priority % block", "status": "done", "commit": "1f203ac"},
+    {"id": 9, "name": "Post: Map 'released' state → 'Completed' in xlsx and docx", "status": "done", "commit": "90e984d"}
   ],
   "remaining_tasks": [],
   "blockers": [
     {
-      "description": "npm install EACCES on WSL NTFS mount (pre-existing, non-blocking)",
+      "description": "Docker CLI not in WSL — use powershell.exe workaround",
       "type": "technical",
-      "workaround": "Use Docker (docker-compose up --build). Backend must be rebuilt with --no-cache after requirements.txt changes."
+      "workaround": "powershell.exe -Command \"cd 'C:\\Users\\ps\\Desktop\\workshop_AI\\group2_warnnoi300percent'; docker ...\""
     },
     {
-      "description": "Many .planning/ files show as modified in git status — NTFS CRLF/LF artifact, not real changes",
+      "description": "uvicorn --reload misses NTFS file changes — must docker restart backend after .py edits",
       "type": "technical",
-      "workaround": "Ignore. Run git diff to confirm only line-ending diffs. Stage only real source files when committing."
+      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
+    },
+    {
+      "description": "check_sprints.py diagnostic file left in repo root — delete before next commit",
+      "type": "cleanup",
+      "workaround": "git rm check_sprints.py"
     }
   ],
   "human_actions_pending": [
     {
-      "action": "Manual UAT: test Excel and Word export downloads from Sprints page",
-      "context": "All-sprints export now produces one sheet/section per sprint. Verify file opens correctly in Excel/Word.",
+      "action": "Manual UAT: test xlsx and docx exports from both BugReportPage and SprintPage",
+      "context": "All export endpoints updated. Verify stats block, No Sprint sheet, Completed status label all appear correctly.",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "Excel bugs export = single sheet, columns: ID|Summary|Status|Priority|Assignee|Fix Version", "rationale": "Raw data so user can filter/sort in Excel", "phase": "05"},
-    {"decision": "Word BugReport = title+metadata+stats+donut chart (matplotlib, wedgeprops width=0.5)+bug table", "rationale": "Locked in discuss-phase", "phase": "05"},
-    {"decision": "Word Sprint (all-sprints) = cover page + one H1 section per sprint with metadata+summary+bug table", "rationale": "User requested all sprints in report", "phase": "05"},
-    {"decision": "Excel Sprint (all-sprints) = one worksheet per sprint; sheet name = sprint name sanitized (strip / \\ * ? : [ ][:31])", "rationale": "User requested all sprints; Excel sheet names disallow those chars", "phase": "05"},
-    {"decision": "No get_current_user auth dep on export endpoints — ambient OAuth", "rationale": "Matches all other routers in codebase", "phase": "05"},
-    {"decision": "matplotlib.use('Agg') required for server-side rendering", "rationale": "Non-interactive backend; no display available in container", "phase": "05"}
+    {"decision": "Bug xlsx: stats block (Total/Open/Resolved + Critical/High/Medium/Low with %) above bug table", "phase": "05"},
+    {"decision": "Sprint xlsx: each sheet has metadata (Sprint/Status/Start/Release Date) + stats block + bug table", "phase": "05"},
+    {"decision": "Sprint state display: released → Completed, active → Active, upcoming → Upcoming, archived → Archived", "phase": "05"},
+    {"decision": "Sprint xlsx sheet order: known sprints (sprint_id DESC) + unknown + No Sprint last", "phase": "05"},
+    {"decision": "No Sprint sheet captures all bugs with null sprint_name", "phase": "05"}
   ],
-  "uncommitted_files": [],
-  "next_action": "Project is 100% complete (5/5 phases). Optional: /gsd-audit-milestone or manual UAT of export downloads at http://localhost:3000.",
-  "context_notes": "All 5 phases delivered. This session: fixed Docker backend (missing matplotlib), added BugReportPage transition animations, changed sprint export (both xlsx and docx) to include all sprints instead of just the active sprint, fixed Excel crash on sprint names containing '/'."
+  "uncommitted_files": ["check_sprints.py (diagnostic — delete)"],
+  "next_action": "Project complete. Clean up: git rm check_sprints.py. Then manual UAT of exports.",
+  "context_notes": "All 5 phases done. This session fixed export quality: sprint xlsx had empty sheets (null sprint_name bugs dropped), added metadata/stats blocks to both xlsx exports, fixed state label. Backend requires docker restart after .py changes on NTFS (uvicorn watcher blind to NTFS)."
 }
