@@ -80,7 +80,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Backend sprint data layer (sprints table, Jira Board API, GET /api/sprints/{project_key}) + SprintPage.jsx full UI vertical slice
+- [x] 04-01-PLAN.md — Backend sprint data layer (sprints table, Jira Board API, GET /api/sprints/{project_key}) + SprintPage.jsx full UI vertical slice
 - [ ] 04-02-PLAN.md — App routing (/sprint route) + Dashboard sidebar Sprint link integration
 
 ### Phase 5: Export
@@ -103,5 +103,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Jira Connection | 3/3 | Complete | 2026-05-12 |
 | 2. Data Sync | 2/2 | Complete | 2026-05-12 |
 | 3. Dashboard UI | 2/2 | Complete | 2026-05-13 |
-| 4. Sprint Report | 0/2 | Planned | - |
+| 4. Sprint Report | 1/2 | In Progress | - |
 | 5. Export | 0/TBD | Not started | - |
