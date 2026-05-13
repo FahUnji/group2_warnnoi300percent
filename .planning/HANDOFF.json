@@ -1,25 +1,33 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T06:27:38Z",
+  "timestamp": "2026-05-13T07:24:53Z",
   "phase": "04",
   "phase_name": "sprint-report",
   "phase_dir": ".planning/phases/04-sprint-report",
   "plan": null,
   "task": null,
-  "total_tasks": 9,
+  "total_tasks": 17,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "04-01 Wave 1: sprints table + jira_sprint_service + GET /api/sprints + SprintPage", "status": "done", "commit": "6e9c2a0"},
-    {"id": 2, "name": "04-02 Wave 2: /sprint route + DashboardPage sidebar Sprint link", "status": "done", "commit": "933bd72"},
-    {"id": 3, "name": "Hotfix: BugReportPage donut tooltip CSS missing", "status": "done", "commit": "d4ff9cb"},
-    {"id": 4, "name": "Sprint sync fixes: state filter + sprint_name join + stale fallback + POST sync also syncs sprints", "status": "done", "commit": "c045b02"},
-    {"id": 5, "name": "Sync fix: BugReport Refresh Data now calls POST /api/sync first; Dashboard card menu adds Sync Now option", "status": "done", "commit": "7c683f4"}
+    {"id": 1,  "name": "04-01 Wave 1: sprints table + jira_sprint_service + GET /api/sprints + SprintPage", "status": "done", "commit": "6e9c2a0"},
+    {"id": 2,  "name": "04-02 Wave 2: /sprint route + DashboardPage sidebar Sprint link", "status": "done", "commit": "933bd72"},
+    {"id": 3,  "name": "Hotfix: BugReportPage donut tooltip CSS missing", "status": "done", "commit": "d4ff9cb"},
+    {"id": 4,  "name": "Sprint sync fixes: state filter + sprint_name join + stale fallback + POST sync also syncs sprints", "status": "done", "commit": "c045b02"},
+    {"id": 5,  "name": "Sync fix: BugReport Refresh Data now calls POST /api/sync first; Dashboard card menu adds Sync Now", "status": "done", "commit": "7c683f4"},
+    {"id": 6,  "name": "Sprint page: Refresh Data syncs bugs first; sort active → closed desc → future", "status": "done", "commit": "87ee0f2"},
+    {"id": 7,  "name": "Code review (hotfix delta since d6b99c6): 3 critical, 6 warning, 3 info", "status": "done", "commit": "cf483da"},
+    {"id": 8,  "name": "Fix CR-01: guard exc.detail + bare except in _fetch_sprints_and_store", "status": "done", "commit": "0615edb"},
+    {"id": 9,  "name": "Fix CR-02: add encodeURIComponent to BugReportPage fetch calls", "status": "done", "commit": "c59028e"},
+    {"id": 10, "name": "Fix CR-03: reset stale on fetch start + stale banner shows even when error present", "status": "done", "commit": "f1cd4ca"},
+    {"id": 11, "name": "Verification: gaps found (missing sidebar + sprint_name join note)", "status": "done", "commit": "4643d1e"},
+    {"id": 12, "name": "Restore Dashboard sidebar with Dashboard/BugReport/Sprint nav links", "status": "done", "commit": "8205df5"},
+    {"id": 13, "name": "Mark Phase 04 complete in STATE.md — advance to Phase 05", "status": "done", "commit": "d9b4347"}
   ],
   "remaining_tasks": [
-    {"id": 6, "name": "Code review gate: /gsd-code-review 4", "status": "not_started"},
-    {"id": 7, "name": "Verification: verifier agent or /gsd-verify-work 4", "status": "not_started"},
-    {"id": 8, "name": "Mark Phase 04 complete in ROADMAP + STATE", "status": "not_started"},
-    {"id": 9, "name": "Human UAT (non-blocking): browser test /sprint?project=KEY + /bug-report?project=KEY", "status": "not_started"}
+    {"id": 14, "name": "Plan Phase 05: Export (.xlsx + .docx)", "status": "not_started"},
+    {"id": 15, "name": "Execute Phase 05: Export backend + frontend wiring", "status": "not_started"},
+    {"id": 16, "name": "Code review Phase 05", "status": "not_started"},
+    {"id": 17, "name": "Verify Phase 05 + mark complete", "status": "not_started"}
   ],
   "blockers": [
     {
@@ -30,22 +38,24 @@
   ],
   "human_actions_pending": [
     {
-      "action": "Browser UAT: verify Refresh Data on Bug Report pulls new bugs from Jira; verify Dashboard Sync Now updates stats; verify Sprint page shows completed + active sprints",
-      "context": "Three sync fixes applied this session. All need visual confirmation.",
+      "action": "Browser UAT: verify Sprint page shows active+completed sprints; verify Refresh Data on Sprint page pulls from Jira; verify Dashboard sidebar shows Sprint link; verify BugReport Refresh Data syncs Jira",
+      "context": "All sync + sidebar fixes applied. Need visual confirmation before shipping Phase 05.",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "BugReportPage fetchStats calls POST /api/sync before GET /api/bugs", "rationale": "Refresh Data button must pull fresh data from Jira, not just re-read stale local DB", "phase": "04"},
-    {"decision": "Dashboard card menu gets Sync Now option", "rationale": "Users need per-project re-sync without navigating away", "phase": "04"},
-    {"decision": "Sprint stats join changed from sprint_id to sprint_name", "rationale": "71% of bugs have sprint_id=NULL; sprint_name is reliable in both tables", "phase": "04"},
-    {"decision": "state=active,closed,future added to Jira Board Sprint API call", "rationale": "Without it Jira may omit closed sprints", "phase": "04"},
-    {"decision": "Graceful stale fallback in _fetch_sprints_and_store", "rationale": "If Jira unreachable, serve cached data with stale:true banner", "phase": "04"}
+    {"decision": "Sprint stats join on sprint_name (not sprint_id)", "rationale": "71% of bugs have sprint_id=NULL — sprint_name is reliable in both tables. Verifier flagged as regression but is intentional documented decision.", "phase": "04"},
+    {"decision": "state=active,closed,future in Jira Board Sprint API", "rationale": "Without it Jira omits closed sprints", "phase": "04"},
+    {"decision": "Graceful stale fallback in _fetch_sprints_and_store", "rationale": "If Jira unreachable, serve cached data with stale:true banner", "phase": "04"},
+    {"decision": "fetchStats + fetchSprints both call POST /api/sync first", "rationale": "Refresh Data must pull from Jira, not just re-read stale local DB", "phase": "04"},
+    {"decision": "Dashboard sidebar restored with Sprint link using projects[0].key per D-07", "rationale": "Was deleted by aade1e1 commit — sidebar required for navigation to Sprint page", "phase": "04"},
+    {"decision": "Export stubs only (Phase 5 deferred)", "rationale": "Export buttons exist in UI as no-ops; real implementation is Phase 05", "phase": "04"},
+    {"decision": "use_worktrees=false permanent", "rationale": "WSL2 NTFS path pollution causes worktree files tracked in commits", "phase": "04"}
   ],
   "uncommitted_files": [
     "backend/.env (secrets — never commit)",
-    ".planning/**/*.md (CRLF normalization only — do not commit)"
+    ".planning/**/*.md (CRLF normalization only — do not commit unless content changed)"
   ],
-  "next_action": "Run /gsd-code-review 4, then spawn verifier agent for Phase 04, then mark phase complete, then begin Phase 05",
-  "context_notes": "Phase 04 all execution done. Three hotfix sessions: (1) donut tooltip CSS missing d4ff9cb, (2) sprint sync broken — state filter + sprint_name join + stale fallback c045b02, (3) Refresh Data didn't sync Jira — fetchStats now calls POST /api/sync first; Dashboard adds Sync Now per-card 7c683f4. Code review and verification still pending. Context was at 65% when pausing."
+  "next_action": "Run /gsd-plan-phase 5 to plan Export phase (.xlsx + .docx downloads)",
+  "context_notes": "Phase 04 fully closed this session. Hotfix code review found 3 blockers (all fixed): KeyError on HTTPException.detail, missing encodeURIComponent in BugReportPage, stale banner hidden by error flag. Verifier found Dashboard sidebar missing (restored from commit 59c7e42). Sprint_name join is intentional — verifier WR-06 note is a false alarm. Phase 05 (Export) is next — Export buttons exist as stubs in both BugReport and Sprint pages, ready to wire up."
 }
