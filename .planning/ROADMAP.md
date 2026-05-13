@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Jira Connection** - Authenticate to Jira REST API and confirm a live connection
 - [x] **Phase 2: Data Sync** - Pull bug data from Jira and persist it in SQLite
-- [ ] **Phase 3: Dashboard UI** - Display bug summaries and charts with project switching
+- [x] **Phase 3: Dashboard UI** - Display bug summaries and charts with project switching
 - [ ] **Phase 4: Sprint Report** - Add active-sprint view and per-sprint history
 - [ ] **Phase 5: Export** - Generate downloadable Excel and Word reports
 
@@ -98,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Jira Connection | 3/3 | Complete | 2026-05-12 |
-| 2. Data Sync | 0/2 | Planned | - |
-| 3. Dashboard UI | 2/2 | Human UAT Pending | - |
+| 2. Data Sync | 2/2 | Complete | 2026-05-12 |
+| 3. Dashboard UI | 2/2 | Complete | 2026-05-13 |
 | 4. Sprint Report | 0/TBD | Not started | - |
 | 5. Export | 0/TBD | Not started | - |
