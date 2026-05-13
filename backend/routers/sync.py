@@ -13,9 +13,10 @@ query string but is NOT interpolated into a SQL statement — SQL uses parameter
 in JiraSyncService._store_bugs. The JQL string is passed as a query param value, not
 concatenated into a URL path in an unsafe way.
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from backend.database import get_db
+from backend.services.jira_sprint_service import JiraSprintService as _JiraSprintService
 from backend.services.jira_sync_service import JiraSyncService
 
 router = APIRouter(prefix="/api", tags=["sync"])
@@ -103,3 +104,25 @@ async def delete_project(project_key: str):
     finally:
         conn.close()
     return {"ok": True}
+
+
+@router.get("/sprints/{project_key}")
+async def get_sprints(project_key: str):
+    """
+    Fetch sprint list for project_key from Jira Board API, upsert into sprints table,
+    and return combined sprint list with bug counts from bugs table.
+
+    Success: HTTP 200, {"ok": true, "sprints": [...], "synced_at": "..."}
+      Each sprint: {sprint_id, sprint_name, state, start_date, end_date,
+                    found, resolved, critical, high, medium, low}
+    Failure: HTTP 400, {"ok": false, "error": "<code>", "message": "<human text>"}
+    Error codes: not_configured | unreachable_host | timeout | invalid_credentials | forbidden | api_error
+    """
+    service = _JiraSprintService()
+    result = await service.get_sprints(project_key)
+    if not result["ok"]:
+        raise HTTPException(
+            status_code=400,
+            detail={"ok": False, "error": result["error"], "message": result["message"]},
+        )
+    return result
