@@ -6,8 +6,10 @@ Security notes (ASVS L1):
 - All SQL uses sqlite3 '?' parameterized queries — no f-strings in SQL statements.
 - Jira API errors are mapped to safe error codes; cloud_id and token are never leaked.
 - HTTP calls use explicit timeout=(5, 30) to prevent indefinite hang on large result sets.
+- project_key is validated against _PROJECT_KEY_RE before use in JQL to prevent injection.
 """
 import asyncio
+import re
 from datetime import datetime, timezone
 
 import requests
@@ -16,6 +18,14 @@ from fastapi import HTTPException
 from backend.database import get_db
 from backend.models.oauth_token import load_oauth_token
 from backend.services.jira_service import _decrypt_token
+
+_PROJECT_KEY_RE = re.compile(r'^[A-Z][A-Z0-9_]{0,9}$')
+
+
+def _validate_project_key(project_key: str) -> None:
+    """Raise ValueError if project_key is not a safe Jira project key."""
+    if not _PROJECT_KEY_RE.match(project_key):
+        raise ValueError(f"Invalid project key: {project_key!r}")
 
 
 def _get_auth_headers() -> tuple[str, str, str]:
@@ -93,6 +103,11 @@ def _fetch_bugs(project_key: str) -> dict:
     Returns {"ok": True, "issues": [...]} or {"ok": False, "error": ..., "message": ...}.
     Never logs or returns access_token or cloud_id.
     """
+    try:
+        _validate_project_key(project_key)
+    except ValueError as exc:
+        return {"ok": False, "error": "invalid_project_key", "message": str(exc)}
+
     try:
         access_token, cloud_id, _base_url = _get_auth_headers()
     except HTTPException as exc:
