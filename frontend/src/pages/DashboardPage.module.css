@@ -31,7 +31,8 @@
 .topnav {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
+  overflow: visible;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -132,7 +133,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  z-index: 200;
+  z-index: 2000;
   overflow: hidden;
   max-height: 280px;
   overflow-y: auto;
@@ -508,7 +509,6 @@
 .connectSection {
   display: flex;
   border-radius: 12px;
-  overflow: hidden;
   margin-bottom: 40px;
   border-top: 4px solid #065b41;
 }
@@ -523,6 +523,7 @@
   align-items: center;
   text-align: center;
   gap: 16px;
+  border-radius: 0 0 0 12px;
 }
 
 .connectIconWrap {
@@ -556,6 +557,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  border-radius: 0 12px 12px 0;
+  position: relative;
 }
 
 .addTitle {
