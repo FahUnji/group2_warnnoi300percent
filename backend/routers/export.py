@@ -138,12 +138,46 @@ async def export_bugs_xlsx(project_key: str):
         ).fetchall()
     finally:
         conn.close()
+    stats = _compute_stats(rows)
+    pc = stats["priority_counts"]
+    total = stats["total"]
+
+    def _pct(n: int) -> str:
+        return f"{round(n / total * 100)}%" if total else "0%"
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Bug Report"
+
+    # --- Summary block ---
+    ws.append(["Project", project_key])
+    ws.append(["Generated", str(date.today())])
+    ws.append([])
+    ws.append(["Total Bugs", total])
+    ws.append(["Open", stats["open_count"]])
+    ws.append(["Resolved", stats["resolved_count"]])
+    ws.append([])
+    ws.append(["Critical", pc["critical"], _pct(pc["critical"])])
+    ws.append(["High", pc["high"], _pct(pc["high"])])
+    ws.append(["Medium", pc["medium"], _pct(pc["medium"])])
+    ws.append(["Low", pc["low"], _pct(pc["low"])])
+    ws.append([])
+    for row_cells in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=1):
+        for cell in row_cells:
+            if cell.value:
+                cell.font = cell.font.copy(bold=True)
+
+    # --- Bug table ---
     headers = ["ID", "Summary", "Status", "Priority", "Assignee", "Fix Version"]
-    data_rows = [
-        [r["issue_key"], r["summary"], r["status"], r["priority"], r["assignee"], r["sprint_name"]]
-        for r in rows
-    ]
-    buf = _build_xlsx_buf(data_rows, headers)
+    ws.append(headers)
+    for cell in ws[ws.max_row]:
+        cell.font = cell.font.copy(bold=True)
+    for r in rows:
+        ws.append([r["issue_key"], r["summary"], r["status"], r["priority"], r["assignee"], r["sprint_name"]])
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
     filename = f"{project_key}-bug-report-{date.today()}.xlsx"
     return StreamingResponse(
         buf,
