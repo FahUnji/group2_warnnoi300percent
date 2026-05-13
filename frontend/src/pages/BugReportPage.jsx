@@ -179,10 +179,14 @@ function BugReportPage() {
           <div className={styles.userMenuWrap} ref={userMenuRef}>
             <button className={styles.navUser} aria-label="User menu" onClick={() => setShowUserMenu(v => !v)}>
               <div className={styles.navAvatar}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="8" r="4" stroke="#065b41" strokeWidth="2"/>
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="" width={24} height={24} style={{ borderRadius: '50%' }} />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="#065b41" strokeWidth="2"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                )}
               </div>
               <span className={styles.navUsername}>{user?.name || 'Account'}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
