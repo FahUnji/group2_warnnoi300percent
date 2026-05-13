@@ -1,38 +1,47 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T02:33:16Z",
-  "phase": "03",
-  "phase_name": "dashboard-ui",
-  "phase_dir": ".planning/phases/03-dashboard-ui",
+  "timestamp": "2026-05-13T04:23:00Z",
+  "phase": "04",
+  "phase_name": "sprint-report",
+  "phase_dir": ".planning/phases/04-sprint-report",
   "plan": null,
   "task": null,
   "total_tasks": null,
-  "status": "phase_complete",
+  "status": "awaiting_review_and_verification",
   "completed_tasks": [
-    {"id": 1, "name": "CR-02: resp.ok guards on all 7 fetch call-sites + Array.isArray guards", "status": "done", "commit": "2bcac70"},
-    {"id": 2, "name": "WR-01: user added to auth/me useEffect deps array", "status": "done", "commit": "2bcac70"},
-    {"id": 3, "name": "Phase 3 marked complete in ROADMAP.md + STATE.md", "status": "done", "commit": "eaeca2d"}
+    {"id": 1, "name": "04-01 Wave 1: sprints table migration + jira_sprint_service.py + GET /api/sprints endpoint + SprintPage.jsx + SprintPage.module.css", "status": "done", "commit": "6e9c2a0"},
+    {"id": 2, "name": "04-02 Wave 2: App.jsx /sprint route + DashboardPage sidebar Sprint link + sidebar CSS", "status": "done", "commit": "933bd72"}
   ],
   "remaining_tasks": [
-    {"id": 4, "name": "Phase 4 planning: /gsd-plan-phase 4", "status": "not_started"}
+    {"id": 3, "name": "Code review gate: /gsd-code-review 4", "status": "not_started"},
+    {"id": 4, "name": "Verification: verifier agent or /gsd-verify-work 4", "status": "not_started"},
+    {"id": 5, "name": "Mark Phase 04 complete in ROADMAP + STATE", "status": "not_started"},
+    {"id": 6, "name": "Human UAT: browser test /sprint?project=KEY, sidebar nav, sprint cards expand/collapse, pagination", "status": "not_started"}
   ],
   "blockers": [
     {
-      "description": "npm install fails on WSL NTFS mount (EACCES permissions)",
+      "description": "npm install fails on WSL NTFS mount (EACCES permissions) — pre-existing from Phase 03",
       "type": "technical",
       "workaround": "Use Docker (docker-compose up) or run npm from native Linux path outside /mnt/d/"
     }
   ],
-  "human_actions_pending": [],
+  "human_actions_pending": [
+    {
+      "action": "Browser UAT: navigate to /sprint?project=KEY, verify sprint cards collapse/expand, sidebar links, pagination, active sprint auto-expands",
+      "context": "SprintPage.jsx is new UI — only testable with live backend + frontend",
+      "blocking": false
+    }
+  ],
   "decisions": [
-    {"decision": "CR-01 not applicable — extractProjectKey removed in Session 2; project keys come from API search results only", "rationale": "03-REVIEW.md was written against earlier code version", "phase": "03"},
-    {"decision": "CR-03 not applicable — handleSync/setSyncSuccess removed; animation timers in handleDeleteProject don't fire setState after unmount", "rationale": "03-REVIEW.md was written against earlier code version", "phase": "03"},
-    {"decision": "Phase 3 closed without human UAT sign-off in browser", "rationale": "npm install blocked by WSL NTFS; core UI verified via code review and static analysis", "phase": "03"}
+    {"decision": "Board ID discovered fresh on each sync — not stored in sprints table", "rationale": "Simpler; board ID can change; not needed for display", "phase": "04"},
+    {"decision": "Export buttons are stubs (close menu only, no real download)", "rationale": "D-12 explicit; real export deferred to Phase 5", "phase": "04"},
+    {"decision": "Client-side pagination at 10 sprints/page", "rationale": "D-13 explicit requirement", "phase": "04"},
+    {"decision": "use_worktrees=false set in config.json", "rationale": "WSL2/Windows paths caused nested worktree commit pollution in previous run", "phase": "04"},
+    {"decision": ".claude/worktrees/ added to .gitignore and tracked files removed", "rationale": "Was missing; caused worktree directory tree to be tracked and committed in 'phase 4 not done' commit", "phase": "04"}
   ],
   "uncommitted_files": [
-    "CRLF to LF line-ending changes across worktree + planning dirs (cosmetic, safe to discard with git checkout)",
     "backend/.env (secrets — never commit)"
   ],
-  "next_action": "Run /gsd-plan-phase 4 to plan Sprint Report phase",
-  "context_notes": "Phase 3 dashboard UI complete and polished. DashboardPage.jsx: single /dashboard route, 3-way ternary (loading/empty/has-projects), fadeInUp entry animations, cardExit/fadeOutUp exit animations, overlay add-project dropdown (no layout shift), kebab card menus, navbar debounced project search. All fetch calls now guard resp.ok before calling .json(). Phase 4 (Sprint Report) needs: Jira sprint API integration, /api/sprint/{project_key} backend endpoint, sprint bug list view + per-sprint history aggregation UI."
+  "next_action": "Run /gsd-code-review 4, then spawn verifier agent for Phase 04 goal verification, then mark phase 04 complete in ROADMAP + STATE",
+  "context_notes": "Phase 04 both plans executed cleanly this session. Code review was interrupted by user (/gsd-pause-work called mid-review). No Self-Check: FAILED markers in either summary. Verification has not run yet. npm install issue pre-existing — use Docker or native Linux path outside /mnt/d/. SprintPage.jsx = 536 lines, matches sprint.html mockup, active sprint auto-expands, client-side pagination 10/page, export stubs only."
 }
