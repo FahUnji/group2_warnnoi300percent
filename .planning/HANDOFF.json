@@ -1,36 +1,25 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T07:57:00Z",
-  "phase": "04",
-  "phase_name": "sprint-report",
-  "phase_dir": ".planning/phases/04-sprint-report",
+  "timestamp": "2026-05-13T08:46:16Z",
+  "phase": "05",
+  "phase_name": "export",
+  "phase_dir": ".planning/phases/05-export",
   "plan": null,
   "task": null,
-  "total_tasks": 17,
+  "total_tasks": 4,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1,  "name": "04-01 Wave 1: sprints table + jira_sprint_service + GET /api/sprints + SprintPage", "status": "done", "commit": "6e9c2a0"},
-    {"id": 2,  "name": "04-02 Wave 2: /sprint route + DashboardPage sidebar Sprint link", "status": "done", "commit": "933bd72"},
-    {"id": 3,  "name": "Hotfix: BugReportPage donut tooltip CSS missing", "status": "done", "commit": "d4ff9cb"},
-    {"id": 4,  "name": "Sprint sync fixes: state filter + sprint_name join + stale fallback + POST sync also syncs sprints", "status": "done", "commit": "c045b02"},
-    {"id": 5,  "name": "Sync fix: BugReport Refresh Data now calls POST /api/sync first; Dashboard card menu adds Sync Now", "status": "done", "commit": "7c683f4"},
-    {"id": 6,  "name": "Sprint page: Refresh Data syncs bugs first; sort active → closed desc → future", "status": "done", "commit": "87ee0f2"},
-    {"id": 7,  "name": "Code review (hotfix delta since d6b99c6): 3 critical, 6 warning, 3 info", "status": "done", "commit": "cf483da"},
-    {"id": 8,  "name": "Fix CR-01: guard exc.detail + bare except in _fetch_sprints_and_store", "status": "done", "commit": "0615edb"},
-    {"id": 9,  "name": "Fix CR-02: add encodeURIComponent to BugReportPage fetch calls", "status": "done", "commit": "c59028e"},
-    {"id": 10, "name": "Fix CR-03: reset stale on fetch start + stale banner shows even when error present", "status": "done", "commit": "f1cd4ca"},
-    {"id": 11, "name": "Verification: gaps found (missing sidebar + sprint_name join note)", "status": "done", "commit": "4643d1e"},
-    {"id": 12, "name": "Restore Dashboard sidebar with Dashboard/BugReport/Sprint nav links", "status": "done", "commit": "8205df5"},
-    {"id": 13, "name": "Mark Phase 04 complete in STATE.md — advance to Phase 05", "status": "done", "commit": "d9b4347"},
-    {"id": 14, "name": "Post-phase session: Fix no_board error code + graceful empty-list return in jira_sprint_service", "status": "done", "commit": "uncommitted"},
-    {"id": 15, "name": "Post-phase session: Add View Sprints to DashboardPage project card dropdown; remove sidebar", "status": "done", "commit": "uncommitted"},
-    {"id": 16, "name": "Post-phase session: Fix SprintPage error extraction (err.detail?.message) for FastAPI format", "status": "done", "commit": "uncommitted"}
+    {"id": 1, "name": "Sprint page: reconnect link on invalid_credentials error (errorCode state)", "status": "done", "commit": "bab988b"},
+    {"id": 2, "name": "Switch sprint data source: Agile Board API → Jira Fix Versions API (/rest/api/3/project/{key}/versions)", "status": "done", "commit": "bab988b"},
+    {"id": 3, "name": "Sprint page state logic: active/upcoming/released/archived inferred from version fields", "status": "done", "commit": "bab988b"},
+    {"id": 4, "name": "Sprint page UI fixes: 1-digit severity, green 100% progress (#065B41), dynamic username from /api/auth/me", "status": "done", "commit": "bab988b"},
+    {"id": 5, "name": "DashboardPage + BugReportPage sidebar: Sprint labels consistent", "status": "done", "commit": "bab988b"}
   ],
   "remaining_tasks": [
-    {"id": 17, "name": "Commit post-phase fixes (3 files: jira_sprint_service.py, DashboardPage.jsx, SprintPage.jsx)", "status": "not_started"},
-    {"id": 18, "name": "UAT: verify Sprint page loads, no-board projects show empty gracefully, View Sprints nav works", "status": "not_started"},
-    {"id": 19, "name": "Plan Phase 05: Export (.xlsx + .docx)", "status": "not_started"},
-    {"id": 20, "name": "Execute Phase 05: Export backend + frontend wiring", "status": "not_started"}
+    {"id": 6, "name": "Browser UAT: Sprint page with fix versions data", "status": "not_started"},
+    {"id": 7, "name": "Plan Phase 05: Export (.xlsx + .docx)", "status": "not_started"},
+    {"id": 8, "name": "Execute Phase 05: backend openpyxl + python-docx endpoints + frontend wiring", "status": "not_started"},
+    {"id": 9, "name": "Code review + verify Phase 05", "status": "not_started"}
   ],
   "blockers": [
     {
@@ -41,26 +30,20 @@
   ],
   "human_actions_pending": [
     {
-      "action": "Browser UAT: reload Sprint page — verify no HTTP 400, no-board projects show 'No sprints found', View Sprints button navigates correctly from Dashboard project card",
-      "context": "Three post-phase fixes applied but not yet confirmed working in browser. Token had ~44min remaining at check time.",
+      "action": "Browser UAT: Sprint page — verify fix versions load, states correct (active/upcoming/completed/archived), 100% bar green, username shows login name not hardcoded",
+      "context": "All changes committed in bab988b. Hard refresh (Ctrl+Shift+R) required after Vite HMR. Token may need reconnect.",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "Sprint stats join on sprint_name (not sprint_id)", "rationale": "71% of bugs have sprint_id=NULL — sprint_name is reliable in both tables", "phase": "04"},
-    {"decision": "state=active,closed,future in Jira Board Sprint API", "rationale": "Without it Jira omits closed sprints", "phase": "04"},
-    {"decision": "Graceful stale fallback in _fetch_sprints_and_store", "rationale": "If Jira unreachable, serve cached data with stale:true banner", "phase": "04"},
-    {"decision": "no_board returns ok:true with empty sprint list", "rationale": "Projects without Agile boards (SAM/MLO may not have Scrum boards) are valid — show empty state, not HTTP 400", "phase": "04"},
-    {"decision": "View Sprints in project card dropdown (not sidebar)", "rationale": "Sidebar removed earlier; dropdown reuses existing cardMenuSync CSS class (green)", "phase": "04"},
-    {"decision": "Export stubs only (Phase 5 deferred)", "rationale": "Export buttons exist in UI as no-ops; real implementation is Phase 05", "phase": "04"},
-    {"decision": "use_worktrees=false permanent", "rationale": "WSL2 NTFS path pollution causes worktree files tracked in commits", "phase": "04"}
+    {"decision": "Sprint page data from fix versions API not Agile Board API", "rationale": "SAM project has no Scrum board; fix versions exist and are the correct release tracking mechanism", "phase": "04"},
+    {"decision": "State: archived→archived, released→released, startDate<=today→active, else→upcoming", "rationale": "Jira versions have no native active state; infer from startDate", "phase": "04"},
+    {"decision": "sprint_name column reused for fix version name in bugs table", "rationale": "Avoids schema migration; LEFT JOIN on name still works", "phase": "04"},
+    {"decision": "100% progress color: #065B41", "rationale": "User specified exact color; matches done-state green", "phase": "04"},
+    {"decision": "use_worktrees=false permanent", "rationale": "WSL2 NTFS path pollution causes worktree files tracked in commits", "phase": "04"},
+    {"decision": "Export stubs only in Phase 04 (Phase 05 deferred)", "rationale": "Export buttons exist as no-ops in BugReport and Sprint pages; real endpoints in Phase 05", "phase": "04"}
   ],
-  "uncommitted_files": [
-    "backend/services/jira_sprint_service.py — no_board error code + graceful empty-list return",
-    "frontend/src/pages/DashboardPage.jsx — View Sprints button added to project card dropdown; sidebar removed",
-    "frontend/src/pages/SprintPage.jsx — error message extraction fixed: err.detail?.message || err.message",
-    ".planning/**/*.md (CRLF normalization only — do not commit unless content changed)"
-  ],
-  "next_action": "Commit the 3 uncommitted files, then run browser UAT, then /gsd-plan-phase 5",
-  "context_notes": "Phase 04 was marked complete at d9b4347. This session added post-phase fixes: (1) jira_sprint_service.py — projects without Agile boards returned 400; now returns ok:true with empty sprints. (2) DashboardPage.jsx — added View Sprints to project card dropdown (sidebar was already removed). (3) SprintPage.jsx — error text was always showing generic fallback because err.message doesn't exist on FastAPI HTTPException responses (wrapped in detail). All three fixes uncommitted. UAT still pending."
+  "uncommitted_files": [],
+  "next_action": "Browser UAT to confirm Sprint/fix-versions page works, then /gsd-plan-phase 5 for Export.",
+  "context_notes": "Phase 04 closed at d9b4347. This session (May 13 afternoon) overhauled the Sprint page: switched from Jira Agile Board API (which returned no_board for SAM project) to Jira Fix Versions API. State is now inferred from version fields. Multiple UI polish fixes committed in bab988b. Phase 05 is next — export buttons already stubbed as no-ops in both BugReport and Sprint pages. Backend needs openpyxl + python-docx libraries added to requirements."
 }
