@@ -86,7 +86,7 @@ def _fetch_sprint_list(board_id: int, access_token: str, cloud_id: str) -> dict:
             resp = requests.get(
                 url,
                 headers=headers,
-                params={"startAt": start_at, "maxResults": max_results},
+                params={"startAt": start_at, "maxResults": max_results, "state": "active,closed,future"},
                 timeout=(5, 15),
                 verify=True,
             )
@@ -193,7 +193,7 @@ def _get_sprint_stats(project_key: str) -> list:
             "  SUM(CASE WHEN LOWER(b.priority) = 'medium' THEN 1 ELSE 0 END) AS medium,"
             "  SUM(CASE WHEN LOWER(b.priority) IN ('low','lowest') THEN 1 ELSE 0 END) AS low"
             " FROM sprints s"
-            " LEFT JOIN bugs b ON b.sprint_id = s.sprint_id AND b.project_key = s.project_key"
+            " LEFT JOIN bugs b ON b.sprint_name = s.sprint_name AND b.project_key = s.project_key"
             " WHERE s.project_key = ?"
             " GROUP BY s.sprint_id"
             " ORDER BY s.sprint_id DESC",
@@ -223,26 +223,36 @@ def _get_sprint_stats(project_key: str) -> list:
 def _fetch_sprints_and_store(project_key: str) -> dict:
     """
     Orchestrates: get auth -> find board -> fetch sprints -> upsert -> return sprint stats.
-    Returns {"ok": True, "sprints": [...], "synced_at": "..."} or {"ok": False, ...}
+    Falls back to cached DB data if Jira API is unreachable or fails.
+    Returns {"ok": True, "sprints": [...], "synced_at": "...", "stale": bool} or {"ok": False, ...}
     """
     try:
         access_token, cloud_id, _ = _get_auth_headers()
     except HTTPException as exc:
+        cached = _get_sprint_stats(project_key)
+        if cached:
+            return {"ok": True, "sprints": cached, "synced_at": None, "stale": True}
         return {"ok": False, "error": exc.detail["error"], "message": exc.detail["message"]}
 
     board_result = _fetch_board_id(project_key, access_token, cloud_id)
     if not board_result["ok"]:
+        cached = _get_sprint_stats(project_key)
+        if cached:
+            return {"ok": True, "sprints": cached, "synced_at": None, "stale": True}
         return board_result
 
     sprint_result = _fetch_sprint_list(board_result["board_id"], access_token, cloud_id)
     if not sprint_result["ok"]:
+        cached = _get_sprint_stats(project_key)
+        if cached:
+            return {"ok": True, "sprints": cached, "synced_at": None, "stale": True}
         return sprint_result
 
     synced_at = datetime.now(timezone.utc).isoformat()
     _upsert_sprints(project_key, sprint_result["sprints"], synced_at)
 
     stats = _get_sprint_stats(project_key)
-    return {"ok": True, "sprints": stats, "synced_at": synced_at}
+    return {"ok": True, "sprints": stats, "synced_at": synced_at, "stale": False}
 
 
 class JiraSprintService:

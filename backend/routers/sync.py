@@ -26,6 +26,7 @@ router = APIRouter(prefix="/api", tags=["sync"])
 async def trigger_sync(project_key: str):
     """
     Fetch all Bug-type issues for project_key from Jira, upsert into bugs table.
+    Also syncs sprint metadata so the Sprint page reflects fresh data.
 
     Success: HTTP 200, {"ok": true, "synced": N, "project_key": "...", "synced_at": "..."}
     Failure: HTTP 400, {"ok": false, "error": "<code>", "message": "<human text>"}
@@ -35,7 +36,13 @@ async def trigger_sync(project_key: str):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail={"ok": False, "error": "invalid_project_key", "message": str(exc)})
     service = JiraSyncService()
-    return await service.sync_bugs(project_key)
+    result = await service.sync_bugs(project_key)
+    # Sync sprint metadata alongside bugs; errors are non-fatal for the bug sync response
+    try:
+        await _JiraSprintService().get_sprints(project_key)
+    except Exception:
+        pass
+    return result
 
 
 @router.get("/bugs/{project_key}")

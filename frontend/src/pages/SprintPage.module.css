@@ -506,6 +506,17 @@
   margin-bottom: 16px;
 }
 
+/* ── Stale data warning ── */
+.staleBanner {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
 /* ── Empty state ── */
 .emptyState {
   text-align: center;

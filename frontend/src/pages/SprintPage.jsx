@@ -23,6 +23,7 @@ function SprintPage() {
   const [exportOpen, setExportOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [stale, setStale] = useState(false);
 
   const exportRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -70,6 +71,7 @@ function SprintPage() {
       if (data.ok && Array.isArray(data.sprints)) {
         setSprints(data.sprints);
         setSyncedAt(data.synced_at || null);
+        setStale(data.stale === true);
         // Auto-expand active sprint (D-10)
         const activeIds = new Set(
           data.sprints.filter(s => s.state === 'active').map(s => s.sprint_id)
@@ -411,6 +413,13 @@ function SprintPage() {
           {/* Error banner */}
           {error && (
             <div className={styles.errorBanner} role="alert">{error}</div>
+          )}
+
+          {/* Stale data warning */}
+          {stale && !error && (
+            <div className={styles.staleBanner} role="status">
+              Showing cached data — could not reach Jira. Click Refresh Data to retry.
+            </div>
           )}
 
           {/* Loading state */}
