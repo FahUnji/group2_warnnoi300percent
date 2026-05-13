@@ -1,34 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
+import styles from './DashboardPage.module.css';
 
 function DashboardPage() {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('jira_user') || 'null'); } catch { return null; }
   });
 
-  const [syncing, setSyncing] = useState(false);
-  const [syncError, setSyncError] = useState('');
-  const [syncSuccess, setSyncSuccess] = useState('');
-  const [lastSynced, setLastSynced] = useState(null);
-  const [projectKey, setProjectKey] = useState(() => {
-    // Resolve active project from sessionStorage (set during NoProjectPage auto-sync)
-    try { return sessionStorage.getItem('active_project_key') || ''; } catch { return ''; }
-  });
-  const [bugs, setBugs] = useState([]);
-  const [loadingBugs, setLoadingBugs] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [projectsError, setProjectsError] = useState('');
 
-  // Show inline fallback when arriving at /dashboard without a project selected
-  const [noProjectWarning, setNoProjectWarning] = useState(false);
-  useEffect(() => {
-    if (!projectKey) {
-      setNoProjectWarning(true);
-    }
-  }, [projectKey]);
+  const [bugStats, setBugStats] = useState({});
+
+  const [addQuery, setAddQuery] = useState('');
+  const [addResults, setAddResults] = useState([]);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addSyncing, setAddSyncing] = useState(false);
+  const [addSelectedKey, setAddSelectedKey] = useState('');
+  const [addError, setAddError] = useState('');
+
+  // Navbar search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [connectingKey, setConnectingKey] = useState('');
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [openCardMenu, setOpenCardMenu] = useState(null);
+  const [removingKey, setRemovingKey] = useState(null);
+  const [isLeavingDashboard, setIsLeavingDashboard] = useState(false);
+  const [showAddDropdown, setShowAddDropdown] = useState(false);
+  const searchRef = useRef(null);
+  const userMenuRef = useRef(null);
+  const addSearchRef = useRef(null);
 
   useEffect(() => {
     if (user) return;
     fetch('/api/auth/me')
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         if (data.ok && data.user) {
           sessionStorage.setItem('jira_user', JSON.stringify(data.user));
@@ -36,20 +46,107 @@ function DashboardPage() {
         }
       })
       .catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    setLoadingProjects(true);
+    fetch('/api/projects')
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data.ok && Array.isArray(data.projects)) setProjects(data.projects);
+        else setProjectsError('Could not load projects. Check your connection and reload.');
+      })
+      .catch(() => setProjectsError('Could not load projects. Check your connection and reload.'))
+      .finally(() => setLoadingProjects(false));
   }, []);
 
-  async function fetchBugs(key) {
-    if (!key) return;
-    setLoadingBugs(true);
-    try {
-      const resp = await fetch(`/api/bugs/${key}`);
-      const data = await resp.json();
-      if (data.ok) setBugs(data.bugs);
-    } catch {}
-    finally { setLoadingBugs(false); }
-  }
+  useEffect(() => {
+    if (!projects.length) return;
+    const initial = {};
+    projects.forEach(p => { initial[p.key] = { total: 0, open: 0, critical: 0, loading: true }; });
+    setBugStats(initial);
+    projects.forEach(project => {
+      fetch(`/api/bugs/${project.key}`)
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(data => {
+          if (data.ok) {
+            const bugs = data.bugs;
+            const total = bugs.length;
+            const isNotDone = b => (b.status || '').toLowerCase() !== 'done';
+            const open = bugs.filter(isNotDone).length;
+            const critical = bugs.filter(b =>
+              isNotDone(b) &&
+              ['critical', 'highest'].includes((b.priority || '').toLowerCase())
+            ).length;
+            setBugStats(prev => ({ ...prev, [project.key]: { total, open, critical, loading: false } }));
+          } else {
+            setBugStats(prev => ({ ...prev, [project.key]: { total: 0, open: 0, critical: 0, loading: false } }));
+          }
+        })
+        .catch(() => setBugStats(prev => ({ ...prev, [project.key]: { total: 0, open: 0, critical: 0, loading: false } })));
+    });
+  }, [projects]);
 
-  useEffect(() => { fetchBugs(projectKey); }, [projectKey]);
+  // Debounced search for Jira projects
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSearchLoading(true);
+      fetch(`/api/projects/search?q=${encodeURIComponent(searchQuery)}`)
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(data => {
+          if (data.ok) {
+            setSearchResults(data.projects);
+            setShowDropdown(true);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setSearchLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Debounced search for Add Project section
+  useEffect(() => {
+    if (!addQuery.trim()) {
+      setAddResults([]);
+      setShowAddDropdown(false);
+      return;
+    }
+    setShowAddDropdown(true);
+    const timer = setTimeout(() => {
+      setAddLoading(true);
+      fetch(`/api/projects/search?q=${encodeURIComponent(addQuery)}`)
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(data => { if (data.ok) setAddResults(data.projects); })
+        .catch(() => {})
+        .finally(() => setAddLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [addQuery]);
+
+  // Close dropdown / user menu on outside click
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setShowDropdown(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
+      if (addSearchRef.current && !addSearchRef.current.contains(e.target)) setShowAddDropdown(false);
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
+
+  // Close card kebab menu on outside click
+  useEffect(() => {
+    if (!openCardMenu) return;
+    function close() { setOpenCardMenu(null); }
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [openCardMenu]);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
@@ -57,220 +154,495 @@ function DashboardPage() {
     window.location.href = '/';
   }
 
-  async function handleSync() {
-    if (!projectKey || syncing) return;
-    setSyncing(true);
-    setSyncError('');
-    setSyncSuccess('');
+  async function handleSelectProject(project) {
+    setShowDropdown(false);
+    setSearchQuery('');
+    setConnectingKey(project.key);
     try {
-      const resp = await fetch(`/api/sync/${projectKey}`, { method: 'POST' });
+      const resp = await fetch(`/api/sync/${project.key}`, { method: 'POST' });
+      if (!resp.ok) throw new Error();
       const data = await resp.json();
       if (data.ok) {
-        setLastSynced(data.synced_at);
-        setSyncSuccess('Sync complete');
-        fetchBugs(projectKey);
-        setTimeout(() => setSyncSuccess(''), 2000);
-      } else {
-        setSyncError('Sync failed. Try again or check your Jira connection.');
+        const r = await fetch('/api/projects');
+        if (!r.ok) throw new Error();
+        const d = await r.json();
+        if (d.ok && Array.isArray(d.projects)) setProjects(d.projects);
       }
     } catch {
-      setSyncError('Sync failed. Try again or check your Jira connection.');
+      // silent — user can retry via connect form
     } finally {
-      setSyncing(false);
+      setConnectingKey('');
     }
   }
 
-  const thStyle = { padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: '#434654', fontSize: '11px', letterSpacing: '0.5px', textTransform: 'uppercase', whiteSpace: 'nowrap' };
-  const tdStyle = { padding: '10px 12px', color: '#002d1c', verticalAlign: 'middle' };
-  const badgeStyle = { display: 'inline-block', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' };
-
-  function statusColor(status) {
-    switch ((status || '').toLowerCase()) {
-      case 'done': case 'closed': case 'resolved': return { background: '#d1fae5', color: '#065f46' };
-      case 'in progress': case 'in review': return { background: '#dbeafe', color: '#1e40af' };
-      case 'open': case 'to do': return { background: '#f3f4f6', color: '#374151' };
-      default: return { background: '#f3f4f6', color: '#374151' };
+  async function handleAddProject(project) {
+    if (addSyncing) return;
+    setAddSelectedKey(project.key);
+    setAddSyncing(true);
+    setAddError('');
+    try {
+      const resp = await fetch(`/api/sync/${project.key}`, { method: 'POST' });
+      if (!resp.ok) throw new Error();
+      const data = await resp.json();
+      if (data.ok) {
+        setAddQuery('');
+        setAddResults([]);
+        const r = await fetch('/api/projects');
+        if (!r.ok) throw new Error();
+        const d = await r.json();
+        if (d.ok && Array.isArray(d.projects)) setProjects(d.projects);
+      } else {
+        setAddError('Sync failed. Select the project again to retry.');
+        setAddSelectedKey('');
+      }
+    } catch {
+      setAddError('Sync failed. Select the project again to retry.');
+      setAddSelectedKey('');
+    } finally {
+      setAddSyncing(false);
     }
   }
 
-  function priorityColor(priority) {
-    switch ((priority || '').toLowerCase()) {
-      case 'highest': case 'critical': return { background: '#fee2e2', color: '#991b1b' };
-      case 'high': return { background: '#ffedd5', color: '#9a3412' };
-      case 'medium': return { background: '#fef9c3', color: '#854d0e' };
-      case 'low': case 'lowest': return { background: '#f0f9ff', color: '#075985' };
-      default: return { background: '#f3f4f6', color: '#374151' };
+  async function handleDeleteProject(key) {
+    setOpenCardMenu(null);
+    try {
+      await fetch(`/api/projects/${key}`, { method: 'DELETE' });
+      const remaining = projects.filter(p => p.key !== key);
+      setRemovingKey(key);
+      if (remaining.length === 0) {
+        // card exit → then main content exit → then switch to no-project
+        setTimeout(() => setIsLeavingDashboard(true), 240);
+        setTimeout(() => {
+          setProjects([]);
+          setRemovingKey(null);
+          setIsLeavingDashboard(false);
+        }, 560);
+      } else {
+        setTimeout(() => {
+          setProjects(remaining);
+          setRemovingKey(null);
+        }, 260);
+      }
+    } catch {
+      setRemovingKey(null);
     }
   }
 
   return (
-    <div style={{ padding: '48px', fontFamily: 'Inter, sans-serif', color: '#414944' }}>
+    <div className={styles.pageWrapper}>
 
-      {/* Page header: title + sync controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px', flexWrap: 'wrap' }}>
-        <h1 style={{ color: '#002d1c', margin: 0, fontSize: '32px', fontWeight: 700 }}>Dashboard</h1>
-        <button
-          onClick={handleSync}
-          disabled={syncing || !projectKey}
-          aria-busy={syncing}
-          aria-disabled={syncing || !projectKey}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: syncing || !projectKey ? '#1b4332' : '#1b4332',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '10px',
-            padding: '8px 16px',
-            minHeight: '48px',
-            fontSize: '14px',
-            fontWeight: 700,
-            cursor: syncing || !projectKey ? 'not-allowed' : 'pointer',
-            opacity: syncing || !projectKey ? 0.7 : 1,
-            transition: 'background 0.2s, transform 0.15s',
-            fontFamily: 'Inter, sans-serif',
-          }}
-          onMouseEnter={e => { if (!syncing && projectKey) e.currentTarget.style.transform = 'translateY(-1px)'; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
-        >
-          {syncing && <LoadingSpinner size={16} />}
-          {syncing ? 'Syncing…' : 'Sync Now'}
-        </button>
-      </div>
-
-      {/* Last synced timestamp */}
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginBottom: '24px' }}>
-        {/* Clock icon */}
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="10" stroke="#c3c6d6" strokeWidth="2"/>
-          <polyline points="12 6 12 12 16 14" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <span style={{ fontSize: '12px', fontWeight: 400, color: '#6b7280' }}>
-          Last synced: {lastSynced ? new Date(lastSynced).toLocaleString() : 'Never'}
-        </span>
-      </div>
-
-      {noProjectWarning && !projectKey && (
-        <div role="alert" style={{ fontSize: '13px', color: '#b45309', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px', padding: '8px 12px', marginBottom: '8px' }}>
-          No project selected. <a href="/no-project" style={{ color: '#b45309', fontWeight: 700 }}>Go to project selection</a>
-        </div>
-      )}
-
-      {/* Sync success inline message */}
-      {syncSuccess && (
-        <div
-          role="alert"
-          style={{
-            background: 'rgba(227,239,234,0.6)',
-            color: '#1b4332',
-            fontSize: '13px',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            marginBottom: '16px',
-            display: 'inline-block',
-          }}
-        >
-          {syncSuccess}
-        </div>
-      )}
-
-      {/* Sync error banner */}
-      {syncError && (
-        <div
-          role="alert"
-          style={{
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#b91c1c',
-            fontSize: '12px',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            marginBottom: '16px',
-          }}
-        >
-          {syncError}
-        </div>
-      )}
-
-      {/* Existing user card — preserved unchanged */}
-      {user ? (
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '12px',
-          background: '#f0f7f4', border: '1px solid #c1e0d5',
-          borderRadius: '10px', padding: '12px 18px', marginBottom: '24px',
-        }}>
-          {user.avatar && (
-            <img src={user.avatar} alt="" width={36} height={36}
-              style={{ borderRadius: '50%', flexShrink: 0 }} />
-          )}
-          <div>
-            <div style={{ fontWeight: 600, color: '#002d1c', fontSize: '15px' }}>{user.name}</div>
-            <div style={{ fontSize: '13px', color: '#5a7a6a' }}>{user.email}</div>
+      {/* Top NavBar */}
+      <header className={styles.topnav}>
+        <div className={styles.topnavLeft}>
+          <div className={styles.navLogo}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z"
+                stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
-          <div style={{
-            marginLeft: '8px', fontSize: '12px', color: '#1b7a4a',
-            background: '#d1fae5', borderRadius: '6px', padding: '3px 10px', fontWeight: 500,
-          }}>
-            Connected
+          <span className={styles.navBrand}>JIRA Bug Summary</span>
+        </div>
+
+        <div className={styles.topnavRight}>
+          {/* Project search */}
+          <div className={styles.searchWrap} ref={searchRef}>
+            <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+              <path d="M21 21L16.65 16.65" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <input
+              className={styles.searchInput}
+              type="text"
+              placeholder="Search Jira projects…"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+              aria-label="Search Jira projects"
+              aria-autocomplete="list"
+              aria-expanded={showDropdown}
+            />
+            {searchLoading && (
+              <span className={styles.searchSpinner}><LoadingSpinner size={13} /></span>
+            )}
+            {showDropdown && (
+              <div className={styles.searchDropdown} role="listbox" aria-label="Project search results">
+                {searchResults.length === 0 ? (
+                  <div className={styles.searchEmpty}>No projects found</div>
+                ) : (
+                  searchResults.map(p => (
+                    <button
+                      key={p.key}
+                      className={styles.searchItem}
+                      role="option"
+                      onClick={() => handleSelectProject(p)}
+                      disabled={connectingKey === p.key}
+                    >
+                      <span className={styles.searchItemKey}>{p.key}</span>
+                      <span className={styles.searchItemName}>{p.name}</span>
+                      {connectingKey === p.key && <LoadingSpinner size={12} />}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
-          <button onClick={handleLogout} style={{
-            marginLeft: '12px', fontSize: '13px', color: '#dc2626', background: 'none',
-            border: '1px solid #fca5a5', borderRadius: '6px', padding: '4px 12px',
-            cursor: 'pointer', fontWeight: 500,
-          }}>
-            Sign out
+
+          <button className={styles.navBtn} aria-label="Notifications">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </button>
-        </div>
-      ) : (
-        <p style={{ marginBottom: '24px', color: '#8b9196' }}>Connecting to Jira…</p>
-      )}
+          <button className={styles.navBtn} aria-label="Help">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#434654" strokeWidth="2"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <button className={styles.navBtn} aria-label="History">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <polyline points="12 8 12 12 14 14" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3.05 11a9 9 0 1 0 .5-4M3 3v4h4" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <div className={styles.navDivider} />
 
-      {/* Bug list */}
-      {loadingBugs ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280', fontSize: '14px' }}>
-          <LoadingSpinner size={18} /> Loading bugs…
+          {/* User menu */}
+          <div className={styles.userMenuWrap} ref={userMenuRef}>
+            <button
+              className={styles.navUser}
+              aria-label="User menu"
+              aria-haspopup="true"
+              aria-expanded={showUserMenu}
+              onClick={() => setShowUserMenu(v => !v)}
+            >
+              <div className={styles.navAvatar}>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="" width={24} height={24} style={{ borderRadius: '50%' }} />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="#065b41" strokeWidth="2"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </div>
+              <span className={styles.navUsername}>{user?.name || 'Account'}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+                <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showUserMenu && (
+              <div className={styles.userMenu} role="menu">
+                <button className={styles.logoutItem} role="menuitem" onClick={handleLogout}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <polyline points="16 17 21 12 16 7" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="21" y1="12" x2="9" y2="12" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      ) : bugs.length === 0 && projectKey ? (
-        <p style={{ color: '#6b7280', fontSize: '14px' }}>No bugs found for {projectKey}. Try syncing.</p>
+      </header>
+
+      {loadingProjects ? (
+        <div className={styles.pageLoadingCenter}><LoadingSpinner size={32} /></div>
+      ) : projects.length === 0 ? (
+
+        <main className={styles.noProjectMain}>
+          <div className={styles.noProjectCard}>
+
+            <div className={styles.emptyHero}>
+              <div className={styles.emptyIconWrap}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 17L12 22L22 17" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 12L12 17L22 12" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h1 className={styles.emptyTitle}>Connect your first JIRA Project</h1>
+              <p className={styles.emptySubtitle}>
+                JIRA Bug Summary bridges the gap between your engineering workflow and automated bug
+                reporting. Connect your Jira instance to start monitoring issues in real-time.
+              </p>
+            </div>
+
+            <div className={styles.noProjectConnectArea}>
+              <span className={styles.noProjectConnectLabel}>SELECT A PROJECT</span>
+
+              {projectsError && (
+                <div className={styles.errorBanner} role="alert">{projectsError}</div>
+              )}
+              {addError && (
+                <div className={styles.errorBanner} role="alert">{addError}</div>
+              )}
+
+              {addSyncing ? (
+                <div className={styles.addSyncBar}>
+                  <LoadingSpinner size={20} />
+                  <span>Syncing {addSelectedKey}…</span>
+                </div>
+              ) : (
+                <div className={styles.addSearchWrap} ref={addSearchRef}>
+                  <svg className={styles.addSearchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+                    <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <input
+                    className={styles.addSearchInput}
+                    type="search"
+                    placeholder="Search projects…"
+                    value={addQuery}
+                    onChange={e => setAddQuery(e.target.value)}
+                    aria-label="Search projects"
+                    autoComplete="off"
+                    onFocus={() => addQuery.trim() && setShowAddDropdown(true)}
+                  />
+                  {addQuery.trim() && showAddDropdown && (
+                    <div className={styles.addDropdown}>
+                      {addLoading ? (
+                        <div className={styles.addDropdownLoading}>
+                          <LoadingSpinner size={16} />
+                          <span>Searching…</span>
+                        </div>
+                      ) : addResults.length === 0 ? (
+                        <p className={styles.addDropdownEmpty}>No projects match &ldquo;{addQuery}&rdquo;</p>
+                      ) : (
+                        <ul className={styles.addProjectList} role="list" aria-label="Jira projects">
+                          {addResults.map((project, idx) => (
+                            <li key={project.key} role="listitem">
+                              <button
+                                className={`${styles.addProjectRow}${addSelectedKey === project.key ? ' ' + styles.addProjectRowSelected : ''}`}
+                                onClick={() => handleAddProject(project)}
+                                aria-pressed={addSelectedKey === project.key}
+                                style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #c3c6d6' : 'none' }}
+                              >
+                                <div className={styles.addProjectAvatar} aria-hidden="true">
+                                  {project.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className={styles.addProjectInfo}>
+                                  <span className={styles.addProjectName}>{project.name}</span>
+                                  <span className={styles.addProjectKey}>{project.key}</span>
+                                </div>
+                                <svg className={styles.addProjectChevron} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className={styles.stepsGrid}>
+              <div className={styles.step}>
+                <span className={styles.stepNum}>01</span>
+                <h3 className={styles.stepTitle}>Provide Link</h3>
+                <p className={styles.stepDesc}>Paste your Jira project URL or specific board key to initialize the handshake.</p>
+              </div>
+              <div className={styles.step}>
+                <span className={styles.stepNum}>02</span>
+                <h3 className={styles.stepTitle}>Authorize Access</h3>
+                <p className={styles.stepDesc}>Grant JIRA Bug Summary read permissions via API token to sync bug tickets automatically.</p>
+              </div>
+              <div className={styles.step}>
+                <span className={styles.stepNum}>03</span>
+                <h3 className={styles.stepTitle}>Analyze &amp; Track</h3>
+                <p className={styles.stepDesc}>Your dashboard will populate with historical data and real-time bug lifecycle metrics.</p>
+              </div>
+            </div>
+
+          </div>
+        </main>
+
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}>
-            <thead>
-              <tr style={{ background: '#f8f9ff', borderBottom: '2px solid #c3c6d6' }}>
-                <th style={thStyle}>Key</th>
-                <th style={thStyle}>Summary</th>
-                <th style={thStyle}>Status</th>
-                <th style={thStyle}>Priority</th>
-                <th style={thStyle}>Sprint</th>
-                <th style={thStyle}>Assignee</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bugs.map((bug, idx) => (
-                <tr key={bug.issue_key} style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8f9ff', borderBottom: '1px solid #e5e7eb' }}>
-                  <td style={tdStyle}>
-                    <span style={{ fontWeight: 600, color: '#065b41', whiteSpace: 'nowrap' }}>{bug.issue_key}</span>
-                  </td>
-                  <td style={{ ...tdStyle, maxWidth: '340px' }}>
-                    <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={bug.summary}>
-                      {bug.summary || '—'}
-                    </span>
-                  </td>
-                  <td style={tdStyle}>
-                    <span style={{ ...badgeStyle, ...statusColor(bug.status) }}>{bug.status || '—'}</span>
-                  </td>
-                  <td style={tdStyle}>
-                    <span style={{ ...badgeStyle, ...priorityColor(bug.priority) }}>{bug.priority || '—'}</span>
-                  </td>
-                  <td style={tdStyle}>{bug.sprint_name || '—'}</td>
-                  <td style={tdStyle}>{bug.assignee || 'Unassigned'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>{bugs.length} issue{bugs.length !== 1 ? 's' : ''}</p>
+
+        <main className={`${styles.mainContent}${isLeavingDashboard ? ' ' + styles.mainContentLeaving : ''}`}>
+
+        <div className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>Active Projects</h1>
+          <p className={styles.pageSubtitle}>Currently monitoring {projects.length} project(s).</p>
         </div>
+
+        <div className={styles.projectsGrid}>
+          {loadingProjects ? (
+            <div className={styles.gridLoading}>
+              <LoadingSpinner size={24} />
+              <span>Loading projects…</span>
+            </div>
+          ) : projectsError ? (
+            <div role="alert" className={styles.errorBanner}>{projectsError}</div>
+          ) : (
+            projects.map((project, idx) => {
+              const stats = bugStats[project.key] || { total: 0, open: 0, critical: 0, loading: true };
+              const hasCritical = !stats.loading && stats.critical > 0;
+              const menuOpen = openCardMenu === project.key;
+              return (
+                <div key={project.key} className={`${styles.projectCardWrap}${removingKey === project.key ? ' ' + styles.projectCardWrapRemoving : ''}`} style={{ '--card-index': idx }}>
+                  <button
+                    className={styles.projectCard}
+                    aria-label={`${project.name} — ${stats.loading ? 'loading' : `${stats.open} open bugs, ${stats.critical} critical`}`}
+                  >
+                    <div className={`${styles.cardBar} ${hasCritical ? styles.barCritical : styles.barNormal}`} />
+                    <div className={styles.cardContent}>
+                      <div className={styles.cardHeader}>
+                        <span className={styles.projectName}>{project.name}</span>
+                        <span className={styles.projectCode}>{project.key}</span>
+                      </div>
+                      <div className={styles.statBox}>
+                        <span className={styles.statLabel}>TOTAL BUGS</span>
+                        <span className={styles.statVal}>{stats.loading ? '—' : stats.total}</span>
+                      </div>
+                      <div className={styles.statBoxes}>
+                        <div className={styles.statBox}>
+                          <span className={styles.statLabel}>OPEN BUGS</span>
+                          <span className={styles.statVal}>{stats.loading ? '—' : stats.open}</span>
+                        </div>
+                        <div className={styles.statBox}>
+                          <span className={styles.statLabel}>CRITICAL</span>
+                          <span className={`${styles.statVal} ${
+                            stats.loading ? '' :
+                            stats.critical === 0 ? styles.statZero :
+                            styles.statCritical
+                          }`}>
+                            {stats.loading ? '—' : stats.critical}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    className={`${styles.cardMenuBtn}${menuOpen ? ' ' + styles.cardMenuBtnOpen : ''}`}
+                    aria-label={`Options for ${project.name}`}
+                    aria-expanded={menuOpen}
+                    aria-haspopup="true"
+                    onMouseDown={e => e.stopPropagation()}
+                    onClick={() => setOpenCardMenu(k => k === project.key ? null : project.key)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <circle cx="12" cy="5" r="1.5"/>
+                      <circle cx="12" cy="12" r="1.5"/>
+                      <circle cx="12" cy="19" r="1.5"/>
+                    </svg>
+                  </button>
+                  {menuOpen && (
+                    <div
+                      className={styles.cardMenuDropdown}
+                      role="menu"
+                      onMouseDown={e => e.stopPropagation()}
+                    >
+                      <button
+                        className={styles.cardMenuDelete}
+                        role="menuitem"
+                        onClick={() => handleDeleteProject(project.key)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M9 6V4h6v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Remove project
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* ConnectSection */}
+        <div className={styles.connectSection}>
+          <div className={styles.connectLeft}>
+            <div className={styles.connectIconWrap}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="12" y1="22.08" x2="12" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <h3 className={styles.connectTitle}>Connect to Jira</h3>
+            <p className={styles.connectSubtitle}>Synchronize your existing Jira tickets and workflow seamlessly.</p>
+          </div>
+
+          <div className={styles.connectRight}>
+            <h2 className={styles.addTitle}>Add New Project</h2>
+            <p className={styles.addDesc}>
+              Search and select a Jira project to start syncing bugs.
+            </p>
+
+            {addError && <div className={styles.errorBanner} role="alert">{addError}</div>}
+
+            {addSyncing ? (
+              <div className={styles.addSyncBar}>
+                <LoadingSpinner size={18} />
+                <span>Syncing {addSelectedKey}…</span>
+              </div>
+            ) : (
+              <div className={styles.addSearchWrap} ref={addSearchRef}>
+                <svg className={styles.addSearchIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
+                  <path d="M21 21l-4.35-4.35" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                <input
+                  className={styles.addSearchInput}
+                  type="search"
+                  placeholder="Search projects…"
+                  value={addQuery}
+                  onChange={e => setAddQuery(e.target.value)}
+                  aria-label="Search projects to add"
+                  autoComplete="off"
+                  onFocus={() => addQuery.trim() && setShowAddDropdown(true)}
+                />
+                {addQuery.trim() && showAddDropdown && (
+                  <div className={styles.addDropdown}>
+                    {addLoading ? (
+                      <div className={styles.addDropdownLoading}>
+                        <LoadingSpinner size={16} />
+                        <span>Searching…</span>
+                      </div>
+                    ) : addResults.length === 0 ? (
+                      <p className={styles.addDropdownEmpty}>No projects match &ldquo;{addQuery}&rdquo;</p>
+                    ) : (
+                      <ul className={styles.addProjectList} role="list" aria-label="Jira projects">
+                        {addResults.map((project, idx) => (
+                          <li key={project.key} role="listitem">
+                            <button
+                              className={`${styles.addProjectRow}${addSelectedKey === project.key ? ' ' + styles.addProjectRowSelected : ''}`}
+                              onClick={() => handleAddProject(project)}
+                              aria-pressed={addSelectedKey === project.key}
+                              style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #e5e7eb' : 'none' }}
+                            >
+                              <div className={styles.addProjectAvatar} aria-hidden="true">
+                                {project.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className={styles.addProjectInfo}>
+                                <span className={styles.addProjectName}>{project.name}</span>
+                                <span className={styles.addProjectKey}>{project.key}</span>
+                              </div>
+                              <svg className={styles.addProjectChevron} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M9 18l6-6-6-6" stroke="#c3c6d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+      </main>
+
       )}
     </div>
   );

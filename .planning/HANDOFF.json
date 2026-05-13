@@ -1,41 +1,38 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-12T08:07:10Z",
-  "phase": "02",
-  "phase_name": "data-sync",
-  "phase_dir": ".planning/phases/02-data-sync",
-  "plan": 2,
-  "task": "post-uat-fixup",
-  "total_tasks": 1,
-  "status": "paused",
+  "timestamp": "2026-05-13T02:33:16Z",
+  "phase": "03",
+  "phase_name": "dashboard-ui",
+  "phase_dir": ".planning/phases/03-dashboard-ui",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "phase_complete",
   "completed_tasks": [
-    {"id": "02-plan-01", "name": "JiraSyncService — fetch bugs + upsert SQLite", "status": "done", "commit": "56d4124"},
-    {"id": "02-plan-02", "name": "NoProjectPage project picker + DashboardPage Sync Now UI", "status": "done", "commit": "b3325d4"},
-    {"id": "02-phase-complete", "name": "Phase 2 UAT 4/4 passed + phase marked complete", "status": "done", "commit": "3945e14"},
-    {"id": "02-pagination-fix", "name": "Jira API pagination: offset startAt → nextPageToken cursor", "status": "done", "commit": "b3325d4"},
-    {"id": "02-scope-simplify", "name": "Removed subtask fetch (Step 2) — dashboard shows only Bug/Bug Task", "status": "done", "commit": null}
+    {"id": 1, "name": "CR-02: resp.ok guards on all 7 fetch call-sites + Array.isArray guards", "status": "done", "commit": "2bcac70"},
+    {"id": 2, "name": "WR-01: user added to auth/me useEffect deps array", "status": "done", "commit": "2bcac70"},
+    {"id": 3, "name": "Phase 3 marked complete in ROADMAP.md + STATE.md", "status": "done", "commit": "eaeca2d"}
   ],
   "remaining_tasks": [
-    {"id": "commit-scope-change", "name": "Commit jira_sync_service.py scope simplification", "status": "not_started"},
-    {"id": "phase-03-plan", "name": "Plan Phase 3: Dashboard UI (charts + project switcher)", "status": "not_started"}
+    {"id": 4, "name": "Phase 4 planning: /gsd-plan-phase 4", "status": "not_started"}
   ],
   "blockers": [
-    {"description": "backend/.env contains secrets — must never be committed", "type": "technical", "workaround": "File is gitignored; stage only specific files"}
+    {
+      "description": "npm install fails on WSL NTFS mount (EACCES permissions)",
+      "type": "technical",
+      "workaround": "Use Docker (docker-compose up) or run npm from native Linux path outside /mnt/d/"
+    }
   ],
-  "human_actions_pending": [
-    {"action": "Re-sync SAM project from UI after backend hot-reloads to confirm 459 issues stored", "context": "jira_sync_service.py changed this session — subtask step removed. DB may still have old 509-issue count. Re-sync confirms 459 Bug/Bug Task only.", "blocking": false}
-  ],
+  "human_actions_pending": [],
   "decisions": [
-    {"decision": "Atlassian OAuth 2.0 (3LO) over Basic Auth modal", "rationale": "Required for future API access + better UX", "phase": "01"},
-    {"decision": "Token encrypted with Fernet at rest in SQLite oauth_tokens table", "rationale": "Security requirement from CR", "phase": "01"},
-    {"decision": "Dashboard shows only Bug and Bug Task issues — no subtasks", "rationale": "User explicitly requested: display 459 Bug/Bug Task only, no child tickets", "phase": "02"},
-    {"decision": "Single-step JQL fetch: issuetype in (Bug, 'Bug Task') ORDER BY created DESC", "rationale": "Removed two-step fetch + dedup — subtasks excluded by user decision", "phase": "02"},
-    {"decision": "Jira Cloud API pagination via nextPageToken cursor, not startAt offset", "rationale": "POST /search/jql returns HTTP 400 on startAt; only nextPageToken supported. Hard cap 100/page.", "phase": "02"},
-    {"decision": "GET /api/bugs/{project_key} separate from sync endpoint", "rationale": "Dashboard loads cached data without re-syncing; read vs write separation", "phase": "02"}
+    {"decision": "CR-01 not applicable — extractProjectKey removed in Session 2; project keys come from API search results only", "rationale": "03-REVIEW.md was written against earlier code version", "phase": "03"},
+    {"decision": "CR-03 not applicable — handleSync/setSyncSuccess removed; animation timers in handleDeleteProject don't fire setState after unmount", "rationale": "03-REVIEW.md was written against earlier code version", "phase": "03"},
+    {"decision": "Phase 3 closed without human UAT sign-off in browser", "rationale": "npm install blocked by WSL NTFS; core UI verified via code review and static analysis", "phase": "03"}
   ],
   "uncommitted_files": [
-    "backend/services/jira_sync_service.py"
+    "CRLF to LF line-ending changes across worktree + planning dirs (cosmetic, safe to discard with git checkout)",
+    "backend/.env (secrets — never commit)"
   ],
-  "next_action": "Commit backend/services/jira_sync_service.py with message 'fix(sync): remove subtask fetch — dashboard shows Bug/Bug Task only'. Then /gsd-plan-phase 3.",
-  "context_notes": "Phase 02 is fully complete (human UAT 4/4 passed, committed). This session: user asked about the 64 subtasks; user then decided dashboard should show only the 459 Bug/Bug Task issues (no child subtasks). Simplified _fetch_bugs() to single-step JQL. One file uncommitted. Phase 03 (Dashboard UI — charts + project switcher) is ready to plan."
+  "next_action": "Run /gsd-plan-phase 4 to plan Sprint Report phase",
+  "context_notes": "Phase 3 dashboard UI complete and polished. DashboardPage.jsx: single /dashboard route, 3-way ternary (loading/empty/has-projects), fadeInUp entry animations, cardExit/fadeOutUp exit animations, overlay add-project dropdown (no layout shift), kebab card menus, navbar debounced project search. All fetch calls now guard resp.ok before calling .json(). Phase 4 (Sprint Report) needs: Jira sprint API integration, /api/sprint/{project_key} backend endpoint, sprint bug list view + per-sprint history aggregation UI."
 }

@@ -31,7 +31,7 @@ function ConnectionPage() {
       .then(data => {
         if (data.ok) {
           if (data.user) sessionStorage.setItem('jira_user', JSON.stringify(data.user));
-          navigate(data.has_projects ? '/dashboard' : '/no-project', { replace: true });
+          navigate('/dashboard', { replace: true });
         } else {
           setChecking(false);
         }
