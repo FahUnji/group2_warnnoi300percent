@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: ~
-last_updated: "2026-05-13T11:20:00.000Z"
-last_activity: 2026-05-13 -- Phase 04 plan 04-01 completed (sprints table, jira_sprint_service, GET /api/sprints endpoint, SprintPage.jsx)
+last_updated: "2026-05-13T04:25:00.000Z"
+last_activity: 2026-05-13 -- Phase 04 plan 04-02 completed (/sprint route, DashboardPage sidebar Sprint link)
 progress:
   total_phases: 5
   completed_phases: 2
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-08)
 
 ## Current Position
 
-Phase: 04 (sprint-report) — EXECUTING
-Plan: 1/2 executed (04-01 Wave 1 → COMPLETE, 04-02 Wave 2 → pending)
-Status: Execution in progress — awaiting 04-02
-Last activity: 2026-05-13 -- Phase 04 plan 04-01 completed
+Phase: 04 (sprint-report) — COMPLETE
+Plan: 2/2 executed (04-01 Wave 1 → COMPLETE, 04-02 Wave 2 → COMPLETE)
+Status: Phase 04 complete — ready for Phase 05
+Last activity: 2026-05-13 -- Phase 04 plan 04-02 completed
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 80%
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Recent decisions affecting current work:
 - Phase 2: Stay with SQLite (not MySQL); OAuth token path for Jira API calls
 - Phase 2: New JiraSyncService; NoProjectPage project picker + auto-sync → Dashboard
 - Phase 4 (04-01): Board ID discovered fresh on each sync (not stored in DB); export stubs deferred to Phase 5; client-side pagination 10/page
+- Phase 4 (04-02): Sidebar only in projects branch; Sprint link uses projects[0].key per D-07; plain `<a href>` used (not React Router Link) consistent with DashboardPage pattern
 
 ### Pending Todos
 
@@ -83,6 +84,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-13T11:20:00.000Z
-Stopped at: Completed 04-01-PLAN.md (sprints table, service, endpoint, SprintPage)
+Last session: 2026-05-13T04:25:00.000Z
+Stopped at: Completed 04-02-PLAN.md (/sprint route, DashboardPage sidebar Sprint link)
 Resume file: None

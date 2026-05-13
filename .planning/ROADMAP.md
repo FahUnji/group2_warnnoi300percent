@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Jira Connection** - Authenticate to Jira REST API and confirm a live connection
 - [x] **Phase 2: Data Sync** - Pull bug data from Jira and persist it in SQLite
 - [x] **Phase 3: Dashboard UI** - Display bug summaries and charts with project switching
-- [ ] **Phase 4: Sprint Report** - Add active-sprint view and per-sprint history
+- [x] **Phase 4: Sprint Report** - Add active-sprint view and per-sprint history
 - [ ] **Phase 5: Export** - Generate downloadable Excel and Word reports
 
 ## Phase Details
@@ -81,7 +81,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Backend sprint data layer (sprints table, Jira Board API, GET /api/sprints/{project_key}) + SprintPage.jsx full UI vertical slice
-- [ ] 04-02-PLAN.md — App routing (/sprint route) + Dashboard sidebar Sprint link integration
+- [x] 04-02-PLAN.md — App routing (/sprint route) + Dashboard sidebar Sprint link integration
 
 ### Phase 5: Export
 **Goal**: Users can download the current bug report as Excel or Word
@@ -103,5 +103,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Jira Connection | 3/3 | Complete | 2026-05-12 |
 | 2. Data Sync | 2/2 | Complete | 2026-05-12 |
 | 3. Dashboard UI | 2/2 | Complete | 2026-05-13 |
-| 4. Sprint Report | 1/2 | In Progress | - |
+| 4. Sprint Report | 2/2 | Complete | 2026-05-13 |
 | 5. Export | 0/TBD | Not started | - |
