@@ -91,6 +91,12 @@ def _slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
+def _display_state(state: str) -> str:
+    _MAP = {"released": "Completed", "closed": "Completed", "active": "Active",
+            "upcoming": "Upcoming", "archived": "Archived"}
+    return _MAP.get((state or "").lower(), (state or "unknown").title())
+
+
 def _build_xlsx_buf(rows: list, headers: list) -> io.BytesIO:
     wb = Workbook()
     ws = wb.active
@@ -322,7 +328,7 @@ async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
             # --- Sprint metadata block ---
             meta = sprint_meta_by_name.get(sn)
             ws.append(["Sprint", sn])
-            ws.append(["Status", meta["state"] if meta else "unknown"])
+            ws.append(["Status", _display_state(meta["state"] if meta else "")])
             ws.append(["Start Date", meta["start_date"] or "N/A" if meta else "N/A"])
             ws.append(["Release Date", meta["end_date"] or "N/A" if meta else "N/A"])
             for row_cells in ws.iter_rows(min_row=1, max_row=4, min_col=1, max_col=1):
@@ -418,7 +424,7 @@ async def export_sprint_docx(project_key: str, sprint_name: str = ""):
         doc.add_paragraph(f"Generated: {date.today()}")
         doc.add_heading("Fix Version Info", level=1)
         doc.add_paragraph(f"Name: {sprint_name}")
-        doc.add_paragraph(f"State: {sprint_meta['state'] if sprint_meta else 'unknown'}")
+        doc.add_paragraph(f"State: {_display_state(sprint_meta['state'] if sprint_meta else '')}")
         doc.add_paragraph(f"Start Date: {sprint_meta['start_date'] or 'N/A' if sprint_meta else 'N/A'}")
         doc.add_paragraph(f"Release Date: {sprint_meta['end_date'] or 'N/A' if sprint_meta else 'N/A'}")
         doc.add_paragraph(f"Progress: {progress_pct}%")
@@ -460,7 +466,7 @@ async def export_sprint_docx(project_key: str, sprint_name: str = ""):
             progress_pct = round((stats["resolved_count"] / total) * 100) if total > 0 else 0
 
             doc.add_heading(sn, level=1)
-            doc.add_paragraph(f"State: {sm['state'] or 'unknown'}")
+            doc.add_paragraph(f"State: {_display_state(sm['state'])}")
             doc.add_paragraph(f"Start Date: {sm['start_date'] or 'N/A'}")
             doc.add_paragraph(f"Release Date: {sm['end_date'] or 'N/A'}")
             doc.add_paragraph(f"Progress: {progress_pct}%")
