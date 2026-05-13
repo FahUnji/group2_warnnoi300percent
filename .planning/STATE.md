@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: ~
-last_updated: "2026-05-13T07:30:00.000Z"
-last_activity: 2026-05-13 -- Phase 04 fully complete: code review + 3 blocker fixes + verification + sidebar restored
+last_updated: "2026-05-13T09:42:00.000Z"
+last_activity: 2026-05-13 -- Phase 05 Export planned: 2 plans in 2 waves (backend router + frontend wiring)
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 6
+  completed_phases: 4
+  total_plans: 8
   completed_plans: 7
-  percent: 100
+  percent: 87
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-08)
 
 ## Current Position
 
-Phase: 05 (export) — NOT STARTED
-Plan: 0/TBD executed
-Status: Phase 04 fully verified and closed — ready for Phase 05 (Export)
-Last activity: 2026-05-13 -- Phase 04 code review + fixes + verification complete; sprint sync + sidebar restored
+Phase: 05 (export) — READY TO EXECUTE
+Plan: 0/2 executed
+Status: Phase 05 planned — 2 plans ready (Wave 1: backend, Wave 2: frontend)
+Last activity: 2026-05-13 -- Phase 05 Export planned: export.py router + requirements + frontend wiring
 
-Progress: [████████████] 80% (4/5 phases complete — Phase 5 Export remaining)
+Progress: [█████████████░] 87% (4/5 phases complete, Phase 5 planned)
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Recent decisions affecting current work:
 - Phase 2: New JiraSyncService; NoProjectPage project picker + auto-sync → Dashboard
 - Phase 4 (04-01): Board ID discovered fresh on each sync (not stored in DB); export stubs deferred to Phase 5; client-side pagination 10/page
 - Phase 4 (04-02): Sidebar only in projects branch; Sprint link uses projects[0].key per D-07; plain `<a href>` used (not React Router Link) consistent with DashboardPage pattern
+- Phase 5: Excel = raw bug table (1 sheet); Word BugReport = title+stats+donut chart+table; Word Sprint = title+fix version info+stats+table (no chart); matplotlib server-side chart; filenames: {PROJECT}-bug-report/sprint-name-{date}.xlsx/.docx; no JWT auth dep (ambient auth)
 
 ### Pending Todos
 
@@ -84,6 +85,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-13T04:25:00.000Z
-Stopped at: Completed 04-02-PLAN.md (/sprint route, DashboardPage sidebar Sprint link)
+Last session: 2026-05-13T09:42:00.000Z
+Stopped at: Phase 05 planned — execute 05-01 (backend export router) then 05-02 (frontend wiring)
 Resume file: None
