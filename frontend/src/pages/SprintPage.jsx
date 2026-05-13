@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styles from './SprintPage.module.css';
 
 const SPRINTS_PER_PAGE = 10;
@@ -10,7 +11,8 @@ function sprintBadgeLabel(state) {
 }
 
 function SprintPage() {
-  const projectKey = new URLSearchParams(window.location.search).get('project') || '';
+  const [searchParams] = useSearchParams();
+  const projectKey = searchParams.get('project') || '';
 
   const [sprints, setSprints] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +89,7 @@ function SprintPage() {
   useEffect(() => {
     if (projectKey) fetchSprints();
     else setLoading(false);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [projectKey]);
 
   function formatSyncedAgo(isoString) {
     if (!isoString) return 'never';
