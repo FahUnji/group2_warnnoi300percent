@@ -1,25 +1,76 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T15:57:38Z",
-  "phase": "05",
-  "phase_name": "export",
-  "phase_dir": ".planning/phases/05-export",
+  "timestamp": "2026-05-13T16:57:37.000Z",
+  "phase": "post-v1",
+  "phase_name": "ui-polish",
+  "phase_dir": null,
   "plan": null,
   "task": null,
-  "total_tasks": 0,
+  "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Bug report docx: title + metadata + 3-col stats table", "status": "done", "commit": "uncommitted"},
-    {"id": 2, "name": "Bug report docx: priority donut chart (page colors #ba1a1a/#f57c00/#fbc02d/#b2c5ff)", "status": "done", "commit": "uncommitted"},
-    {"id": 3, "name": "Bug report docx: status donut chart (#d1d5db/#f59e0b/#065b41) + legend tables side by side", "status": "done", "commit": "uncommitted"},
-    {"id": 4, "name": "Sprint docx: per-sprint card table (bordered, colored rows) replacing plain paragraphs", "status": "done", "commit": "uncommitted"},
-    {"id": 5, "name": "Sprint docx: dark green header, state badge colors, severity grid with tinted cells + colored values", "status": "done", "commit": "uncommitted"},
-    {"id": 6, "name": "Bug fix: stray tblPr.append(tblBorders) removed from _set_cell_bg, restored to _remove_table_borders", "status": "done", "commit": "uncommitted"}
+    {
+      "id": 1,
+      "name": "Extract shared Navbar component from DashboardPage + BugReportPage + SprintPage",
+      "status": "done",
+      "commit": "dadbc2d"
+    },
+    {
+      "id": 2,
+      "name": "Create shared Sidebar component (Bug Report + Sprint links only, no Dashboard)",
+      "status": "done",
+      "commit": "3c454ee"
+    },
+    {
+      "id": 3,
+      "name": "Navbar 3-section layout: hamburger + centered logo on mobile for sidebar pages",
+      "status": "done",
+      "commit": "3c454ee"
+    },
+    {
+      "id": 4,
+      "name": "Fix layout gap: remove margin-top 64px (sticky navbar takes flow space)",
+      "status": "done",
+      "commit": "3c454ee"
+    },
+    {
+      "id": 5,
+      "name": "Page transitions: fadeInUp enter + fadeOutUp exit on BugReport and Sprint",
+      "status": "done",
+      "commit": "3c454ee"
+    },
+    {
+      "id": 6,
+      "name": "Remove all old per-page navbar/sidebar CSS from BugReportPage + SprintPage module files",
+      "status": "done",
+      "commit": "3c454ee"
+    }
   ],
-  "remaining_tasks": [],
+  "remaining_tasks": [
+    {
+      "id": 7,
+      "name": "Browser UAT: restart frontend, verify no gap, mobile hamburger, logo center, transitions",
+      "status": "not_started"
+    },
+    {
+      "id": 8,
+      "name": "Continue responsive/consistency work on page-level layouts (user implied more after navbar)",
+      "status": "not_started"
+    },
+    {
+      "id": 9,
+      "name": "UAT pending from previous session: Bug Report + Sprint Export Word (.docx)",
+      "status": "not_started"
+    }
+  ],
   "blockers": [
     {
-      "description": "Backend NOT yet restarted after export.py changes this session",
+      "description": "Frontend container not restarted — UI changes not live yet",
+      "type": "human_action",
+      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\""
+    },
+    {
+      "description": "Backend container may need restart — export.py changes from previous session",
       "type": "human_action",
       "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
     },
@@ -41,30 +92,54 @@
   ],
   "human_actions_pending": [
     {
-      "action": "Restart backend: powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\"",
-      "context": "export.py heavily modified this session — uvicorn blind to NTFS, changes not live until restart",
+      "action": "Restart frontend container to see UI changes",
+      "context": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\"",
       "blocking": true
     },
     {
-      "action": "UAT: test Bug Report → Export as Word (.docx) — verify stats table, dual donut charts, legend tables, bug list",
-      "context": "New docx layout with matplotlib charts — must verify charts render correctly in Word",
+      "action": "UAT: sidebar flush under navbar, mobile hamburger, logo centered on mobile, page transitions",
+      "context": "All sidebar+navbar changes committed but not tested in browser",
       "blocking": false
     },
     {
-      "action": "UAT: test Sprint → Export as Word (.docx) — verify colored card per sprint, severity grid, bug list",
-      "context": "New card-based sprint section with cell background colors via XML manipulation",
+      "action": "UAT: Bug Report Export Word (.docx) and Sprint Export Word (.docx)",
+      "context": "Pending from previous session — backend export.py redesigned with matplotlib charts + colored tables",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "Bug report docx: dual donut charts (priority + status) side by side in 2-col layout table, matching BugReportPage UI", "rationale": "User requested docx match page visual — donut charts are main visual on BugReportPage", "phase": "05"},
-    {"decision": "Sprint docx: card table per sprint (NOT donut charts) — user explicitly rejected charts for sprint", "rationale": "User said 'no need donut chart, should be card of each sprints' — sprint page shows card rows not charts", "phase": "05"},
-    {"decision": "Sprint card colors: dark green header (#1b4332), state-specific badge bg, tinted severity cells, colored stat values", "rationale": "User requested color in table to match page's visual style", "phase": "05"},
-    {"decision": "_set_cell_bg uses tcPr + w:shd XML element for cell background — python-docx has no native API", "rationale": "Standard python-docx XML manipulation pattern for cell shading", "phase": "05"}
+    {
+      "decision": "Sidebar shows only Bug Report + Sprint (no Dashboard link)",
+      "rationale": "Explicit user request: 'Display only Bug report page and Sprint page'",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Navbar restructured to 3-section layout (navLeft|navCenter|navRight)",
+      "rationale": "Required to center logo on mobile when hamburger present, without JS",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Logo click triggers exit animation then navigates to /dashboard via onLogoClick prop",
+      "rationale": "Allows pages to run fadeOutUp before navigating; cleaner than intercepting anchor",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Removed margin-top 64px from layout divs in BugReport/Sprint/Dashboard",
+      "rationale": "position:sticky takes space in normal flow — the old fixed-nav margin was no longer needed",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Bug report docx: dual donut charts side by side + stats table (from previous session)",
+      "rationale": "User requested docx match page visual",
+      "phase": "05"
+    },
+    {
+      "decision": "Sprint docx: colored card table per sprint, no donut charts (from previous session)",
+      "rationale": "User explicitly rejected charts for sprint — card rows match sprint page visual",
+      "phase": "05"
+    }
   ],
-  "uncommitted_files": [
-    "backend/routers/export.py"
-  ],
-  "next_action": "Restart backend, then UAT both docx exports (bug report + sprint). If charts fail to render, check matplotlib Agg backend is active.",
-  "context_notes": "Session 4 of post-phase UI polish. All 5 phases complete. This session: rewrote both docx exports to match page visuals. Bug report gets dual matplotlib donuts + stats table. Sprint gets colored card tables (no charts). One bug encountered and fixed: stray tblPr.append line leaked from _remove_table_borders into _set_cell_bg during edit — caused NameError on export. jira_sprint_service.py shows modified — pre-existing, not from this session."
+  "uncommitted_files": [],
+  "next_action": "Restart frontend container, open browser, verify: (1) no gap between navbar and sidebar, (2) mobile hamburger collapses sidebar, (3) logo centered on mobile, (4) page transitions animate. Then continue page-level responsive improvements.",
+  "context_notes": "All 5 project phases complete. User iterating on UI consistency and responsive design post-v1. This session: navbar+sidebar extracted to shared components, mobile hamburger added, layout gap fixed, transitions added. Next likely: page-level content responsive improvements (grids, cards). Backend export.py has pending UAT from previous session."
 }
