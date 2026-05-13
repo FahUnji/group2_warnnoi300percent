@@ -61,6 +61,7 @@ function SprintPage() {
     setLoading(true);
     setError('');
     try {
+      await fetch(`/api/sync/${encodeURIComponent(projectKey)}`, { method: 'POST' }).catch(() => {});
       const resp = await fetch(`/api/sprints/${encodeURIComponent(projectKey)}`);
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
@@ -69,12 +70,18 @@ function SprintPage() {
       }
       const data = await resp.json();
       if (data.ok && Array.isArray(data.sprints)) {
-        setSprints(data.sprints);
+        const stateOrder = { active: 0, closed: 1, future: 2 };
+        const sorted = [...data.sprints].sort((a, b) => {
+          const oa = stateOrder[a.state] ?? 3;
+          const ob = stateOrder[b.state] ?? 3;
+          if (oa !== ob) return oa - ob;
+          return b.sprint_id - a.sprint_id;
+        });
+        setSprints(sorted);
         setSyncedAt(data.synced_at || null);
         setStale(data.stale === true);
-        // Auto-expand active sprint (D-10)
         const activeIds = new Set(
-          data.sprints.filter(s => s.state === 'active').map(s => s.sprint_id)
+          sorted.filter(s => s.state === 'active').map(s => s.sprint_id)
         );
         setExpandedIds(activeIds);
         setCurrentPage(1);
