@@ -132,7 +132,10 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
     for issue in issues:
         fields = issue.get("fields", {})
         sprint_raw = fields.get("customfield_10020")
-        sprint_name = sprint_raw[0]["name"] if sprint_raw else None
+        if isinstance(sprint_raw, list) and sprint_raw:
+            sprint_name = sprint_raw[0].get("name")
+        else:
+            sprint_name = None
         assignee_field = fields.get("assignee")
         assignee = assignee_field.get("displayName") if assignee_field else None
         status_field = fields.get("status", {})
