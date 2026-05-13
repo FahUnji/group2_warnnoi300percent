@@ -444,7 +444,7 @@ function DashboardPage() {
                                 className={`${styles.addProjectRow}${addSelectedKey === project.key ? ' ' + styles.addProjectRowSelected : ''}`}
                                 onClick={() => handleAddProject(project)}
                                 aria-pressed={addSelectedKey === project.key}
-                                style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #c3c6d6' : 'none' }}
+                                style={{ borderBottom: idx < addResults.length - 1 ? '1px solid #e5e7eb' : 'none' }}
                               >
                                 <div className={styles.addProjectAvatar} aria-hidden="true">
                                   {project.name.charAt(0).toUpperCase()}
@@ -694,6 +694,34 @@ function DashboardPage() {
                 )}
               </div>
             )}
+
+            <div className={styles.features}>
+              <div className={styles.featureItem}>
+                <div className={styles.featureIcon}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <polyline points="23 4 23 10 17 10" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <polyline points="1 20 1 14 7 14" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className={styles.featureText}>
+                  <span className={styles.featureTitle}>Auto-Syncing</span>
+                  <p className={styles.featureDesc}>Real-time updates between tools.</p>
+                </div>
+              </div>
+
+              <div className={styles.featureItem}>
+                <div className={styles.featureIcon}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className={styles.featureText}>
+                  <span className={styles.featureTitle}>Enterprise Encryption</span>
+                  <p className={styles.featureDesc}>256-bit AES for all data in transit.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

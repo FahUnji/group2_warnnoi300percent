@@ -490,7 +490,7 @@
 }
 
 .statVal {
-  font-size: 32px;
+  font-size: 25px;
   font-weight: 700;
   color: #065b41;
   line-height: 1.1;
@@ -693,6 +693,7 @@
 .features {
   display: flex;
   gap: 40px;
+  margin-top: 20px; /* Adds space above the features section */
 }
 
 .featureItem {
@@ -1247,3 +1248,4 @@
 @media (max-width: 900px) {
   .sidebar { display: none; }
 }
+
