@@ -61,10 +61,29 @@ def init_db() -> None:
                 UNIQUE (issue_id, project_key)
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sprints (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                sprint_id   INTEGER NOT NULL,
+                sprint_name TEXT    NOT NULL,
+                state       TEXT    NOT NULL,
+                start_date  TEXT,
+                end_date    TEXT,
+                project_key TEXT    NOT NULL,
+                synced_at   TEXT    DEFAULT (datetime('now')),
+                UNIQUE (sprint_id, project_key)
+            )
+        """)
         conn.commit()
         # Migration: add project_name column if not present
         try:
             conn.execute("ALTER TABLE jira_projects ADD COLUMN project_name TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # already exists
+        # Migration: add synced_at column to sprints if not present
+        try:
+            conn.execute("ALTER TABLE sprints ADD COLUMN synced_at TEXT")
             conn.commit()
         except sqlite3.OperationalError:
             pass  # already exists
