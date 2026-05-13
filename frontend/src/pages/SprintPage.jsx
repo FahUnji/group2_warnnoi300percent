@@ -316,11 +316,8 @@ function SprintPage() {
               Dashboard
             </a>
             <a
-              href="#"
+              href={projectKey ? `/bug-report?project=${projectKey}` : '/bug-report'}
               className={styles.navLink}
-              aria-disabled="true"
-              style={{ opacity: 0.5, pointerEvents: 'none' }}
-              onClick={e => e.preventDefault()}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
