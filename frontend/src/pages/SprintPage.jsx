@@ -23,6 +23,7 @@ function SprintPage() {
   const [syncedAt, setSyncedAt] = useState(null);
   const [expandedIds, setExpandedIds] = useState(new Set());
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [stale, setStale] = useState(false);
@@ -149,6 +150,38 @@ function SprintPage() {
     if (!isoStr) return '';
     const d = new Date(isoStr);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async function handleExport(format) {
+    setExportOpen(false);
+    const targetSprint = sprints.find(s => s.state === 'active') || sprints[0];
+    if (!targetSprint) return;
+    setExportLoading(true);
+    try {
+      const sprintParam = encodeURIComponent(targetSprint.sprint_name);
+      const url = `/api/export/sprint/${format}?project_key=${encodeURIComponent(projectKey)}&sprint_name=${sprintParam}`;
+      const r = await fetch(url);
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        setError(err.detail?.message || err.message || 'Export failed. Please try again.');
+        return;
+      }
+      const blob = await r.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      const today = new Date().toISOString().slice(0, 10);
+      const slug = targetSprint.sprint_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      a.download = `${projectKey}-${slug}-${today}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(href);
+    } catch {
+      setError('Export failed. Please try again.');
+    } finally {
+      setExportLoading(false);
+    }
   }
 
   async function handleLogout() {
@@ -390,10 +423,11 @@ function SprintPage() {
                 <button
                   className={styles.btnOutline}
                   onClick={() => setExportOpen(v => !v)}
+                  disabled={exportLoading}
                   aria-expanded={exportOpen}
                   aria-haspopup="true"
                 >
-                  Export Report
+                  {exportLoading ? 'Exporting...' : 'Export Report'}
                   <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
                     <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -402,7 +436,7 @@ function SprintPage() {
                   <button
                     className={styles.exportItem}
                     role="menuitem"
-                    onClick={() => setExportOpen(false)}
+                    onClick={() => handleExport('docx')}
                   >
                     <div className={styles.exportItemIcon}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -420,7 +454,7 @@ function SprintPage() {
                   <button
                     className={styles.exportItem}
                     role="menuitem"
-                    onClick={() => setExportOpen(false)}
+                    onClick={() => handleExport('xlsx')}
                   >
                     <div className={styles.exportItemIcon}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">

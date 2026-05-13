@@ -44,6 +44,7 @@ function BugReportPage() {
   });
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stats, setStats] = useState(null);
@@ -116,6 +117,34 @@ function BugReportPage() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  async function handleExport(format) {
+    setExportOpen(false);
+    setExportLoading(true);
+    try {
+      const url = `/api/export/bugs/${format}?project_key=${encodeURIComponent(projectKey)}`;
+      const r = await fetch(url);
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        setError(err.detail?.message || err.message || 'Export failed. Please try again.');
+        return;
+      }
+      const blob = await r.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      const today = new Date().toISOString().slice(0, 10);
+      a.download = `${projectKey}-bug-report-${today}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(href);
+    } catch {
+      setError('Export failed. Please try again.');
+    } finally {
+      setExportLoading(false);
+    }
+  }
 
   function handleLogout() {
     sessionStorage.clear();
@@ -263,15 +292,15 @@ function BugReportPage() {
             </div>
             <div className={styles.pageHeaderRight}>
               <div className={styles.exportWrap} ref={exportRef}>
-                <button className={styles.btnOutline} onClick={() => setExportOpen(v => !v)} aria-expanded={exportOpen}>
-                  Export Report
+                <button className={styles.btnOutline} onClick={() => setExportOpen(v => !v)} disabled={exportLoading} aria-expanded={exportOpen}>
+                  {exportLoading ? 'Exporting...' : 'Export Report'}
                   <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
                     <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </button>
                 {exportOpen && (
                   <div className={styles.exportMenu}>
-                    <button className={styles.exportItem} onClick={() => setExportOpen(false)}>
+                    <button className={styles.exportItem} onClick={() => handleExport('docx')}>
                       <div className={styles.exportItemIcon}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -285,7 +314,7 @@ function BugReportPage() {
                         <span className={styles.exportItemExt}>(.docx)</span>
                       </div>
                     </button>
-                    <button className={styles.exportItem} onClick={() => setExportOpen(false)}>
+                    <button className={styles.exportItem} onClick={() => handleExport('xlsx')}>
                       <div className={styles.exportItemIcon}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
                           <rect x="3" y="3" width="18" height="18" rx="2" stroke="#374151" strokeWidth="2"/>
