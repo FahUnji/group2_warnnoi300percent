@@ -142,8 +142,13 @@ async def export_bugs_xlsx(project_key: str):
             " FROM bugs WHERE project_key = ? ORDER BY issue_key ASC",
             (project_key,),
         ).fetchall()
+        proj_row = conn.execute(
+            "SELECT project_name FROM jira_projects WHERE project_key = ?",
+            (project_key,),
+        ).fetchone()
     finally:
         conn.close()
+    project_name = proj_row["project_name"] if proj_row and proj_row["project_name"] else ""
     stats = _compute_stats(rows)
     pc = stats["priority_counts"]
     total = stats["total"]
@@ -157,6 +162,8 @@ async def export_bugs_xlsx(project_key: str):
 
     # --- Summary block ---
     ws.append(["Project", project_key])
+    if project_name:
+        ws.append(["Project Name", project_name])
     ws.append(["Generated", str(date.today())])
     ws.append([])
     ws.append(["Total Bugs", total])
@@ -208,8 +215,13 @@ async def export_bugs_docx(project_key: str):
             " FROM bugs WHERE project_key = ? ORDER BY issue_key ASC",
             (project_key,),
         ).fetchall()
+        proj_row = conn.execute(
+            "SELECT project_name FROM jira_projects WHERE project_key = ?",
+            (project_key,),
+        ).fetchone()
     finally:
         conn.close()
+    project_name = proj_row["project_name"] if proj_row and proj_row["project_name"] else ""
 
     stats = _compute_stats(rows)
     pc = stats["priority_counts"]
@@ -220,6 +232,8 @@ async def export_bugs_docx(project_key: str):
     doc.add_heading(f"{project_key} Bug Report", 0)
     # 2. Metadata
     doc.add_paragraph(f"Project: {project_key}")
+    if project_name:
+        doc.add_paragraph(f"Project Name: {project_name}")
     doc.add_paragraph(f"Generated: {date.today()}")
     # 3. Summary stats
     doc.add_heading("Summary", level=1)

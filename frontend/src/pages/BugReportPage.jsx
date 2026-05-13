@@ -45,6 +45,7 @@ function BugReportPage() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [projectFullName, setProjectFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stats, setStats] = useState(null);
@@ -70,6 +71,14 @@ function BugReportPage() {
   useEffect(() => {
     if (projectKey) fetchStats();
     else setLoading(false);
+  }, [projectKey]);
+
+  useEffect(() => {
+    if (!projectKey) return;
+    fetch(`/api/projects/${encodeURIComponent(projectKey)}`)
+      .then(r => r.json())
+      .then(data => { if (data.ok && data.project_name) setProjectFullName(data.project_name); })
+      .catch(() => {});
   }, [projectKey]);
 
   async function fetchStats() {
@@ -251,7 +260,7 @@ function BugReportPage() {
             </div>
             <div className={styles.projectInfo}>
               <span className={styles.projectName}>{projectKey || 'Project'}</span>
-              <span className={styles.projectSub}>Jira Cloud Instance</span>
+              <span className={styles.projectSub}>{projectFullName || 'Jira Cloud Instance'}</span>
             </div>
           </div>
           <nav className={styles.sidebarNav}>

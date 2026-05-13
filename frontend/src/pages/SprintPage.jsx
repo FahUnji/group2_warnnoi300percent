@@ -363,9 +363,9 @@ function SprintPage() {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <div>
-              <span className={styles.projectName}>{projectName || projectKey}</span>
-              <span className={styles.projectSub}>Jira Cloud Instance</span>
+            <div className={styles.projectInfo}>
+              <span className={styles.projectName}>{projectKey}</span>
+              <span className={styles.projectSub}>{projectName || 'Jira Cloud Instance'}</span>
             </div>
           </div>
 

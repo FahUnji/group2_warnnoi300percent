@@ -630,7 +630,7 @@ function DashboardPage() {
           <div className={styles.connectRight}>
             <h2 className={styles.addTitle}>Add New Project</h2>
             <p className={styles.addDesc}>
-              Search and select a Jira project to start syncing bugs.
+              Search and select a Jira project to start syncing bugs. Provide your project key or name — JIRA Bug Summary will automatically sync your issues and display real-time bug metrics on your dashboard.
             </p>
 
             {addError && <div className={styles.errorBanner} role="alert">{addError}</div>}

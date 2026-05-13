@@ -1,23 +1,23 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T12:30:00Z",
+  "timestamp": "2026-05-13T12:56:11Z",
   "phase": "05",
   "phase_name": "export",
   "phase_dir": ".planning/phases/05-export",
-  "plan": "02",
+  "plan": null,
   "task": null,
   "total_tasks": 0,
-  "status": "complete",
+  "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Phase 05-01: Backend export router (4 endpoints)", "status": "done", "commit": "ad9229b"},
-    {"id": 2, "name": "Phase 05-02: Frontend export wiring BugReportPage + SprintPage", "status": "done", "commit": "fe6449c"},
-    {"id": 3, "name": "Post: BugReportPage animations + Word all-sprints export", "status": "done", "commit": "0a2193b"},
-    {"id": 4, "name": "Post: Excel sprint export one-sheet-per-sprint", "status": "done", "commit": "85c64fb"},
-    {"id": 5, "name": "Post: Fix Excel sheet title crash on '/' in sprint names", "status": "done", "commit": "b3d486d"},
-    {"id": 6, "name": "Post: Sprint xlsx missing data — add No Sprint + unknown sprint sheets", "status": "done", "commit": "ed126d8"},
-    {"id": 7, "name": "Post: Sprint xlsx metadata/stats/date block per sheet", "status": "done", "commit": "a7b1825"},
-    {"id": 8, "name": "Post: Bug report xlsx summary stats + priority % block", "status": "done", "commit": "1f203ac"},
-    {"id": 9, "name": "Post: Map 'released' state → 'Completed' in xlsx and docx", "status": "done", "commit": "90e984d"}
+    {"id": 1, "name": "Add GET /api/projects/{project_key} endpoint (returns project_name + site_name)", "status": "done", "commit": "uncommitted"},
+    {"id": 2, "name": "BugReportPage sidebar: projectKey short + projectFullName below (fetched from new endpoint)", "status": "done", "commit": "uncommitted"},
+    {"id": 3, "name": "SprintPage sidebar: projectKey short + projectName below (already had projectName)", "status": "done", "commit": "uncommitted"},
+    {"id": 4, "name": "Sidebar sizing: BugReportPage matched to SprintPage (256px, #c3c6d6 border, 14px gap, 16px font)", "status": "done", "commit": "uncommitted"},
+    {"id": 5, "name": "Both sidebars: text-overflow ellipsis on projectName + projectSub (1 line, truncate)", "status": "done", "commit": "uncommitted"},
+    {"id": 6, "name": "SprintPage: added projectInfo CSS class + wired in JSX for min-width:0 truncation", "status": "done", "commit": "uncommitted"},
+    {"id": 7, "name": "export.py bugs: add project_name row to xlsx + paragraph to docx (after project_key)", "status": "done", "commit": "uncommitted"},
+    {"id": 8, "name": "Dashboard cards bigger: min-height 160→200, statVal 26→32px, padding/gap enlarged", "status": "done", "commit": "uncommitted"},
+    {"id": 9, "name": "Dashboard addDesc text: kept base sentence + added detail matching html mockup style", "status": "done", "commit": "uncommitted"}
   ],
   "remaining_tasks": [],
   "blockers": [
@@ -32,26 +32,50 @@
       "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
     },
     {
-      "description": "check_sprints.py diagnostic file left in repo root — delete before next commit",
-      "type": "cleanup",
-      "workaround": "git rm check_sprints.py"
+      "description": "Backend NOT yet restarted after export.py + sync.py changes this session",
+      "type": "human_action",
+      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
+    },
+    {
+      "description": ".planning/*.md files show as modified in git status — CRLF-only noise, do NOT stage",
+      "type": "advisory",
+      "workaround": "Never stage .planning/ unless content was intentionally edited"
     }
   ],
   "human_actions_pending": [
     {
-      "action": "Manual UAT: test xlsx and docx exports from both BugReportPage and SprintPage",
-      "context": "All export endpoints updated. Verify stats block, No Sprint sheet, Completed status label all appear correctly.",
+      "action": "Restart backend: powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\"",
+      "context": "sync.py + export.py modified this session; uvicorn blind to NTFS — restart required",
+      "blocking": true
+    },
+    {
+      "action": "Manual UAT: verify sidebar project name displays correctly on BugReportPage + SprintPage",
+      "context": "projectFullName fetched from GET /api/projects/{project_key} — needs live test",
+      "blocking": false
+    },
+    {
+      "action": "Manual UAT: verify dashboard cards visually bigger, addDesc text correct",
+      "context": "CSS-only changes, Vite HMR auto-applied",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "Bug xlsx: stats block (Total/Open/Resolved + Critical/High/Medium/Low with %) above bug table", "phase": "05"},
-    {"decision": "Sprint xlsx: each sheet has metadata (Sprint/Status/Start/Release Date) + stats block + bug table", "phase": "05"},
-    {"decision": "Sprint state display: released → Completed, active → Active, upcoming → Upcoming, archived → Archived", "phase": "05"},
-    {"decision": "Sprint xlsx sheet order: known sprints (sprint_id DESC) + unknown + No Sprint last", "phase": "05"},
-    {"decision": "No Sprint sheet captures all bugs with null sprint_name", "phase": "05"}
+    {"decision": "Sidebar shows project_key (short) on top, full project_name below — NOT site_name/cloud instance", "rationale": "User confirmed: 'Manao Meal' not 'Manao Software'", "phase": "05"},
+    {"decision": "BugReportPage fetches project meta from new GET /api/projects/{project_key}; SprintPage already had projectName from /api/projects list", "rationale": "Reuse existing data where available", "phase": "05"},
+    {"decision": "Truncation needs projectInfo container with min-width:0 and flex:1 — added to both pages", "rationale": "Flex child won't truncate without min-width:0 on container", "phase": "05"},
+    {"decision": "Sprint page base for sidebar sizing: 256px width, #c3c6d6 border, gap:14px", "rationale": "User said keep sprint as base", "phase": "05"},
+    {"decision": "export.py: project_name row only added if project_name is non-empty (conditional)", "rationale": "Avoid blank row if DB has no project_name yet", "phase": "05"}
   ],
-  "uncommitted_files": ["check_sprints.py (diagnostic — delete)"],
-  "next_action": "Project complete. Clean up: git rm check_sprints.py. Then manual UAT of exports.",
-  "context_notes": "All 5 phases done. This session fixed export quality: sprint xlsx had empty sheets (null sprint_name bugs dropped), added metadata/stats blocks to both xlsx exports, fixed state label. Backend requires docker restart after .py changes on NTFS (uvicorn watcher blind to NTFS)."
+  "uncommitted_files": [
+    "backend/routers/sync.py",
+    "backend/routers/export.py",
+    "frontend/src/pages/BugReportPage.jsx",
+    "frontend/src/pages/BugReportPage.module.css",
+    "frontend/src/pages/SprintPage.jsx",
+    "frontend/src/pages/SprintPage.module.css",
+    "frontend/src/pages/DashboardPage.jsx",
+    "frontend/src/pages/DashboardPage.module.css"
+  ],
+  "next_action": "Restart backend (docker restart), then manual UAT: check sidebar names on both pages, dashboard card size.",
+  "context_notes": "Post-phase UI polish session. All 5 phases remain complete. Changes are UI quality fixes: project name display, sidebar consistency, card sizing, description copy. backend/services/jira_sprint_service.py was already modified before this session — pre-existing change, not from this session."
 }
