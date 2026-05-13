@@ -1,3 +1,13 @@
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .root {
   font-family: 'Inter', sans-serif;
   background: #f8f9ff;
@@ -84,6 +94,7 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   z-index: 300;
   padding: 6px;
+  animation: slideDown 0.15s ease both;
 }
 
 .logoutItem {
@@ -197,6 +208,7 @@
   padding: 6px;
   display: flex;
   flex-direction: column;
+  animation: slideDown 0.15s ease both;
 }
 
 .exportItem {
@@ -232,6 +244,8 @@
   border-radius: 12px;
   padding: 14px 18px;
   display: flex; flex-direction: column; gap: 5px;
+  animation: fadeInUp 0.4s ease both;
+  animation-delay: calc(var(--card-index, 0) * 80ms);
 }
 
 .statCardTop {
@@ -273,6 +287,8 @@
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 18px 20px;
+  animation: fadeInUp 0.4s ease both;
+  animation-delay: calc((var(--chart-index, 0) + 3) * 80ms);
 }
 
 .chartPriority { padding: 40px 20px; }
@@ -326,7 +342,7 @@
 
 .chartStatus .donutValue { font-size: 20px; }
 
-.donutArc { cursor: pointer; transition: stroke-width 0.15s; }
+.donutArc { cursor: pointer; transition: stroke-width 0.15s, stroke-dasharray 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 .donutArc:hover { stroke-width: 34; }
 .chartStatus .donutArc:hover { stroke-width: 22; }
 

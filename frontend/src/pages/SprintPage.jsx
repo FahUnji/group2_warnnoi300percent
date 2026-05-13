@@ -154,12 +154,23 @@ function SprintPage() {
 
   async function handleExport(format) {
     setExportOpen(false);
-    const targetSprint = sprints.find(s => s.state === 'active') || sprints[0];
-    if (!targetSprint) return;
     setExportLoading(true);
     try {
-      const sprintParam = encodeURIComponent(targetSprint.sprint_name);
-      const url = `/api/export/sprint/${format}?project_key=${encodeURIComponent(projectKey)}&sprint_name=${sprintParam}`;
+      let url;
+      let downloadName;
+      const today = new Date().toISOString().slice(0, 10);
+      if (format === 'docx') {
+        // Word export always includes all sprints
+        url = `/api/export/sprint/docx?project_key=${encodeURIComponent(projectKey)}`;
+        downloadName = `${projectKey}-all-sprints-${today}.docx`;
+      } else {
+        const targetSprint = sprints.find(s => s.state === 'active') || sprints[0];
+        if (!targetSprint) return;
+        const sprintParam = encodeURIComponent(targetSprint.sprint_name);
+        url = `/api/export/sprint/${format}?project_key=${encodeURIComponent(projectKey)}&sprint_name=${sprintParam}`;
+        const slug = targetSprint.sprint_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        downloadName = `${projectKey}-${slug}-${today}.${format}`;
+      }
       const r = await fetch(url);
       if (!r.ok) {
         const err = await r.json().catch(() => ({}));
@@ -170,9 +181,7 @@ function SprintPage() {
       const href = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = href;
-      const today = new Date().toISOString().slice(0, 10);
-      const slug = targetSprint.sprint_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      a.download = `${projectKey}-${slug}-${today}.${format}`;
+      a.download = downloadName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

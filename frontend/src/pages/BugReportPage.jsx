@@ -48,6 +48,7 @@ function BugReportPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stats, setStats] = useState(null);
+  const [animated, setAnimated] = useState(false);
   const [donutTip, setDonutTip] = useState({ visible: false, label: '', pct: 0, color: '', x: 0, y: 0 });
 
   const userMenuRef = useRef(null);
@@ -73,6 +74,7 @@ function BugReportPage() {
 
   async function fetchStats() {
     setLoading(true);
+    setAnimated(false);
     setError('');
     try {
       // Sync from Jira before reading local DB
@@ -102,6 +104,7 @@ function BugReportPage() {
       });
 
       setStats({ total, open: total - statusCounts.done, resolved: statusCounts.done, priorityCounts, statusCounts });
+      requestAnimationFrame(() => requestAnimationFrame(() => setAnimated(true)));
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -342,7 +345,7 @@ function BugReportPage() {
           ) : stats ? (
             <>
               <div className={styles.statRow}>
-                <div className={styles.statCard}>
+                <div className={styles.statCard} style={{ '--card-index': 0 }}>
                   <div className={styles.statCardTop}>
                     <span className={styles.statCardLabel}>Total Bugs</span>
                     <div className={`${styles.statIcon} ${styles.statIconBug}`}>
@@ -355,7 +358,7 @@ function BugReportPage() {
                   <div className={`${styles.statCardValue} ${styles.valRed}`}>{stats.total.toLocaleString()}</div>
                 </div>
 
-                <div className={styles.statCard}>
+                <div className={styles.statCard} style={{ '--card-index': 1 }}>
                   <div className={styles.statCardTop}>
                     <span className={styles.statCardLabel}>Open</span>
                     <div className={`${styles.statIcon} ${styles.statIconOpen}`}>
@@ -371,7 +374,7 @@ function BugReportPage() {
                   <p className={styles.statCardSub}>Active development queue</p>
                 </div>
 
-                <div className={styles.statCard}>
+                <div className={styles.statCard} style={{ '--card-index': 2 }}>
                   <div className={styles.statCardTop}>
                     <span className={styles.statCardLabel}>Resolved</span>
                     <div className={`${styles.statIcon} ${styles.statIconResolved}`}>
@@ -394,7 +397,7 @@ function BugReportPage() {
               </div>
 
               <div className={styles.chartsRow}>
-                <div className={`${styles.chartCard} ${styles.chartPriority}`}>
+                <div className={`${styles.chartCard} ${styles.chartPriority}`} style={{ '--chart-index': 0 }}>
                   <div className={styles.chartHeader}>
                     <h3 className={styles.chartTitle}>Bugs by Priority</h3>
                     <div className={styles.priorityLegend}>
@@ -414,7 +417,7 @@ function BugReportPage() {
                           <circle key={arc.key} cx="120" cy="120" r="104" fill="none"
                             stroke={P_COLORS[arc.key]}
                             strokeWidth="28"
-                            strokeDasharray={`${arc.dash} ${P_CIRCUMFERENCE}`}
+                            strokeDasharray={`${animated ? arc.dash : 0} ${P_CIRCUMFERENCE}`}
                             strokeDashoffset={arc.offset}
                             transform="rotate(-90 120 120)"
                             className={styles.donutArc}
@@ -441,7 +444,7 @@ function BugReportPage() {
                   </div>
                 </div>
 
-                <div className={`${styles.chartCard} ${styles.chartStatus}`}>
+                <div className={`${styles.chartCard} ${styles.chartStatus}`} style={{ '--chart-index': 1 }}>
                   <h3 className={styles.chartTitle}>Status Distribution</h3>
                   <div className={styles.statusChartBody}>
                     <div className={styles.donutWrap}>
@@ -451,7 +454,7 @@ function BugReportPage() {
                           <circle key={arc.key} cx="96" cy="96" r="80" fill="none"
                             stroke={S_COLORS[arc.key]}
                             strokeWidth="16"
-                            strokeDasharray={`${arc.dash} ${S_CIRCUMFERENCE}`}
+                            strokeDasharray={`${animated ? arc.dash : 0} ${S_CIRCUMFERENCE}`}
                             strokeDashoffset={arc.offset}
                             transform="rotate(-90 96 96)"
                             className={styles.donutArc}

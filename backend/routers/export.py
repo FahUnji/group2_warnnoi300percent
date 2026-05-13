@@ -261,67 +261,118 @@ async def export_sprint_docx(project_key: str, sprint_name: str = ""):
             status_code=400,
             detail={"ok": False, "error": "invalid_project_key", "message": str(exc)},
         )
-    if not sprint_name:
-        raise HTTPException(
-            status_code=400,
-            detail={"ok": False, "error": "missing_sprint_name", "message": "sprint_name query parameter is required"},
-        )
     conn = get_db()
     try:
-        rows = conn.execute(
-            "SELECT issue_key, summary, status, priority, assignee, sprint_name"
-            " FROM bugs WHERE project_key = ? AND sprint_name = ? ORDER BY issue_key ASC",
-            (project_key, sprint_name),
-        ).fetchall()
-        sprint_meta = conn.execute(
-            "SELECT sprint_id, sprint_name, state, start_date, end_date"
-            " FROM sprints WHERE project_key = ? AND sprint_name = ? LIMIT 1",
-            (project_key, sprint_name),
-        ).fetchone()
+        if sprint_name:
+            sprints_meta = conn.execute(
+                "SELECT sprint_id, sprint_name, state, start_date, end_date"
+                " FROM sprints WHERE project_key = ? AND sprint_name = ? LIMIT 1",
+                (project_key, sprint_name),
+            ).fetchall()
+            all_bugs = conn.execute(
+                "SELECT issue_key, summary, status, priority, assignee, sprint_name"
+                " FROM bugs WHERE project_key = ? AND sprint_name = ? ORDER BY issue_key ASC",
+                (project_key, sprint_name),
+            ).fetchall()
+        else:
+            sprints_meta = conn.execute(
+                "SELECT sprint_id, sprint_name, state, start_date, end_date"
+                " FROM sprints WHERE project_key = ? ORDER BY sprint_id DESC",
+                (project_key,),
+            ).fetchall()
+            all_bugs = conn.execute(
+                "SELECT issue_key, summary, status, priority, assignee, sprint_name"
+                " FROM bugs WHERE project_key = ? ORDER BY sprint_name, issue_key ASC",
+                (project_key,),
+            ).fetchall()
     finally:
         conn.close()
 
-    stats = _compute_stats(rows)
-    pc = stats["priority_counts"]
-    total = stats["total"]
-    progress_pct = round((stats["resolved_count"] / total) * 100) if total > 0 else 0
-
     doc = Document()
-    # 1. Title
-    doc.add_heading(f"{project_key} - {sprint_name} Sprint Report", 0)
-    # 2. Metadata
-    doc.add_paragraph(f"Project: {project_key}")
-    doc.add_paragraph(f"Fix Version: {sprint_name}")
-    doc.add_paragraph(f"Generated: {date.today()}")
-    # 3. Fix version info (EXPORT-WORD-SPRINT decision)
-    doc.add_heading("Fix Version Info", level=1)
-    doc.add_paragraph(f"Name: {sprint_name}")
-    doc.add_paragraph(f"State: {sprint_meta['state'] if sprint_meta else 'unknown'}")
-    doc.add_paragraph(f"Start Date: {sprint_meta['start_date'] or 'N/A' if sprint_meta else 'N/A'}")
-    doc.add_paragraph(f"Release Date: {sprint_meta['end_date'] or 'N/A' if sprint_meta else 'N/A'}")
-    doc.add_paragraph(f"Progress: {progress_pct}%")
-    # 4. Summary stats
-    doc.add_heading("Summary", level=1)
-    doc.add_paragraph(f"Total Bugs: {total}")
-    doc.add_paragraph(f"Open: {stats['open_count']}")
-    doc.add_paragraph(f"Resolved: {stats['resolved_count']}")
-    doc.add_paragraph(f"Critical: {pc['critical']}")
-    doc.add_paragraph(f"High: {pc['high']}")
-    doc.add_paragraph(f"Medium: {pc['medium']}")
-    doc.add_paragraph(f"Low: {pc['low']}")
-    # 5. Bug table (NO chart for sprint report — per EXPORT-WORD-SPRINT)
-    doc.add_heading("Bugs", level=1)
     headers = ["ID", "Summary", "Status", "Priority", "Assignee", "Fix Version"]
-    data_rows = [
-        [r["issue_key"], r["summary"], r["status"], r["priority"], r["assignee"], r["sprint_name"]]
-        for r in rows
-    ]
-    _add_word_table(doc, headers, data_rows)
+
+    if sprint_name:
+        # Single sprint report
+        sprint_meta = sprints_meta[0] if sprints_meta else None
+        stats = _compute_stats(all_bugs)
+        pc = stats["priority_counts"]
+        total = stats["total"]
+        progress_pct = round((stats["resolved_count"] / total) * 100) if total > 0 else 0
+        doc.add_heading(f"{project_key} - {sprint_name} Sprint Report", 0)
+        doc.add_paragraph(f"Project: {project_key}")
+        doc.add_paragraph(f"Fix Version: {sprint_name}")
+        doc.add_paragraph(f"Generated: {date.today()}")
+        doc.add_heading("Fix Version Info", level=1)
+        doc.add_paragraph(f"Name: {sprint_name}")
+        doc.add_paragraph(f"State: {sprint_meta['state'] if sprint_meta else 'unknown'}")
+        doc.add_paragraph(f"Start Date: {sprint_meta['start_date'] or 'N/A' if sprint_meta else 'N/A'}")
+        doc.add_paragraph(f"Release Date: {sprint_meta['end_date'] or 'N/A' if sprint_meta else 'N/A'}")
+        doc.add_paragraph(f"Progress: {progress_pct}%")
+        doc.add_heading("Summary", level=1)
+        doc.add_paragraph(f"Total Bugs: {total}")
+        doc.add_paragraph(f"Open: {stats['open_count']}")
+        doc.add_paragraph(f"Resolved: {stats['resolved_count']}")
+        doc.add_paragraph(f"Critical: {pc['critical']}")
+        doc.add_paragraph(f"High: {pc['high']}")
+        doc.add_paragraph(f"Medium: {pc['medium']}")
+        doc.add_paragraph(f"Low: {pc['low']}")
+        doc.add_heading("Bugs", level=1)
+        data_rows = [
+            [r["issue_key"], r["summary"], r["status"], r["priority"], r["assignee"], r["sprint_name"]]
+            for r in all_bugs
+        ]
+        _add_word_table(doc, headers, data_rows)
+        filename = f"{project_key}-{_slugify(sprint_name)}-{date.today()}.docx"
+    else:
+        # All sprints report — one section per sprint
+        bugs_by_sprint: dict = {}
+        for bug in all_bugs:
+            key = bug["sprint_name"] or "No Sprint"
+            bugs_by_sprint.setdefault(key, []).append(bug)
+
+        overall_stats = _compute_stats(all_bugs)
+        doc.add_heading(f"{project_key} - All Sprints Report", 0)
+        doc.add_paragraph(f"Project: {project_key}")
+        doc.add_paragraph(f"Generated: {date.today()}")
+        doc.add_paragraph(f"Total Sprints: {len(sprints_meta)}")
+        doc.add_paragraph(f"Total Bugs: {overall_stats['total']}")
+
+        for sm in sprints_meta:
+            sn = sm["sprint_name"]
+            sprint_bugs = bugs_by_sprint.get(sn, [])
+            stats = _compute_stats(sprint_bugs)
+            total = stats["total"]
+            pc = stats["priority_counts"]
+            progress_pct = round((stats["resolved_count"] / total) * 100) if total > 0 else 0
+
+            doc.add_heading(sn, level=1)
+            doc.add_paragraph(f"State: {sm['state'] or 'unknown'}")
+            doc.add_paragraph(f"Start Date: {sm['start_date'] or 'N/A'}")
+            doc.add_paragraph(f"Release Date: {sm['end_date'] or 'N/A'}")
+            doc.add_paragraph(f"Progress: {progress_pct}%")
+            doc.add_heading("Summary", level=2)
+            doc.add_paragraph(f"Total Bugs: {total}")
+            doc.add_paragraph(f"Open: {stats['open_count']}")
+            doc.add_paragraph(f"Resolved: {stats['resolved_count']}")
+            doc.add_paragraph(f"Critical: {pc['critical']}")
+            doc.add_paragraph(f"High: {pc['high']}")
+            doc.add_paragraph(f"Medium: {pc['medium']}")
+            doc.add_paragraph(f"Low: {pc['low']}")
+            if sprint_bugs:
+                doc.add_heading("Bugs", level=2)
+                data_rows = [
+                    [r["issue_key"], r["summary"], r["status"], r["priority"], r["assignee"], r["sprint_name"]]
+                    for r in sprint_bugs
+                ]
+                _add_word_table(doc, headers, data_rows)
+            else:
+                doc.add_paragraph("No bugs recorded for this sprint.")
+
+        filename = f"{project_key}-all-sprints-{date.today()}.docx"
 
     buf = io.BytesIO()
     doc.save(buf)
     buf.seek(0)
-    filename = f"{project_key}-{_slugify(sprint_name)}-{date.today()}.docx"
     return StreamingResponse(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
