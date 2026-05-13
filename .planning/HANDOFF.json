@@ -1,63 +1,38 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T01:38:40Z",
+  "timestamp": "2026-05-13T02:33:16Z",
   "phase": "03",
   "phase_name": "dashboard-ui",
   "phase_dir": ".planning/phases/03-dashboard-ui",
   "plan": null,
   "task": null,
   "total_tasks": null,
-  "status": "human_uat_pending",
+  "status": "phase_complete",
   "completed_tasks": [
-    {"id": "03-01", "name": "CSS Module + static structure: DashboardPage.module.css + DashboardPage.jsx rewrite", "status": "done", "commit": "9a950e7"},
-    {"id": "03-02", "name": "Data flow: /api/projects fetch, parallel /api/bugs/{key} stats, handleConnect, handleSync", "status": "done", "commit": "60b09f6"},
-    {"id": "03-review", "name": "Code review: 3 critical, 7 warning, 3 info findings", "status": "done", "commit": "849a6de"},
-    {"id": "03-verify", "name": "Verification: 7/8 must-haves pass, human_needed status", "status": "done", "commit": "9e9c035"},
-    {"id": "03-search", "name": "Jira project search in navbar + NoProjectPage discovery fix", "status": "done", "commit": "166c97c"},
-    {"id": "03-search-select", "name": "Replace Add-project form with debounced search-and-select UI", "status": "done", "commit": "97fe240"},
-    {"id": "03-kebab", "name": "Per-project 3-dot kebab menu with remove action", "status": "done", "commit": "37bfb5a"},
-    {"id": "03-kebab-visible", "name": "Make kebab button always visible (removed hover-only opacity:0)", "status": "done", "commit": "57046df"},
-    {"id": "03-docs", "name": "Correct planning docs: OAuth 2.0, SQLite, search-and-select flow, PROJ-03", "status": "done", "commit": "69be528"},
-    {"id": "03-critical-fix", "name": "Fix critical count to exclude resolved bugs (isNotDone predicate)", "status": "done", "commit": "8fdec32"},
-    {"id": "03-total-bugs", "name": "Add TOTAL BUGS stat to project cards", "status": "done", "commit": "ab7388c"},
-    {"id": "03-merge-noproject", "name": "Merge NoProjectPage into DashboardPage — single /dashboard route, conditional rendering", "status": "done", "commit": "e95f67c"},
-    {"id": "03-animations", "name": "Entry/exit animations: fadeInUp, staggered cards, cardExit, fadeOutUp; fix initial-load blink", "status": "done", "commit": "54bba42"},
-    {"id": "03-overlay-dropdown", "name": "Add-project search as overlay dropdown — prevents layout shift", "status": "done", "commit": "5d2186c"},
-    {"id": "03-dropdown-fix", "name": "Fix navbar search clipping (topnav z-index 1000, overflow:visible); fix add-project dropdown clipped by connectSection overflow:hidden", "status": "done", "commit": "uncommitted"}
+    {"id": 1, "name": "CR-02: resp.ok guards on all 7 fetch call-sites + Array.isArray guards", "status": "done", "commit": "2bcac70"},
+    {"id": 2, "name": "WR-01: user added to auth/me useEffect deps array", "status": "done", "commit": "2bcac70"},
+    {"id": 3, "name": "Phase 3 marked complete in ROADMAP.md + STATE.md", "status": "done", "commit": "eaeca2d"}
   ],
   "remaining_tasks": [
-    {"id": "03-human-uat", "name": "Human UAT: 5 items in 03-HUMAN-UAT.md — run frontend + backend, test visuals and data flow", "status": "not_started"},
-    {"id": "03-fix-blockers", "name": "Fix 3 code review blockers (CR-01 URL injection, CR-02 resp.ok, CR-03 setTimeout) — run /gsd-code-review 3 --fix", "status": "not_started"},
-    {"id": "03-complete", "name": "Mark phase complete after UAT approval — update ROADMAP + STATE to Complete", "status": "not_started"}
+    {"id": 4, "name": "Phase 4 planning: /gsd-plan-phase 4", "status": "not_started"}
   ],
   "blockers": [
-    {"description": "backend/.env contains secrets — must NEVER be committed", "type": "technical", "workaround": "File is gitignored; stage only specific files"},
-    {"description": "npm install fails on WSL with NTFS EACCES permission error", "type": "technical", "workaround": "Run npm install from native Linux path or use Docker"}
+    {
+      "description": "npm install fails on WSL NTFS mount (EACCES permissions)",
+      "type": "technical",
+      "workaround": "Use Docker (docker-compose up) or run npm from native Linux path outside /mnt/d/"
+    }
   ],
-  "human_actions_pending": [
-    {"action": "Run 5 UAT items in 03-HUMAN-UAT.md: build, visual render, card stats with live data, bar color, connect project E2E", "context": "Phase 3 verification is human_needed — automated checks pass but visual/data flow requires manual testing with running backend+frontend", "blocking": true}
-  ],
+  "human_actions_pending": [],
   "decisions": [
-    {"decision": "Atlassian OAuth 2.0 (3LO) over Basic Auth modal", "rationale": "Required for future API access + better UX", "phase": "01"},
-    {"decision": "Token encrypted with Fernet at rest in SQLite oauth_tokens table", "rationale": "Security requirement from CR", "phase": "01"},
-    {"decision": "Dashboard shows only Bug and Bug Task issues — no subtasks", "rationale": "User explicitly requested: display Bug/Bug Task only, no child tickets", "phase": "02"},
-    {"decision": "Jira Cloud API pagination via nextPageToken cursor, not startAt offset", "rationale": "POST /search/jql returns HTTP 400 on startAt; only nextPageToken supported", "phase": "02"},
-    {"decision": "No Recharts — Phase 3 has no pie charts", "rationale": "UI redesigned to match dashboard.html which has no charts at all", "phase": "03"},
-    {"decision": "Per-card inline stats: OPEN BUGS + CRITICAL counts from GET /api/bugs/{project_key}", "rationale": "Matches dashboard.html design — each card fetches its own stats in parallel on mount", "phase": "03"},
-    {"decision": "Colored left bar: red (#dc2626) if critical > 0, green (#065b41) if critical = 0", "rationale": "Direct from dashboard.html/dashboard.css mockup", "phase": "03"},
-    {"decision": "CSS Modules: DashboardPage.module.css (new file)", "rationale": "CSS Modules pattern; all new styles go here", "phase": "03"},
-    {"decision": "isNotDone predicate for critical count", "rationale": "critical = bugs with status != done AND priority critical/highest — prevents resolved bugs inflating the critical counter", "phase": "03"},
-    {"decision": "Kebab menu as sibling button (wrapper div + absolute position)", "rationale": "Project cards are <button> — nested <button> is invalid HTML; wrapper div + sibling button solves it cleanly", "phase": "03"},
-    {"decision": "Always-visible 3-dot button (no hover-only)", "rationale": "User preference — hover-only was too hard to discover for QA users", "phase": "03"},
-    {"decision": "Privacy-by-default project search (no auto-load on mount)", "rationale": "Prevents leaking full Jira project list; user must type before results appear", "phase": "03"},
-    {"decision": "TOTAL BUGS = bugs.length (no filter)", "rationale": "total is unfiltered — all synced bugs regardless of status/priority; matches dashboard.html mockup layout", "phase": "03"},
-    {"decision": "Single /dashboard route with conditional rendering (3-way ternary: loadingProjects / projects.length===0 / has-projects)", "rationale": "Eliminates flash-of-wrong-state and removes need for navigation on delete", "phase": "03"},
-    {"decision": "connectSection overflow:hidden removed; border-radius distributed to child panels", "rationale": "overflow:hidden on the section was clipping the absolutely-positioned add-project dropdown", "phase": "03"},
-    {"decision": "topnav z-index 100→1000 + overflow:visible", "rationale": "Ensures sticky navbar stacking context paints above animated page content stacking contexts", "phase": "03"}
+    {"decision": "CR-01 not applicable — extractProjectKey removed in Session 2; project keys come from API search results only", "rationale": "03-REVIEW.md was written against earlier code version", "phase": "03"},
+    {"decision": "CR-03 not applicable — handleSync/setSyncSuccess removed; animation timers in handleDeleteProject don't fire setState after unmount", "rationale": "03-REVIEW.md was written against earlier code version", "phase": "03"},
+    {"decision": "Phase 3 closed without human UAT sign-off in browser", "rationale": "npm install blocked by WSL NTFS; core UI verified via code review and static analysis", "phase": "03"}
   ],
   "uncommitted_files": [
-    "frontend/src/pages/DashboardPage.module.css"
+    "CRLF to LF line-ending changes across worktree + planning dirs (cosmetic, safe to discard with git checkout)",
+    "backend/.env (secrets — never commit)"
   ],
-  "next_action": "Commit DashboardPage.module.css dropdown fixes, then run human UAT (5 items in 03-HUMAN-UAT.md).",
-  "context_notes": "Phase 3 UI is complete + polished. Animations, overlay dropdowns, and dropdown-clipping fixes all done. One uncommitted file: DashboardPage.module.css (topnav overflow/z-index + connectSection overflow removal). Human UAT is the only gate. After UAT: fix 3 CR blockers, mark phase complete, begin Phase 4."
+  "next_action": "Run /gsd-plan-phase 4 to plan Sprint Report phase",
+  "context_notes": "Phase 3 dashboard UI complete and polished. DashboardPage.jsx: single /dashboard route, 3-way ternary (loading/empty/has-projects), fadeInUp entry animations, cardExit/fadeOutUp exit animations, overlay add-project dropdown (no layout shift), kebab card menus, navbar debounced project search. All fetch calls now guard resp.ok before calling .json(). Phase 4 (Sprint Report) needs: Jira sprint API integration, /api/sprint/{project_key} backend endpoint, sprint bug list view + per-sprint history aggregation UI."
 }
