@@ -225,24 +225,28 @@
     display: flex;
   }
 
-  /* Center the logo when hamburger is shown */
-  .hasSidebar .navCenter {
+  /* Center logo on all pages */
+  .navCenter {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     flex: unset;
-    pointer-events: none;
   }
 
-  /* Keep navLeft/navRight above the absolutely-positioned center */
-  .hasSidebar .navLeft,
-  .hasSidebar .navRight {
+  /* navLeft/navRight sit above the absolutely-positioned center */
+  .navLeft,
+  .navRight {
     position: relative;
     z-index: 1;
   }
 
-  .hasSidebar .navRight {
+  .navRight {
     margin-left: auto;
+  }
+
+  /* Sidebar pages: disable pointer events so hamburger stays clickable through the logo layer */
+  .hasSidebar .navCenter {
+    pointer-events: none;
   }
 }
 
