@@ -1,5 +1,39 @@
 # Jira Bug Summary Dashboard
 
+---
+
+## Hook
+
+> **"Your QA team shouldn't need to navigate 5 Jira screens just to answer: how many critical bugs are still open?"**
+
+Jira is powerful — but it's built for project managers, not QA health checks. Getting a clear picture of bug status, priority breakdown, and sprint progress means clicking through filters, switching boards, and exporting raw data manually. Every time.
+
+**Jira Bug Summary Dashboard** gives QA testers one screen with everything they need — charts, counts, sprint cards — and lets them export it to Excel or Word in one click.
+
+---
+
+## Problem Statement
+
+QA teams working with Jira face a recurring friction:
+
+- **Scattered information** — bug status, priority, and sprint assignment live in different Jira views
+- **No quick summary** — there is no single screen showing total open bugs, critical count, and sprint progress at a glance
+- **Manual reporting** — generating a bug report for a stakeholder means exporting raw CSVs and formatting them by hand
+- **Multi-project overhead** — teams managing several projects must switch context repeatedly to get the same basic metrics per project
+
+### Who it's for
+QA testers and QA leads who need a fast, readable view of bug health across one or more Jira projects — without Jira admin access or report-building skills.
+
+### What it solves
+| Pain | Solution |
+|------|----------|
+| Can't see bug priority + status in one view | Dashboard with donut charts — priority and status side by side |
+| No quick open/critical count per project | Project cards on dashboard show open + critical count at a glance |
+| Sprint bug tracking requires multiple Jira screens | Sprint page shows per-sprint cards with severity breakdown |
+| Sharing reports requires manual formatting | One-click export to Excel or Word — charts and tables included |
+
+---
+
 A web dashboard for QA testers to view bug health (status + priority breakdown) across any Jira project — without navigating Jira directly. Supports Excel and Word export.
 
 ---
