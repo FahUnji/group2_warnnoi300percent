@@ -100,6 +100,75 @@ def init_db() -> None:
             )
         """)
         conn.commit()
+
+        # Migration: drop legacy tables that still use account_id TEXT
+        # (schema changed to user_id INTEGER FK referencing users table)
+        for table in ("oauth_tokens", "jira_projects", "bugs", "sprints"):
+            row = conn.execute(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
+            ).fetchone()
+            if row and "account_id" in (row[0] or ""):
+                conn.execute(f"DROP TABLE {table}")
+        conn.commit()
+
+        # Recreate any tables that were just dropped
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS oauth_tokens (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id           INTEGER NOT NULL REFERENCES users(id),
+                access_token_enc  TEXT    NOT NULL,
+                refresh_token_enc TEXT,
+                cloud_id          TEXT    NOT NULL,
+                site_url          TEXT    NOT NULL,
+                site_name         TEXT,
+                expires_at        TEXT,
+                updated_at        TEXT    DEFAULT (datetime('now')),
+                UNIQUE (user_id)
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS jira_projects (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id      INTEGER NOT NULL REFERENCES users(id),
+                project_key  TEXT    NOT NULL,
+                project_url  TEXT    NOT NULL DEFAULT '',
+                project_name TEXT,
+                added_at     TEXT    DEFAULT (datetime('now')),
+                UNIQUE (user_id, project_key)
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS bugs (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     INTEGER NOT NULL REFERENCES users(id),
+                issue_id    INTEGER NOT NULL,
+                issue_key   TEXT    NOT NULL,
+                project_key TEXT    NOT NULL,
+                summary     TEXT,
+                status      TEXT,
+                priority    TEXT,
+                sprint_name TEXT,
+                sprint_id   INTEGER,
+                assignee    TEXT,
+                synced_at   TEXT    NOT NULL,
+                UNIQUE (user_id, issue_id, project_key)
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sprints (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     INTEGER NOT NULL REFERENCES users(id),
+                sprint_id   INTEGER NOT NULL,
+                sprint_name TEXT    NOT NULL,
+                state       TEXT    NOT NULL,
+                start_date  TEXT,
+                end_date    TEXT,
+                project_key TEXT    NOT NULL,
+                synced_at   TEXT    DEFAULT (datetime('now')),
+                UNIQUE (user_id, sprint_id, project_key)
+            )
+        """)
+        conn.commit()
     finally:
         conn.close()
 

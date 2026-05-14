@@ -148,7 +148,7 @@ async def atlassian_callback(code: str = "", state: str = "", error: str = ""):
     session_id = create_session(user_id)
 
     project_count = count_projects(user_id)
-    redirect_path = "/dashboard" if project_count > 0 else "/no-project"
+    redirect_path = "/dashboard" if project_count > 0 else "/"
 
     response = RedirectResponse(f"{frontend_url}{redirect_path}")
     response.set_cookie(
