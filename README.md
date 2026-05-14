@@ -277,3 +277,85 @@ powershell.exe -Command "docker restart group2_warnnoi300percent-frontend-1"
 | `dashboard-phase-3` | Phase 3 dashboard UI |
 | `back-end-phase-2` | Phase 2 data sync |
 | `front-end-phase-1` | Phase 1 Jira OAuth connection |
+
+---
+
+## Prompting Strategy
+
+This project was built entirely with AI assistance (Claude Code) across 5 phases + post-v1 polish. Key prompting strategies that worked:
+
+### 1. Phase-based scoping
+Break work into phases with clear goals before writing a single line of code. Each phase had a plan, execution, and verification step. Prompts like `/gsd-plan-phase 5` produced a task list before any implementation started — preventing scope creep mid-execution.
+
+### 2. Session handoff files
+AI context resets between sessions. Solve this by having the AI write a structured handoff at the end of every session — what was done, what's next, what decisions were made, what files are uncommitted. The next session reads this file first and picks up exactly where the last left off.
+
+```
+/gsd-pause-work   → writes .continue-here.md + HANDOFF.json, commits WIP
+/gsd-resume-work  → reads handoff, restores full context, presents status
+```
+
+### 3. Precise correction prompts
+When the AI produces the wrong output, correct with specifics — not "that's wrong." Example from this project:
+
+> AI built: Sprint Word export with donut charts (same as bug report)  
+> Correction: *"on sprint no need donut chart, should be card of each sprints"*  
+> Result: AI scrapped the chart approach and rebuilt using bordered card tables
+
+Vague corrections like "redo it" lead to the same output. Specific corrections ("card, not chart") lead to the right output on the first retry.
+
+### 4. Feed runtime errors directly
+When export failed, pasting the docker logs output into the prompt gave the AI the exact stack trace and line number. No guessing — it found the root cause (`NameError: name 'tblPr' is not defined` at line 133) immediately.
+
+### 5. Confirm before irreversible actions
+Prompts like "remove the UI folder" were treated as explicit authorization. For anything destructive (deleting files, merging branches), the AI confirmed the action before executing. This prevented accidental data loss across 5+ active sessions.
+
+---
+
+## Debugging Story
+
+### The Stray Line Bug
+
+**Phase:** 5 — Export  
+**Symptom:** "Can not export" — clicking Export as Word returned an error with no file  
+**Error (from docker logs):**
+```
+NameError: name 'tblPr' is not defined
+  File "/app/backend/routers/export.py", line 133, in _set_cell_bg
+    tblPr.append(tblBorders)
+```
+
+**Root cause:**
+
+Two helper functions were added back-to-back in `export.py`:
+
+```python
+def _remove_table_borders(table):
+    ...
+    tblPr = tbl.get_or_add_tblPr()
+    tblPr.append(tblBorders)   # ← this line was accidentally dropped from here
+
+def _set_cell_bg(cell, hex_color):
+    ...
+    tblPr.append(tblBorders)   # ← and landed here, where tblPr doesn't exist
+```
+
+During a surgical edit at the function boundary, the last line of `_remove_table_borders` was cut and pasted into the body of `_set_cell_bg`. The functions were syntactically valid Python — no import error, no linting warning — but `tblPr` simply didn't exist in `_set_cell_bg`'s scope. The bug only surfaced at runtime when a Word export was triggered.
+
+**How it was found:**
+
+```bash
+docker logs group2_warnnoi300percent-backend-1 --tail 50
+```
+
+The stack trace pointed to the exact line. Once seen, the fix was obvious — move the line back to `_remove_table_borders`.
+
+**Lesson learned:**
+
+After any edit that touches a function boundary (adding a function before/after another, splitting a function, inserting code near a `def`), immediately run a syntax + import check:
+
+```bash
+python3 -c "import ast; ast.parse(open('backend/routers/export.py').read()); print('OK')"
+```
+
+This catches stray-line bugs before they reach the container — saving a restart cycle and a confusing runtime error.
