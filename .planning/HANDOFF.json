@@ -1,119 +1,103 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-14T07:43:17Z",
-  "phase": "post-v1.0",
-  "phase_name": "multi-user-support",
+  "timestamp": "2026-05-14T08:30:00.000Z",
+  "phase": "post-v1",
+  "phase_name": "multi-user-isolation",
   "phase_dir": null,
   "plan": null,
   "task": null,
   "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Wipe jira.db and redesign schema with users/sessions/user_id FKs on all tables", "status": "done", "commit": null},
-    {"id": 2, "name": "Create models/user.py — upsert_user, load_user", "status": "done", "commit": null},
-    {"id": 3, "name": "Create models/session.py — create_session, get_session_user, delete_session (7-day TTL)", "status": "done", "commit": null},
-    {"id": 4, "name": "Create dependencies.py — get_current_user FastAPI dep (reads session cookie)", "status": "done", "commit": null},
-    {"id": 5, "name": "Update models/oauth_token.py — all functions take user_id param", "status": "done", "commit": null},
-    {"id": 6, "name": "Rewrite routers/auth.py — OAuth callback fetches Atlassian /me, upserts user, creates session cookie; /me reads session; /logout deletes session", "status": "done", "commit": null},
-    {"id": 7, "name": "Update routers/sync.py — Depends(get_current_user) + user_id filter on all DB queries", "status": "done", "commit": null},
-    {"id": 8, "name": "Update routers/export.py — Depends(get_current_user) + user_id filter on all 4 endpoints", "status": "done", "commit": null},
-    {"id": 9, "name": "Update routers/jira.py — Depends(get_current_user) guard on all 3 endpoints", "status": "done", "commit": null},
-    {"id": 10, "name": "Thread user_id through all functions in jira_sync_service.py and jira_sprint_service.py", "status": "done", "commit": null},
-    {"id": 11, "name": "Update jira_service.py — count_projects(user_id) call in test_and_save", "status": "done", "commit": null},
-    {"id": 12, "name": "Update main.py — allow_credentials=True, add DELETE to allow_methods", "status": "done", "commit": null},
-    {"id": 13, "name": "Add credentials: 'include' to all 22 fetch() calls in 4 frontend pages", "status": "done", "commit": null},
-    {"id": 14, "name": "Update .env.example with ATLASSIAN_CLIENT_ID, ATLASSIAN_CLIENT_SECRET, FRONTEND_URL, COOKIE_SECURE", "status": "done", "commit": null}
+    {
+      "id": 1,
+      "name": "README Debugging Story rewrite",
+      "status": "done",
+      "commit": "6b58216"
+    },
+    {
+      "id": 2,
+      "name": "Multi-user data isolation — users/sessions tables, session_id cookie, all queries scoped by user_id",
+      "status": "done",
+      "commit": "c8fcc83"
+    },
+    {
+      "id": 3,
+      "name": "Fix DB migration — drop legacy account_id tables, recreate with user_id INTEGER FK",
+      "status": "done",
+      "commit": "71358eb"
+    },
+    {
+      "id": 4,
+      "name": "Fix auth redirect — new users go to / not /no-project (route not in React Router)",
+      "status": "done",
+      "commit": "130497b"
+    }
   ],
   "remaining_tasks": [
-    {"id": 15, "name": "Commit all multi-user changes", "status": "not_started"},
-    {"id": 16, "name": "Restart backend server (kill old uvicorn, start fresh)", "status": "not_started"},
-    {"id": 17, "name": "Restart frontend server", "status": "not_started"},
-    {"id": 18, "name": "UAT: Login as User A, add project, sync bugs — verify dashboard shows data", "status": "not_started"},
-    {"id": 19, "name": "UAT: Login as User B in incognito/separate browser — verify empty state (data isolation confirmed)", "status": "not_started"},
-    {"id": 20, "name": "UAT: Logout — verify session cookie cleared, redirected to login page", "status": "not_started"},
-    {"id": 21, "name": "UAT: Export endpoints — verify DOCX/XLSX download still works with session cookie", "status": "not_started"}
+    {
+      "id": 5,
+      "name": "Verify login works end-to-end — clear cookies → OAuth → land on ConnectionPage with no 500 error",
+      "status": "not_started"
+    },
+    {
+      "id": 6,
+      "name": "Verify sync — add Jira project → sync completes without 'Sync failed'",
+      "status": "not_started"
+    },
+    {
+      "id": 7,
+      "name": "UAT: two browser profiles, different Atlassian accounts → confirm isolated project lists",
+      "status": "not_started"
+    },
+    {
+      "id": 8,
+      "name": "UAT: Bug Report Word (.docx) and Sprint Word (.docx) exports",
+      "status": "not_started"
+    },
+    {
+      "id": 9,
+      "name": "Responsive UI polish UAT: sidebar animations, card layouts, navbar logo",
+      "status": "not_started"
+    }
   ],
   "blockers": [
     {
-      "description": "Docker CLI unavailable in WSL — cannot restart containers directly",
-      "type": "human_action",
-      "workaround": "Run uvicorn directly in WSL: cd backend && source ../.venv/bin/activate && uvicorn backend.main:app --port 8000. For frontend: cd frontend && npm run dev."
-    },
-    {
-      "description": "uvicorn --reload blind to WSL file changes (NTFS limitation)",
-      "type": "technical",
-      "workaround": "Kill and restart uvicorn manually after backend changes"
-    },
-    {
-      "description": "UAT requires 2 separate Atlassian accounts to verify data isolation",
-      "type": "human_action",
-      "workaround": "Use incognito window + second Atlassian account, or use two different browsers"
+      "description": "Login still unconfirmed — user paused before testing fixes",
+      "type": "advisory",
+      "workaround": "Clear browser cookies for localhost → go to http://localhost:3000 → Login → Atlassian OAuth → should land on ConnectionPage (no 500). If 500: powershell.exe -Command \"docker logs group2_warnnoi300percent-backend-1 --tail 30\""
     }
   ],
   "human_actions_pending": [
     {
-      "action": "Restart backend server to load new schema and code changes",
-      "context": "17 backend files changed. New DB schema with users/sessions tables. Old process has stale code.",
-      "blocking": true
-    },
-    {
-      "action": "Do UAT with 2 Atlassian accounts to verify data isolation",
-      "context": "Core requirement — must confirm User A data not visible to User B",
+      "action": "Clear browser cookies for localhost (remove old jira_session or session_id cookie), log in fresh via Atlassian OAuth, add a Jira project, confirm sync completes",
+      "context": "DB migration ran on last restart. New auth uses session_id cookie (opaque token → user_id lookup in sessions table). Old jira_session cookie is stale.",
       "blocking": true
     }
   ],
   "decisions": [
     {
-      "decision": "HttpOnly session cookie (not JWT)",
-      "rationale": "User chose this. Cookie auto-sent by browser, XSS-proof (JS cannot read), CSRF protection via SameSite=Lax.",
-      "phase": "post-v1.0"
+      "decision": "Proper users+sessions tables with INTEGER user_id FK on all data tables",
+      "rationale": "Codebase was already refactored to this model. database.py was the only laggard — still created tables with legacy account_id TEXT. Fixed by migration that drops+recreates legacy tables on startup.",
+      "phase": "post-v1"
     },
     {
-      "decision": "Wipe DB — no migration",
-      "rationale": "User chose this. Old schema has no user_id; new schema requires user_id NOT NULL on all data tables. Clean start.",
-      "phase": "post-v1.0"
+      "decision": "session_id cookie (opaque token) not jira_session (account_id value)",
+      "rationale": "Proper session abstraction. session_id → user_id lookup in sessions table. Safer than storing account_id directly in cookie.",
+      "phase": "post-v1"
     },
     {
-      "decision": "7-day session TTL in sessions table",
-      "rationale": "Stateful sessions — instant revocation possible. sessions.expires_at checked against datetime('now') on each request.",
-      "phase": "post-v1.0"
+      "decision": "New users redirect to / not /no-project",
+      "rationale": "/no-project not in React Router — triggers *-catch-all. Direct to / (ConnectionPage) instead.",
+      "phase": "post-v1"
     },
     {
-      "decision": "COOKIE_SECURE env-driven (default false for dev, true for prod)",
-      "rationale": "localhost is HTTP so Secure attribute would block cookie entirely. Set COOKIE_SECURE=true in production.",
-      "phase": "post-v1.0"
-    },
-    {
-      "decision": "OAuth token NOT deleted on logout — only session deleted",
-      "rationale": "Re-login creates new session without full OAuth dance. Token stays encrypted in DB keyed to user_id.",
-      "phase": "post-v1.0"
-    },
-    {
-      "decision": "jira_config table kept without user_id — API token auth (jira.py) is dead code in UI",
-      "rationale": "ConnectionPage uses OAuth only. jira.py endpoints protected by Depends(get_current_user) but jira_config remains global. Can be removed later.",
-      "phase": "post-v1.0"
+      "decision": "CRLF-only modified files not committed",
+      "rationale": "backend/ and frontend/src/ show equal insertion/deletion counts — pure CRLF noise from WSL/Windows. No semantic changes.",
+      "phase": "post-v1"
     }
   ],
-  "uncommitted_files": [
-    "backend/database.py",
-    "backend/dependencies.py (NEW)",
-    "backend/models/oauth_token.py",
-    "backend/models/session.py (NEW)",
-    "backend/models/user.py (NEW)",
-    "backend/routers/auth.py",
-    "backend/routers/export.py",
-    "backend/routers/jira.py",
-    "backend/routers/sync.py",
-    "backend/services/jira_service.py",
-    "backend/services/jira_sprint_service.py",
-    "backend/services/jira_sync_service.py",
-    "backend/main.py",
-    "backend/.env.example",
-    "frontend/src/pages/BugReportPage.jsx",
-    "frontend/src/pages/ConnectionPage.jsx",
-    "frontend/src/pages/DashboardPage.jsx",
-    "frontend/src/pages/SprintPage.jsx"
-  ],
-  "next_action": "Commit all changes, then restart backend (kill uvicorn, start fresh at port 8000), restart frontend (npm run dev), then UAT: login as User A → add project → verify data; login as User B in incognito → verify empty state.",
-  "context_notes": "Full multi-user implementation completed in one session. All 22 fetch() calls updated with credentials: include. All backend functions thread user_id. New DB schema initialized (jira.db recreated with new tables). All Python files pass AST syntax check. Implementation UNTESTED — no UAT done yet. Previous session work (responsive CSS, navbar logo) is already committed."
+  "uncommitted_files": [],
+  "next_action": "User clears browser cookies → logs in via Atlassian OAuth → verifies no 500 error, lands on ConnectionPage → adds Jira project → verifies sync completes. If error: powershell.exe -Command \"docker logs group2_warnnoi300percent-backend-1 --tail 30\"",
+  "context_notes": "Root cause of 500 on login: codebase was refactored to users+sessions+integer user_id FK BEFORE database.py was updated. So init_db() still created tables with legacy account_id TEXT. On OAuth callback, upsert_oauth_token(user_id, ...) failed with 'table oauth_tokens has no column named user_id'. Fixed with migration that checks for account_id in table SQL and drops+recreates. All 4 data tables now correct (user_id=True, account_id=False). Backend running clean on last check. Auth chain: OAuth → /me → upsert_user(atlassian_account_id) → user_id int → create_session(user_id) → session_id cookie → all subsequent requests use Depends(get_current_user) which reads session_id cookie."
 }
