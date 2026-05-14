@@ -11,9 +11,10 @@ Error response shape (D-13):
 import ipaddress
 import urllib.parse
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, field_validator
 
+from backend.dependencies import get_current_user
 from backend.services.jira_service import JiraService
 
 router = APIRouter(prefix="/api/jira", tags=["jira"])
@@ -69,39 +70,24 @@ class JiraConfigRequest(BaseModel):
 
 
 @router.post("/connect")
-async def connect_jira(payload: JiraConfigRequest):
-    """
-    Test Jira credentials and persist them if valid.
-
-    Success: HTTP 200, {"ok": true, "message": "Connected successfully"}
-    Failure: HTTP 400, {"ok": false, "error": "<code>", "message": "<human text>"}
-    """
+async def connect_jira(
+    payload: JiraConfigRequest,
+    user_id: int = Depends(get_current_user),
+):
     service = JiraService()
-    # JiraService.test_and_save raises HTTPException(400) on failure
     result = await service.test_and_save(
-        payload.base_url, payload.email, payload.api_token
+        payload.base_url, payload.email, payload.api_token, user_id
     )
     return result
 
 
 @router.get("/status")
-async def jira_status():
-    """
-    Verify saved Jira credentials (called on React app load — D-14).
-
-    Returns {"ok": true} if saved credentials are valid.
-    Returns {"ok": false, "error": "<code>", "message": "<text>"} otherwise.
-    This endpoint never raises — always returns 200 with ok flag.
-    """
+async def jira_status(_: int = Depends(get_current_user)):
     service = JiraService()
     return await service.verify_saved_credentials()
 
 
 @router.get("/me")
-async def jira_me():
-    """
-    Return current Jira user info from saved credentials.
-    Returns {"ok": true, "user": {...}} or {"ok": false, "error": "..."}.
-    """
+async def jira_me(_: int = Depends(get_current_user)):
     service = JiraService()
     return await service.get_current_user()

@@ -26,7 +26,7 @@ function ConnectionPage() {
       setChecking(false);
       return;
     }
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
         if (data.ok) {

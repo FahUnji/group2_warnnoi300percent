@@ -50,7 +50,7 @@ function SprintPage() {
 
   useEffect(() => {
     if (user) return;
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         if (data.ok && data.user) {
@@ -64,7 +64,7 @@ function SprintPage() {
   // Fetch project name from /api/projects
   useEffect(() => {
     if (!projectKey) return;
-    fetch('/api/projects')
+    fetch('/api/projects', { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
         if (data.ok && Array.isArray(data.projects)) {
@@ -82,8 +82,8 @@ function SprintPage() {
     setErrorCode('');
     setStale(false);
     try {
-      await fetch(`/api/sync/${encodeURIComponent(projectKey)}`, { method: 'POST' }).catch(() => {});
-      const resp = await fetch(`/api/sprints/${encodeURIComponent(projectKey)}`);
+      await fetch(`/api/sync/${encodeURIComponent(projectKey)}`, { method: 'POST', credentials: 'include' }).catch(() => {});
+      const resp = await fetch(`/api/sprints/${encodeURIComponent(projectKey)}`, { credentials: 'include' });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         setErrorCode(err.detail?.error || '');
@@ -159,7 +159,7 @@ function SprintPage() {
       const today = new Date().toISOString().slice(0, 10);
       const url = `/api/export/sprint/${format}?project_key=${encodeURIComponent(projectKey)}`;
       const downloadName = `${projectKey}-all-sprints-${today}.${format}`;
-      const r = await fetch(url);
+      const r = await fetch(url, { credentials: 'include' });
       if (!r.ok) {
         const err = await r.json().catch(() => ({}));
         setError(err.detail?.message || err.message || 'Export failed. Please try again.');
@@ -182,7 +182,7 @@ function SprintPage() {
   }
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     sessionStorage.removeItem('jira_user');
     window.location.href = '/';
   }

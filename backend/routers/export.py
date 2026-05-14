@@ -23,11 +23,12 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook
 
 from backend.database import get_db
+from backend.dependencies import get_current_user
 from backend.services.jira_sync_service import _validate_project_key
 
 router = APIRouter(prefix="/api/export", tags=["export"])
@@ -173,7 +174,10 @@ def _add_word_table(doc: Document, headers: list, rows: list) -> None:
 
 
 @router.get("/bugs/xlsx")
-async def export_bugs_xlsx(project_key: str):
+async def export_bugs_xlsx(
+    project_key: str,
+    user_id: int = Depends(get_current_user),
+):
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
@@ -185,12 +189,12 @@ async def export_bugs_xlsx(project_key: str):
     try:
         rows = conn.execute(
             "SELECT issue_key, summary, status, priority, assignee, sprint_name"
-            " FROM bugs WHERE project_key = ? ORDER BY issue_key ASC",
-            (project_key,),
+            " FROM bugs WHERE project_key = ? AND user_id = ? ORDER BY issue_key ASC",
+            (project_key, user_id),
         ).fetchall()
         proj_row = conn.execute(
-            "SELECT project_name FROM jira_projects WHERE project_key = ?",
-            (project_key,),
+            "SELECT project_name FROM jira_projects WHERE project_key = ? AND user_id = ?",
+            (project_key, user_id),
         ).fetchone()
     finally:
         conn.close()
@@ -246,7 +250,10 @@ async def export_bugs_xlsx(project_key: str):
 
 
 @router.get("/bugs/docx")
-async def export_bugs_docx(project_key: str):
+async def export_bugs_docx(
+    project_key: str,
+    user_id: int = Depends(get_current_user),
+):
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
@@ -258,12 +265,12 @@ async def export_bugs_docx(project_key: str):
     try:
         rows = conn.execute(
             "SELECT issue_key, summary, status, priority, assignee, sprint_name"
-            " FROM bugs WHERE project_key = ? ORDER BY issue_key ASC",
-            (project_key,),
+            " FROM bugs WHERE project_key = ? AND user_id = ? ORDER BY issue_key ASC",
+            (project_key, user_id),
         ).fetchall()
         proj_row = conn.execute(
-            "SELECT project_name FROM jira_projects WHERE project_key = ?",
-            (project_key,),
+            "SELECT project_name FROM jira_projects WHERE project_key = ? AND user_id = ?",
+            (project_key, user_id),
         ).fetchone()
     finally:
         conn.close()
@@ -404,7 +411,11 @@ async def export_bugs_docx(project_key: str):
 
 
 @router.get("/sprint/xlsx")
-async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
+async def export_sprint_xlsx(
+    project_key: str,
+    sprint_name: str = "",
+    user_id: int = Depends(get_current_user),
+):
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
@@ -417,25 +428,25 @@ async def export_sprint_xlsx(project_key: str, sprint_name: str = ""):
         if sprint_name:
             rows = conn.execute(
                 "SELECT issue_key, summary, status, priority, assignee, sprint_name"
-                " FROM bugs WHERE project_key = ? AND sprint_name = ? ORDER BY issue_key ASC",
-                (project_key, sprint_name),
+                " FROM bugs WHERE project_key = ? AND user_id = ? AND sprint_name = ? ORDER BY issue_key ASC",
+                (project_key, user_id, sprint_name),
             ).fetchall()
             sprints_meta_rows = conn.execute(
                 "SELECT sprint_name, state, start_date, end_date"
-                " FROM sprints WHERE project_key = ? AND sprint_name = ? LIMIT 1",
-                (project_key, sprint_name),
+                " FROM sprints WHERE project_key = ? AND user_id = ? AND sprint_name = ? LIMIT 1",
+                (project_key, user_id, sprint_name),
             ).fetchall()
         else:
             sprints_meta_rows = conn.execute(
                 "SELECT sprint_name, state, start_date, end_date"
-                " FROM sprints WHERE project_key = ? ORDER BY sprint_id DESC",
-                (project_key,),
+                " FROM sprints WHERE project_key = ? AND user_id = ? ORDER BY sprint_id DESC",
+                (project_key, user_id),
             ).fetchall()
             sprint_names = [r["sprint_name"] for r in sprints_meta_rows]
             rows = conn.execute(
                 "SELECT issue_key, summary, status, priority, assignee, sprint_name"
-                " FROM bugs WHERE project_key = ? ORDER BY sprint_name, issue_key ASC",
-                (project_key,),
+                " FROM bugs WHERE project_key = ? AND user_id = ? ORDER BY sprint_name, issue_key ASC",
+                (project_key, user_id),
             ).fetchall()
     finally:
         conn.close()
@@ -638,7 +649,11 @@ def _add_sprint_section(doc: Document, sprint_name: str, sprint_meta, bugs: list
 
 
 @router.get("/sprint/docx")
-async def export_sprint_docx(project_key: str, sprint_name: str = ""):
+async def export_sprint_docx(
+    project_key: str,
+    sprint_name: str = "",
+    user_id: int = Depends(get_current_user),
+):
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
@@ -649,30 +664,30 @@ async def export_sprint_docx(project_key: str, sprint_name: str = ""):
     conn = get_db()
     try:
         proj_row = conn.execute(
-            "SELECT project_name FROM jira_projects WHERE project_key = ?",
-            (project_key,),
+            "SELECT project_name FROM jira_projects WHERE project_key = ? AND user_id = ?",
+            (project_key, user_id),
         ).fetchone()
         if sprint_name:
             sprints_meta = conn.execute(
                 "SELECT sprint_id, sprint_name, state, start_date, end_date"
-                " FROM sprints WHERE project_key = ? AND sprint_name = ? LIMIT 1",
-                (project_key, sprint_name),
+                " FROM sprints WHERE project_key = ? AND user_id = ? AND sprint_name = ? LIMIT 1",
+                (project_key, user_id, sprint_name),
             ).fetchall()
             all_bugs = conn.execute(
                 "SELECT issue_key, summary, status, priority, assignee, sprint_name"
-                " FROM bugs WHERE project_key = ? AND sprint_name = ? ORDER BY issue_key ASC",
-                (project_key, sprint_name),
+                " FROM bugs WHERE project_key = ? AND user_id = ? AND sprint_name = ? ORDER BY issue_key ASC",
+                (project_key, user_id, sprint_name),
             ).fetchall()
         else:
             sprints_meta = conn.execute(
                 "SELECT sprint_id, sprint_name, state, start_date, end_date"
-                " FROM sprints WHERE project_key = ? ORDER BY sprint_id DESC",
-                (project_key,),
+                " FROM sprints WHERE project_key = ? AND user_id = ? ORDER BY sprint_id DESC",
+                (project_key, user_id),
             ).fetchall()
             all_bugs = conn.execute(
                 "SELECT issue_key, summary, status, priority, assignee, sprint_name"
-                " FROM bugs WHERE project_key = ? ORDER BY sprint_name, issue_key ASC",
-                (project_key,),
+                " FROM bugs WHERE project_key = ? AND user_id = ? ORDER BY sprint_name, issue_key ASC",
+                (project_key, user_id),
             ).fetchall()
     finally:
         conn.close()
