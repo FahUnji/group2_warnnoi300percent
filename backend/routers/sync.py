@@ -1,21 +1,7 @@
-"""
-Sync router — exposes two endpoints:
-
-  POST /api/sync/{project_key}  — fetch all Bug-type issues for project, upsert into bugs table (SYNC-01, SYNC-02, SYNC-03)
-  GET  /api/projects            — list accessible Jira projects for the project picker (D-05)
-
-Error response shape:
-  HTTP 400: {"ok": false, "error": "<code>", "message": "<human text>"}
-  Codes: not_configured | unreachable_host | timeout | invalid_credentials | forbidden | api_error
-
-Security: project_key is passed as a path parameter (string only). It is used in a JQL
-query string but is NOT interpolated into a SQL statement — SQL uses parameterized queries
-in JiraSyncService._store_bugs. The JQL string is passed as a query param value, not
-concatenated into a URL path in an unsafe way.
-"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from backend.database import get_db
+from backend.dependencies import get_current_user
 from backend.services.jira_sprint_service import JiraSprintService as _JiraSprintService
 from backend.services.jira_sync_service import JiraSyncService, _validate_project_key
 
@@ -23,35 +9,28 @@ router = APIRouter(prefix="/api", tags=["sync"])
 
 
 @router.post("/sync/{project_key}")
-async def trigger_sync(project_key: str):
-    """
-    Fetch all Bug-type issues for project_key from Jira, upsert into bugs table.
-    Also syncs sprint metadata so the Sprint page reflects fresh data.
-
-    Success: HTTP 200, {"ok": true, "synced": N, "project_key": "...", "synced_at": "..."}
-    Failure: HTTP 400, {"ok": false, "error": "<code>", "message": "<human text>"}
-    """
+async def trigger_sync(
+    project_key: str,
+    user_id: int = Depends(get_current_user),
+):
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail={"ok": False, "error": "invalid_project_key", "message": str(exc)})
     service = JiraSyncService()
-    result = await service.sync_bugs(project_key)
-    # Sync sprint metadata alongside bugs; errors are non-fatal for the bug sync response
+    result = await service.sync_bugs(project_key, user_id)
     try:
-        await _JiraSprintService().get_sprints(project_key)
+        await _JiraSprintService().get_sprints(project_key, user_id)
     except Exception:
         pass
     return result
 
 
 @router.get("/bugs/{project_key}")
-async def get_bugs(project_key: str):
-    """
-    Return all bugs stored in SQLite for project_key.
-
-    Success: HTTP 200, {"ok": true, "bugs": [...], "total": N}
-    """
+async def get_bugs(
+    project_key: str,
+    user_id: int = Depends(get_current_user),
+):
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
@@ -60,8 +39,8 @@ async def get_bugs(project_key: str):
     try:
         rows = conn.execute(
             "SELECT issue_key, summary, status, priority, sprint_name, assignee, synced_at"
-            " FROM bugs WHERE project_key = ? ORDER BY issue_key ASC",
-            (project_key,),
+            " FROM bugs WHERE project_key = ? AND user_id = ? ORDER BY issue_key ASC",
+            (project_key, user_id),
         ).fetchall()
     finally:
         conn.close()
@@ -81,45 +60,43 @@ async def get_bugs(project_key: str):
 
 
 @router.get("/projects/search")
-async def search_projects(q: str = ""):
-    """
-    Search accessible Jira projects by name or key for the project picker.
-    Empty query returns all accessible projects (up to 20).
-
-    Success: HTTP 200, {"ok": true, "projects": [{"key": "PROJ", "name": "My Project"}, ...]}
-    """
+async def search_projects(
+    q: str = "",
+    user_id: int = Depends(get_current_user),
+):
     service = JiraSyncService()
-    return await service.search_projects(q.strip())
+    return await service.search_projects(q.strip(), user_id)
 
 
 @router.get("/projects")
-async def list_projects():
-    """
-    Return list of accessible Jira projects for the frontend project picker.
-
-    Success: HTTP 200, {"ok": true, "projects": [{"key": "PROJ", "name": "My Project"}, ...]}
-    Failure: HTTP 400, {"ok": false, "error": "<code>", "message": "<human text>"}
-    """
+async def list_projects(user_id: int = Depends(get_current_user)):
     service = JiraSyncService()
-    return await service.list_projects()
+    return await service.list_projects(user_id)
 
 
 @router.delete("/projects/{project_key}")
-async def delete_project(project_key: str):
-    """
-    Remove a synced project and all its bugs from local SQLite.
-
-    Success: HTTP 200, {"ok": true}
-    """
+async def delete_project(
+    project_key: str,
+    user_id: int = Depends(get_current_user),
+):
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail={"ok": False, "error": "invalid_project_key", "message": str(exc)})
     conn = get_db()
     try:
-        conn.execute("DELETE FROM sprints WHERE project_key = ?", (project_key,))
-        conn.execute("DELETE FROM bugs WHERE project_key = ?", (project_key,))
-        conn.execute("DELETE FROM jira_projects WHERE project_key = ?", (project_key,))
+        conn.execute(
+            "DELETE FROM sprints WHERE project_key = ? AND user_id = ?",
+            (project_key, user_id),
+        )
+        conn.execute(
+            "DELETE FROM bugs WHERE project_key = ? AND user_id = ?",
+            (project_key, user_id),
+        )
+        conn.execute(
+            "DELETE FROM jira_projects WHERE project_key = ? AND user_id = ?",
+            (project_key, user_id),
+        )
         conn.commit()
     finally:
         conn.close()
@@ -127,12 +104,10 @@ async def delete_project(project_key: str):
 
 
 @router.get("/projects/{project_key}")
-async def get_project_meta(project_key: str):
-    """
-    Return project name and Jira cloud instance name for a project key.
-
-    Success: HTTP 200, {"ok": true, "project_key": "...", "project_name": "...", "site_name": "...", "site_url": "..."}
-    """
+async def get_project_meta(
+    project_key: str,
+    user_id: int = Depends(get_current_user),
+):
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
@@ -143,11 +118,13 @@ async def get_project_meta(project_key: str):
     conn = get_db()
     try:
         proj = conn.execute(
-            "SELECT project_key, project_name FROM jira_projects WHERE project_key = ?",
-            (project_key,),
+            "SELECT project_key, project_name FROM jira_projects"
+            " WHERE project_key = ? AND user_id = ?",
+            (project_key, user_id),
         ).fetchone()
         token = conn.execute(
-            "SELECT site_name, site_url FROM oauth_tokens LIMIT 1",
+            "SELECT site_name, site_url FROM oauth_tokens WHERE user_id = ? LIMIT 1",
+            (user_id,),
         ).fetchone()
     finally:
         conn.close()
@@ -161,23 +138,16 @@ async def get_project_meta(project_key: str):
 
 
 @router.get("/sprints/{project_key}")
-async def get_sprints(project_key: str):
-    """
-    Fetch sprint list for project_key from Jira Board API, upsert into sprints table,
-    and return combined sprint list with bug counts from bugs table.
-
-    Success: HTTP 200, {"ok": true, "sprints": [...], "synced_at": "..."}
-      Each sprint: {sprint_id, sprint_name, state, start_date, end_date,
-                    found, resolved, critical, high, medium, low}
-    Failure: HTTP 400, {"ok": false, "error": "<code>", "message": "<human text>"}
-    Error codes: not_configured | unreachable_host | timeout | invalid_credentials | forbidden | api_error
-    """
+async def get_sprints(
+    project_key: str,
+    user_id: int = Depends(get_current_user),
+):
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail={"ok": False, "error": "invalid_project_key", "message": str(exc)})
     service = _JiraSprintService()
-    result = await service.get_sprints(project_key)
+    result = await service.get_sprints(project_key, user_id)
     if not result["ok"]:
         raise HTTPException(
             status_code=400,

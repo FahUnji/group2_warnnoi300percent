@@ -110,14 +110,8 @@ class JiraService:
     """Service layer for Jira authentication and credential management."""
 
     async def test_and_save(
-        self, base_url: str, email: str, api_token: str
+        self, base_url: str, email: str, api_token: str, user_id: int = 0
     ) -> dict:
-        """
-        Test Jira credentials, then encrypt and persist them if valid.
-
-        Raises HTTPException(400) with D-13 error shape on failure.
-        Returns {"ok": True, "message": "Connected successfully"} on success.
-        """
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             None, _test_jira_auth, base_url, email, api_token
@@ -127,10 +121,9 @@ class JiraService:
                 status_code=400,
                 detail={"ok": False, "error": result["error"], "message": result["message"]},
             )
-        # Credentials valid — encrypt and persist (D-03)
         encrypted = _encrypt_token(api_token)
         await loop.run_in_executor(None, upsert_config, base_url, email, encrypted)
-        project_count = await loop.run_in_executor(None, count_projects)
+        project_count = await loop.run_in_executor(None, count_projects, user_id)
         return {
             "ok": True,
             "message": "Connected successfully",

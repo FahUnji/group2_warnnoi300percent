@@ -60,7 +60,7 @@ function BugReportPage() {
 
   useEffect(() => {
     if (user) return;
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         if (data.ok && data.user) {
@@ -78,7 +78,7 @@ function BugReportPage() {
 
   useEffect(() => {
     if (!projectKey) return;
-    fetch(`/api/projects/${encodeURIComponent(projectKey)}`)
+    fetch(`/api/projects/${encodeURIComponent(projectKey)}`, { credentials: 'include' })
       .then(r => r.json())
       .then(data => { if (data.ok && data.project_name) setProjectFullName(data.project_name); })
       .catch(() => {});
@@ -90,8 +90,8 @@ function BugReportPage() {
     setError('');
     try {
       // Sync from Jira before reading local DB
-      await fetch(`/api/sync/${encodeURIComponent(projectKey)}`, { method: 'POST' }).catch(() => {});
-      const r = await fetch(`/api/bugs/${encodeURIComponent(projectKey)}`);
+      await fetch(`/api/sync/${encodeURIComponent(projectKey)}`, { method: 'POST', credentials: 'include' }).catch(() => {});
+      const r = await fetch(`/api/bugs/${encodeURIComponent(projectKey)}`, { credentials: 'include' });
       const data = await r.json();
       if (!r.ok) {
         setError(data?.message || 'Failed to load bug report.');
@@ -137,7 +137,7 @@ function BugReportPage() {
     setExportLoading(true);
     try {
       const url = `/api/export/bugs/${format}?project_key=${encodeURIComponent(projectKey)}`;
-      const r = await fetch(url);
+      const r = await fetch(url, { credentials: 'include' });
       if (!r.ok) {
         const err = await r.json().catch(() => ({}));
         setError(err.detail?.message || err.message || 'Export failed. Please try again.');

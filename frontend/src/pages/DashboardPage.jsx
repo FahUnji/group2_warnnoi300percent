@@ -30,7 +30,7 @@ function DashboardPage() {
 
   useEffect(() => {
     if (user) return;
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         if (data.ok && data.user) {
@@ -43,7 +43,7 @@ function DashboardPage() {
 
   useEffect(() => {
     setLoadingProjects(true);
-    fetch('/api/projects')
+    fetch('/api/projects', { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
         if (data.ok && Array.isArray(data.projects)) setProjects(data.projects);
@@ -59,7 +59,7 @@ function DashboardPage() {
     projects.forEach(p => { initial[p.key] = { total: 0, open: 0, critical: 0, loading: true }; });
     setBugStats(initial);
     projects.forEach(project => {
-      fetch(`/api/bugs/${project.key}`)
+      fetch(`/api/bugs/${project.key}`, { credentials: 'include' })
         .then(r => { if (!r.ok) throw new Error(); return r.json(); })
         .then(data => {
           if (data.ok) {
@@ -90,7 +90,7 @@ function DashboardPage() {
     setShowAddDropdown(true);
     const timer = setTimeout(() => {
       setAddLoading(true);
-      fetch(`/api/projects/search?q=${encodeURIComponent(addQuery)}`)
+      fetch(`/api/projects/search?q=${encodeURIComponent(addQuery)}`, { credentials: 'include' })
         .then(r => { if (!r.ok) throw new Error(); return r.json(); })
         .then(data => { if (data.ok) setAddResults(data.projects); })
         .catch(() => {})
@@ -117,7 +117,7 @@ function DashboardPage() {
   }, [openCardMenu]);
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     sessionStorage.removeItem('jira_user');
     window.location.href = '/';
   }
@@ -128,13 +128,13 @@ function DashboardPage() {
     setAddSyncing(true);
     setAddError('');
     try {
-      const resp = await fetch(`/api/sync/${project.key}`, { method: 'POST' });
+      const resp = await fetch(`/api/sync/${project.key}`, { method: 'POST', credentials: 'include' });
       if (!resp.ok) throw new Error();
       const data = await resp.json();
       if (data.ok) {
         setAddQuery('');
         setAddResults([]);
-        const r = await fetch('/api/projects');
+        const r = await fetch('/api/projects', { credentials: 'include' });
         if (!r.ok) throw new Error();
         const d = await r.json();
         if (d.ok && Array.isArray(d.projects)) setProjects(d.projects);
@@ -154,8 +154,8 @@ function DashboardPage() {
     setOpenCardMenu(null);
     setSyncingKey(key);
     try {
-      await fetch(`/api/sync/${key}`, { method: 'POST' });
-      const r = await fetch(`/api/bugs/${key}`);
+      await fetch(`/api/sync/${key}`, { method: 'POST', credentials: 'include' });
+      const r = await fetch(`/api/bugs/${key}`, { credentials: 'include' });
       const data = await r.json();
       if (data.ok) {
         const bugs = data.bugs || [];
@@ -177,7 +177,7 @@ function DashboardPage() {
   async function handleDeleteProject(key) {
     setOpenCardMenu(null);
     try {
-      const resp = await fetch(`/api/projects/${key}`, { method: 'DELETE' });
+      const resp = await fetch(`/api/projects/${key}`, { method: 'DELETE', credentials: 'include' });
       if (!resp.ok) {
         return;
       }

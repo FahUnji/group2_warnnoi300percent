@@ -23,18 +23,17 @@ _PROJECT_KEY_RE = re.compile(r'^[A-Z][A-Z0-9_]{0,9}$')
 
 
 def _validate_project_key(project_key: str) -> None:
-    """Raise ValueError if project_key is not a safe Jira project key."""
     if not _PROJECT_KEY_RE.match(project_key):
         raise ValueError(f"Invalid project key: {project_key!r}")
 
 
-def _get_auth_headers() -> tuple[str, str, str]:
+def _get_auth_headers(user_id: int) -> tuple[str, str, str]:
     """
-    Load OAuth token from DB and return (access_token, cloud_id, base_url).
+    Load OAuth token for user_id and return (access_token, cloud_id, base_url).
     Raises HTTPException(400) if no token is stored.
     access_token is plaintext — caller must not log it.
     """
-    row = load_oauth_token()
+    row = load_oauth_token(user_id)
     if row is None:
         raise HTTPException(
             status_code=400,
@@ -46,13 +45,10 @@ def _get_auth_headers() -> tuple[str, str, str]:
     return access_token, cloud_id, base_url
 
 
-_PAGE_SIZE = 100  # Jira Cloud hard cap per request
+_PAGE_SIZE = 100
+
 
 def _jira_search(url: str, access_token: str, jql: str) -> dict:
-    """
-    Paginated Jira POST /search/jql — loops until all pages fetched.
-    Returns {"ok": True, "issues": [...]} or {"ok": False, "error": ..., "message": ...}.
-    """
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Accept": "application/json",
@@ -97,24 +93,18 @@ def _jira_search(url: str, access_token: str, jql: str) -> dict:
     return {"ok": True, "issues": all_issues}
 
 
-def _fetch_bugs(project_key: str) -> dict:
-    """
-    Blocking function: fetch Bug and Bug Task issues for a project.
-    Returns {"ok": True, "issues": [...]} or {"ok": False, "error": ..., "message": ...}.
-    Never logs or returns access_token or cloud_id.
-    """
+def _fetch_bugs(project_key: str, user_id: int) -> dict:
     try:
         _validate_project_key(project_key)
     except ValueError as exc:
         return {"ok": False, "error": "invalid_project_key", "message": str(exc)}
 
     try:
-        access_token, cloud_id, _base_url = _get_auth_headers()
+        access_token, cloud_id, _base_url = _get_auth_headers(user_id)
     except HTTPException as exc:
         return {"ok": False, "error": exc.detail["error"], "message": exc.detail["message"]}
 
     url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/search/jql"
-
     return _jira_search(
         url,
         access_token,
@@ -122,12 +112,7 @@ def _fetch_bugs(project_key: str) -> dict:
     )
 
 
-def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
-    """
-    Blocking function: DELETE existing bugs for project_key then batch-insert new ones.
-    Uses parameterized queries only (sqlite3 '?' placeholders).
-    Returns count of inserted rows.
-    """
+def _store_bugs(project_key: str, issues: list, synced_at: str, user_id: int) -> int:
     rows = []
     for issue in issues:
         fields = issue.get("fields", {})
@@ -139,8 +124,9 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
         status_field = fields.get("status", {})
         priority_field = fields.get("priority", {})
         rows.append((
-            issue.get("id"),          # issue_id (Jira numeric ID as string — cast to int below)
-            issue.get("key", ""),     # issue_key e.g. PROJ-123
+            user_id,
+            issue.get("id"),
+            issue.get("key", ""),
             project_key,
             fields.get("summary"),
             status_field.get("name") if status_field else None,
@@ -151,20 +137,21 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
             synced_at,
         ))
 
-    # Cast issue_id to int (Jira returns it as a string in issue["id"])
     rows = [
-        (int(r[0]) if r[0] is not None else None, *r[1:])
+        (r[0], int(r[1]) if r[1] is not None else None, *r[2:])
         for r in rows
     ]
 
     conn = get_db()
     try:
-        # Parameterized DELETE — project_key bound via '?' placeholder
-        conn.execute("DELETE FROM bugs WHERE project_key = ?", (project_key,))
+        conn.execute(
+            "DELETE FROM bugs WHERE project_key = ? AND user_id = ?",
+            (project_key, user_id),
+        )
         conn.executemany(
             "INSERT INTO bugs"
-            " (issue_id, issue_key, project_key, summary, status, priority, sprint_name, sprint_id, assignee, synced_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " (user_id, issue_id, issue_key, project_key, summary, status, priority, sprint_name, sprint_id, assignee, synced_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             rows,
         )
         conn.commit()
@@ -173,12 +160,9 @@ def _store_bugs(project_key: str, issues: list, synced_at: str) -> int:
         conn.close()
 
 
-def _fetch_project_name(project_key: str) -> str:
-    """
-    Fetch display name for a project from Jira. Falls back to project_key on any error.
-    """
+def _fetch_project_name(project_key: str, user_id: int) -> str:
     try:
-        access_token, cloud_id, _ = _get_auth_headers()
+        access_token, cloud_id, _ = _get_auth_headers(user_id)
     except HTTPException:
         return project_key
     url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/project/{project_key}"
@@ -195,27 +179,27 @@ def _fetch_project_name(project_key: str) -> str:
         return project_key
 
 
-def _upsert_project(project_key: str, project_name: str) -> None:
-    """Register synced project (key + name) in jira_projects. Upserts on conflict."""
+def _upsert_project(project_key: str, project_name: str, user_id: int) -> None:
     conn = get_db()
     try:
         conn.execute(
-            "INSERT INTO jira_projects (project_key, project_url, project_name)"
-            " VALUES (?, '', ?)"
-            " ON CONFLICT(project_key) DO UPDATE SET project_name = excluded.project_name",
-            (project_key, project_name),
+            "INSERT INTO jira_projects (user_id, project_key, project_url, project_name)"
+            " VALUES (?, ?, '', ?)"
+            " ON CONFLICT(user_id, project_key) DO UPDATE SET project_name = excluded.project_name",
+            (user_id, project_key, project_name),
         )
         conn.commit()
     finally:
         conn.close()
 
 
-def _list_synced_projects() -> dict:
-    """Return only projects the user has explicitly synced, ordered by when they were added."""
+def _list_synced_projects(user_id: int) -> dict:
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT project_key, project_name FROM jira_projects ORDER BY added_at ASC"
+            "SELECT project_key, project_name FROM jira_projects"
+            " WHERE user_id = ? ORDER BY added_at ASC",
+            (user_id,),
         ).fetchall()
     finally:
         conn.close()
@@ -228,10 +212,9 @@ def _list_synced_projects() -> dict:
     }
 
 
-def _search_jira_projects(query: str) -> dict:
-    """Search accessible Jira projects by name or key. Empty query returns up to 20 accessible projects."""
+def _search_jira_projects(query: str, user_id: int) -> dict:
     try:
-        access_token, cloud_id, _ = _get_auth_headers()
+        access_token, cloud_id, _ = _get_auth_headers(user_id)
     except HTTPException as exc:
         return {"ok": False, "error": exc.detail["error"], "message": exc.detail["message"]}
     url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/project/search"
@@ -263,33 +246,23 @@ def _search_jira_projects(query: str) -> dict:
 
 
 class JiraSyncService:
-    """Service layer for Jira data sync: fetch bugs and project list."""
 
-    async def sync_bugs(self, project_key: str) -> dict:
-        """
-        Fetch all Bug-type issues for project_key from Jira, upsert into bugs table.
-        Also registers the project in jira_projects so it appears on the dashboard.
-        Raises HTTPException(400) on any failure.
-        Returns {"ok": True, "synced": N, "project_key": ..., "synced_at": ...} on success.
-        """
+    async def sync_bugs(self, project_key: str, user_id: int) -> dict:
         loop = asyncio.get_running_loop()
 
-        # Step 1: Fetch bugs from Jira (blocking HTTP)
-        fetch_result = await loop.run_in_executor(None, _fetch_bugs, project_key)
+        fetch_result = await loop.run_in_executor(None, _fetch_bugs, project_key, user_id)
         if not fetch_result["ok"]:
             raise HTTPException(
                 status_code=400,
                 detail={"ok": False, "error": fetch_result["error"], "message": fetch_result["message"]},
             )
 
-        # Step 2: Store bugs in SQLite (blocking DB write)
         synced_at = datetime.now(timezone.utc).isoformat()
         issues = fetch_result["issues"]
-        count = await loop.run_in_executor(None, _store_bugs, project_key, issues, synced_at)
+        count = await loop.run_in_executor(None, _store_bugs, project_key, issues, synced_at, user_id)
 
-        # Step 3: Register project so it shows on dashboard (fetch name, upsert record)
-        project_name = await loop.run_in_executor(None, _fetch_project_name, project_key)
-        await loop.run_in_executor(None, _upsert_project, project_key, project_name)
+        project_name = await loop.run_in_executor(None, _fetch_project_name, project_key, user_id)
+        await loop.run_in_executor(None, _upsert_project, project_key, project_name, user_id)
 
         return {
             "ok": True,
@@ -298,15 +271,10 @@ class JiraSyncService:
             "synced_at": synced_at,
         }
 
-    async def list_projects(self) -> dict:
-        """
-        Return only projects the user has explicitly synced (from local SQLite).
-        First login returns empty list. Projects appear after user connects them via /api/sync/{key}.
-        """
+    async def list_projects(self, user_id: int) -> dict:
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, _list_synced_projects)
+        return await loop.run_in_executor(None, _list_synced_projects, user_id)
 
-    async def search_projects(self, query: str) -> dict:
-        """Search accessible Jira projects by name or key."""
+    async def search_projects(self, query: str, user_id: int) -> dict:
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, _search_jira_projects, query)
+        return await loop.run_in_executor(None, _search_jira_projects, query, user_id)

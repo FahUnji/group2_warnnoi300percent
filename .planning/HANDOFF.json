@@ -1,134 +1,119 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-14T02:41:57.000Z",
-  "phase": "post-v1",
-  "phase_name": "ui-polish",
+  "timestamp": "2026-05-14T07:43:17Z",
+  "phase": "post-v1.0",
+  "phase_name": "multi-user-support",
   "phase_dir": null,
   "plan": null,
   "task": null,
   "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {
-      "id": 1,
-      "name": "Sidebar animation polish: entry/exit keyframes, skip on sidebar-to-sidebar nav",
-      "status": "done",
-      "commit": "9fa9a8d"
-    },
-    {
-      "id": 2,
-      "name": "Responsive card internals: chartBody flex, chartsRow breakpoint 1100px, statusChartBody row, severityCards wrap, sprintName ellipsis",
-      "status": "done",
-      "commit": "f17b0d6"
-    },
-    {
-      "id": 3,
-      "name": "Navbar logo mobile: left-aligned next to hamburger, consistent position all pages",
-      "status": "done",
-      "commit": "d651545"
-    }
+    {"id": 1, "name": "Wipe jira.db and redesign schema with users/sessions/user_id FKs on all tables", "status": "done", "commit": null},
+    {"id": 2, "name": "Create models/user.py — upsert_user, load_user", "status": "done", "commit": null},
+    {"id": 3, "name": "Create models/session.py — create_session, get_session_user, delete_session (7-day TTL)", "status": "done", "commit": null},
+    {"id": 4, "name": "Create dependencies.py — get_current_user FastAPI dep (reads session cookie)", "status": "done", "commit": null},
+    {"id": 5, "name": "Update models/oauth_token.py — all functions take user_id param", "status": "done", "commit": null},
+    {"id": 6, "name": "Rewrite routers/auth.py — OAuth callback fetches Atlassian /me, upserts user, creates session cookie; /me reads session; /logout deletes session", "status": "done", "commit": null},
+    {"id": 7, "name": "Update routers/sync.py — Depends(get_current_user) + user_id filter on all DB queries", "status": "done", "commit": null},
+    {"id": 8, "name": "Update routers/export.py — Depends(get_current_user) + user_id filter on all 4 endpoints", "status": "done", "commit": null},
+    {"id": 9, "name": "Update routers/jira.py — Depends(get_current_user) guard on all 3 endpoints", "status": "done", "commit": null},
+    {"id": 10, "name": "Thread user_id through all functions in jira_sync_service.py and jira_sprint_service.py", "status": "done", "commit": null},
+    {"id": 11, "name": "Update jira_service.py — count_projects(user_id) call in test_and_save", "status": "done", "commit": null},
+    {"id": 12, "name": "Update main.py — allow_credentials=True, add DELETE to allow_methods", "status": "done", "commit": null},
+    {"id": 13, "name": "Add credentials: 'include' to all 22 fetch() calls in 4 frontend pages", "status": "done", "commit": null},
+    {"id": 14, "name": "Update .env.example with ATLASSIAN_CLIENT_ID, ATLASSIAN_CLIENT_SECRET, FRONTEND_URL, COOKIE_SECURE", "status": "done", "commit": null}
   ],
   "remaining_tasks": [
-    {
-      "id": 4,
-      "name": "Restart containers + browser UAT: sidebar animations, card responsive layouts, navbar logo position",
-      "status": "not_started"
-    },
-    {
-      "id": 5,
-      "name": "UAT: Bug Report Export Word (.docx) and Sprint Export Word (.docx)",
-      "status": "not_started"
-    },
-    {
-      "id": 6,
-      "name": "Investigate backend/services/jira_sprint_service.py — uncommitted modification, unknown change",
-      "status": "not_started"
-    },
-    {
-      "id": 7,
-      "name": "Continue page-level responsive improvements if user identifies more areas",
-      "status": "not_started"
-    }
+    {"id": 15, "name": "Commit all multi-user changes", "status": "not_started"},
+    {"id": 16, "name": "Restart backend server (kill old uvicorn, start fresh)", "status": "not_started"},
+    {"id": 17, "name": "Restart frontend server", "status": "not_started"},
+    {"id": 18, "name": "UAT: Login as User A, add project, sync bugs — verify dashboard shows data", "status": "not_started"},
+    {"id": 19, "name": "UAT: Login as User B in incognito/separate browser — verify empty state (data isolation confirmed)", "status": "not_started"},
+    {"id": 20, "name": "UAT: Logout — verify session cookie cleared, redirected to login page", "status": "not_started"},
+    {"id": 21, "name": "UAT: Export endpoints — verify DOCX/XLSX download still works with session cookie", "status": "not_started"}
   ],
   "blockers": [
     {
-      "description": "Frontend container not restarted — all CSS changes from this session not live",
+      "description": "Docker CLI unavailable in WSL — cannot restart containers directly",
       "type": "human_action",
-      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\""
+      "workaround": "Run uvicorn directly in WSL: cd backend && source ../.venv/bin/activate && uvicorn backend.main:app --port 8000. For frontend: cd frontend && npm run dev."
     },
     {
-      "description": "Backend container may need restart for export.py (from 2 sessions ago)",
-      "type": "human_action",
-      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
-    },
-    {
-      "description": "Docker CLI not in WSL — use powershell.exe workaround",
+      "description": "uvicorn --reload blind to WSL file changes (NTFS limitation)",
       "type": "technical",
-      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\""
+      "workaround": "Kill and restart uvicorn manually after backend changes"
     },
     {
-      "description": "backend/services/jira_sprint_service.py has uncommitted changes — origin unknown",
-      "type": "advisory",
-      "workaround": "git diff HEAD -- backend/services/jira_sprint_service.py to inspect before committing or discarding"
+      "description": "UAT requires 2 separate Atlassian accounts to verify data isolation",
+      "type": "human_action",
+      "workaround": "Use incognito window + second Atlassian account, or use two different browsers"
     }
   ],
   "human_actions_pending": [
     {
-      "action": "Restart frontend container",
-      "context": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\"",
+      "action": "Restart backend server to load new schema and code changes",
+      "context": "17 backend files changed. New DB schema with users/sessions tables. Old process has stale code.",
       "blocking": true
     },
     {
-      "action": "UAT all changes in browser: sidebar animations, card responsive at mobile/tablet, navbar logo left-aligned on all pages",
-      "context": "3 commits this session: f17b0d6, 43b5e37, d651545",
-      "blocking": false
-    },
-    {
-      "action": "UAT Bug Report Export Word (.docx) and Sprint Export Word (.docx)",
-      "context": "Pending from 2 sessions ago — backend export.py redesigned with matplotlib charts + colored tables",
-      "blocking": false
+      "action": "Do UAT with 2 Atlassian accounts to verify data isolation",
+      "context": "Core requirement — must confirm User A data not visible to User B",
+      "blocking": true
     }
   ],
   "decisions": [
     {
-      "decision": "chartBody: grid (1fr auto 1fr) → flex (justify-content: center) for priority donut card",
-      "rationale": "Fixed grid with 240px SVG broke at ~380px card width (e.g. 1000px viewport with sidebar); flex centers naturally at any width",
-      "phase": "post-v1"
+      "decision": "HttpOnly session cookie (not JWT)",
+      "rationale": "User chose this. Cookie auto-sent by browser, XSS-proof (JS cannot read), CSRF protection via SameSite=Lax.",
+      "phase": "post-v1.0"
     },
     {
-      "decision": "chartsRow breakpoint raised 960px → 1100px",
-      "rationale": "At 960-1100px viewport, 1fr+340px grid made priority card only ~380-480px wide — too narrow for the donut layout",
-      "phase": "post-v1"
+      "decision": "Wipe DB — no migration",
+      "rationale": "User chose this. Old schema has no user_id; new schema requires user_id NOT NULL on all data tables. Clean start.",
+      "phase": "post-v1.0"
     },
     {
-      "decision": "statusChartBody: flex-direction row at ≤960px (donut left, legend right), column at ≤480px",
-      "rationale": "When chartsRow collapses to 1fr, status card gets full width — horizontal layout uses space better",
-      "phase": "post-v1"
+      "decision": "7-day session TTL in sessions table",
+      "rationale": "Stateful sessions — instant revocation possible. sessions.expires_at checked against datetime('now') on each request.",
+      "phase": "post-v1.0"
     },
     {
-      "decision": "severityCards: flex-wrap at ≤640px with reduced gap",
-      "rationale": "4 items × ~86px + 3 × 48px gap = 408px total, overflows 327px mobile content area",
-      "phase": "post-v1"
+      "decision": "COOKIE_SECURE env-driven (default false for dev, true for prod)",
+      "rationale": "localhost is HTTP so Secure attribute would block cookie entirely. Set COOKIE_SECURE=true in production.",
+      "phase": "post-v1.0"
     },
     {
-      "decision": "sprintMeta min-width: 0 + sprintName text-overflow: ellipsis",
-      "rationale": "white-space: nowrap on sprintName without overflow control caused row overflow on long sprint names",
-      "phase": "post-v1"
+      "decision": "OAuth token NOT deleted on logout — only session deleted",
+      "rationale": "Re-login creates new session without full OAuth dance. Token stays encrypted in DB keyed to user_id.",
+      "phase": "post-v1.0"
     },
     {
-      "decision": "Navbar logo: left-aligned (not centered) on mobile, consistent all pages",
-      "rationale": "User tested centered and preferred left next to hamburger. navLeft is same 36px on all pages so logo x-position is identical whether hamburger is present or not",
-      "phase": "post-v1"
-    },
-    {
-      "decision": "Removed pointer-events: none from navCenter (no longer absolutely positioned)",
-      "rationale": "With left-aligned flow layout, navCenter is in normal flow — pointer-events: none no longer needed and would block logo clicks",
-      "phase": "post-v1"
+      "decision": "jira_config table kept without user_id — API token auth (jira.py) is dead code in UI",
+      "rationale": "ConnectionPage uses OAuth only. jira.py endpoints protected by Depends(get_current_user) but jira_config remains global. Can be removed later.",
+      "phase": "post-v1.0"
     }
   ],
   "uncommitted_files": [
-    "backend/services/jira_sprint_service.py"
+    "backend/database.py",
+    "backend/dependencies.py (NEW)",
+    "backend/models/oauth_token.py",
+    "backend/models/session.py (NEW)",
+    "backend/models/user.py (NEW)",
+    "backend/routers/auth.py",
+    "backend/routers/export.py",
+    "backend/routers/jira.py",
+    "backend/routers/sync.py",
+    "backend/services/jira_service.py",
+    "backend/services/jira_sprint_service.py",
+    "backend/services/jira_sync_service.py",
+    "backend/main.py",
+    "backend/.env.example",
+    "frontend/src/pages/BugReportPage.jsx",
+    "frontend/src/pages/ConnectionPage.jsx",
+    "frontend/src/pages/DashboardPage.jsx",
+    "frontend/src/pages/SprintPage.jsx"
   ],
-  "next_action": "Restart frontend container, then UAT in browser: sidebar animations, card responsive layouts at mobile/tablet, navbar logo left-aligned on all 3 pages.",
-  "context_notes": "All 5 project phases complete (v1.0). Post-v1 UI polish. This session: responsive card internals (3 cards), navbar logo alignment. Key files changed: BugReportPage.module.css (chartBody flex, chartsRow 1100px, statusChartBody row/col, new breakpoints), SprintPage.module.css (sprintMeta min-width, sprintName ellipsis, severityCards wrap), Navbar.module.css (removed absolute centering, logo flows left naturally). All committed. jira_sprint_service.py has an uncommitted change of unknown origin — inspect before touching."
+  "next_action": "Commit all changes, then restart backend (kill uvicorn, start fresh at port 8000), restart frontend (npm run dev), then UAT: login as User A → add project → verify data; login as User B in incognito → verify empty state.",
+  "context_notes": "Full multi-user implementation completed in one session. All 22 fetch() calls updated with credentials: include. All backend functions thread user_id. New DB schema initialized (jira.db recreated with new tables). All Python files pass AST syntax check. Implementation UNTESTED — no UAT done yet. Previous session work (responsive CSS, navbar logo) is already committed."
 }
