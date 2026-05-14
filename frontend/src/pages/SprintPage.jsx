@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import Navbar from '../components/Navbar/Navbar';
+import Sidebar from '../components/Sidebar/Sidebar';
 import styles from './SprintPage.module.css';
 
 const SPRINTS_PER_PAGE = 10;
@@ -23,24 +25,23 @@ function SprintPage() {
   const [syncedAt, setSyncedAt] = useState(null);
   const [expandedIds, setExpandedIds] = useState(new Set());
   const [exportOpen, setExportOpen] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [stale, setStale] = useState(false);
   const [user, setUser] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('jira_user') || 'null'); } catch { return null; }
   });
 
-  const exportRef = useRef(null);
-  const userMenuRef = useRef(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
-  // Close export menu and user menu on outside click
+  const exportRef = useRef(null);
+
+  // Close export menu on outside click
   useEffect(() => {
     function onClickOutside(e) {
       if (exportRef.current && !exportRef.current.contains(e.target)) {
         setExportOpen(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setShowUserMenu(false);
       }
     }
     document.addEventListener('mousedown', onClickOutside);
@@ -151,10 +152,44 @@ function SprintPage() {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
+  async function handleExport(format) {
+    setExportOpen(false);
+    setExportLoading(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const url = `/api/export/sprint/${format}?project_key=${encodeURIComponent(projectKey)}`;
+      const downloadName = `${projectKey}-all-sprints-${today}.${format}`;
+      const r = await fetch(url);
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        setError(err.detail?.message || err.message || 'Export failed. Please try again.');
+        return;
+      }
+      const blob = await r.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = downloadName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(href);
+    } catch {
+      setError('Export failed. Please try again.');
+    } finally {
+      setExportLoading(false);
+    }
+  }
+
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     sessionStorage.removeItem('jira_user');
     window.location.href = '/';
+  }
+
+  function handleBackToDashboard() {
+    setIsLeaving(true);
+    setTimeout(() => { window.location.href = '/dashboard'; }, 280);
   }
 
   // Pagination
@@ -235,146 +270,14 @@ function SprintPage() {
   }
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", background: '#f8f9ff', minHeight: '100vh' }}>
+    <div style={{ fontFamily: "'Inter', sans-serif", background: '#f0f2f5', minHeight: '100vh' }}>
 
-      {/* Top NavBar */}
-      <header className={styles.topnav}>
-        <div className={styles.topnavLeft}>
-          <div className={styles.navLogo}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z"
-                stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <span className={styles.navBrand}>JIRA Bug Summary</span>
-        </div>
-
-        <div className={styles.topnavRight}>
-          {/* Search (decorative - matches mockup) */}
-          <div className={styles.searchWrap}>
-            <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
-              <path d="M21 21L16.65 16.65" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <input
-              className={styles.searchInput}
-              type="text"
-              placeholder="Search bugs, users, tasks..."
-              aria-label="Search"
-            />
-          </div>
-
-          <button className={styles.navBtn} aria-label="Notifications">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button className={styles.navBtn} aria-label="Help">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#434654" strokeWidth="2"/>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button className={styles.navBtn} aria-label="History">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <polyline points="12 8 12 12 14 14" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3.05 11a9 9 0 1 0 .5-4M3 3v4h4" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <div className={styles.navDivider} />
-
-          {/* User menu */}
-          <div className={styles.userMenuWrap} ref={userMenuRef}>
-            <button
-              className={styles.navUser}
-              aria-label="User menu"
-              aria-haspopup="true"
-              aria-expanded={showUserMenu}
-              onClick={() => setShowUserMenu(v => !v)}
-            >
-              <div className={styles.navAvatar}>
-                {user?.avatar ? (
-                  <img src={user.avatar} alt="" width={24} height={24} style={{ borderRadius: '50%' }} />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" stroke="#065b41" strokeWidth="2"/>
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                )}
-              </div>
-              <span className={styles.navUsername}>{user?.name || 'Account'}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
-                <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            {showUserMenu && (
-              <div className={styles.userMenu} role="menu">
-                <button className={styles.logoutItem} role="menuitem" onClick={handleLogout}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <polyline points="16 17 21 12 16 7" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <line x1="21" y1="12" x2="9" y2="12" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar user={user} onLogout={handleLogout} onMenuToggle={() => setSidebarOpen(v => !v)} menuOpen={sidebarOpen} onLogoClick={handleBackToDashboard} />
 
       <div className={styles.layout}>
+        <Sidebar projectKey={projectKey} projectName={projectName} activePage="sprint" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isLeaving={isLeaving} />
 
-        {/* Sidebar */}
-        <aside className={styles.sidebar}>
-          <div className={styles.sidebarProject}>
-            <div className={styles.projectIcon}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <div>
-              <span className={styles.projectName}>{projectName || projectKey}</span>
-              <span className={styles.projectSub}>Jira Cloud Instance</span>
-            </div>
-          </div>
-
-          <nav className={styles.sidebarNav}>
-            <a href="/dashboard" className={styles.navLink}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="14" y="3" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="14" y="14" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="3" y="14" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Dashboard
-            </a>
-            <a
-              href={projectKey ? `/bug-report?project=${projectKey}` : '/bug-report'}
-              className={styles.navLink}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <polyline points="14 2 14 8 20 8" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="16" y1="13" x2="8" y2="13" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="16" y1="17" x2="8" y2="17" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Bug Report
-            </a>
-            <a href="#" className={`${styles.navLink} ${styles.navLinkActive}`} aria-current="page">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="16" y1="2" x2="16" y2="6" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="8" y1="2" x2="8" y2="6" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="3" y1="10" x2="21" y2="10" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Sprint
-            </a>
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className={styles.mainContent}>
+        <main className={`${styles.mainContent}${isLeaving ? ' ' + styles.mainContentLeaving : ''}`}>
 
           {/* Page header */}
           <div className={styles.pageHeader}>
@@ -390,10 +293,11 @@ function SprintPage() {
                 <button
                   className={styles.btnOutline}
                   onClick={() => setExportOpen(v => !v)}
+                  disabled={exportLoading}
                   aria-expanded={exportOpen}
                   aria-haspopup="true"
                 >
-                  Export Report
+                  {exportLoading ? 'Exporting...' : 'Export Report'}
                   <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
                     <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -402,7 +306,7 @@ function SprintPage() {
                   <button
                     className={styles.exportItem}
                     role="menuitem"
-                    onClick={() => setExportOpen(false)}
+                    onClick={() => handleExport('docx')}
                   >
                     <div className={styles.exportItemIcon}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -420,7 +324,7 @@ function SprintPage() {
                   <button
                     className={styles.exportItem}
                     role="menuitem"
-                    onClick={() => setExportOpen(false)}
+                    onClick={() => handleExport('xlsx')}
                   >
                     <div className={styles.exportItemIcon}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">

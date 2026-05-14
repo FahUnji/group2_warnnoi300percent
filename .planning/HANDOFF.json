@@ -1,60 +1,134 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T08:57:42Z",
-  "phase": "05",
-  "phase_name": "export",
-  "phase_dir": ".planning/phases/05-export",
+  "timestamp": "2026-05-14T02:41:57.000Z",
+  "phase": "post-v1",
+  "phase_name": "ui-polish",
+  "phase_dir": null,
   "plan": null,
   "task": null,
   "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Sprint page: reconnect link on invalid_credentials error (errorCode state)", "status": "done", "commit": "bab988b"},
-    {"id": 2, "name": "Switch sprint data source: Agile Board API → Jira Fix Versions API (/rest/api/3/project/{key}/versions)", "status": "done", "commit": "bab988b"},
-    {"id": 3, "name": "Sprint page state logic: active/upcoming/released/archived inferred from version fields", "status": "done", "commit": "bab988b"},
-    {"id": 4, "name": "Sprint page UI fixes: 1-digit severity, green 100% progress (#065B41), dynamic username from /api/auth/me", "status": "done", "commit": "bab988b"},
-    {"id": 5, "name": "DashboardPage + BugReportPage sidebar: Sprint labels consistent", "status": "done", "commit": "bab988b"},
-    {"id": 6, "name": "Jira user avatar: BugReportPage + SprintPage conditional avatar/SVG fallback (matching DashboardPage)", "status": "done", "commit": "pending"}
+    {
+      "id": 1,
+      "name": "Sidebar animation polish: entry/exit keyframes, skip on sidebar-to-sidebar nav",
+      "status": "done",
+      "commit": "9fa9a8d"
+    },
+    {
+      "id": 2,
+      "name": "Responsive card internals: chartBody flex, chartsRow breakpoint 1100px, statusChartBody row, severityCards wrap, sprintName ellipsis",
+      "status": "done",
+      "commit": "f17b0d6"
+    },
+    {
+      "id": 3,
+      "name": "Navbar logo mobile: left-aligned next to hamburger, consistent position all pages",
+      "status": "done",
+      "commit": "d651545"
+    }
   ],
   "remaining_tasks": [
-    {"id": 7, "name": "Browser UAT: avatar shows on all 3 pages + Sprint page fix versions correct", "status": "not_started"},
-    {"id": 8, "name": "Plan Phase 05: Export (.xlsx + .docx) via /gsd-plan-phase 5", "status": "not_started"},
-    {"id": 9, "name": "Execute Phase 05: backend openpyxl + python-docx endpoints + frontend wiring", "status": "not_started"},
-    {"id": 10, "name": "Code review + verify Phase 05", "status": "not_started"}
+    {
+      "id": 4,
+      "name": "Restart containers + browser UAT: sidebar animations, card responsive layouts, navbar logo position",
+      "status": "not_started"
+    },
+    {
+      "id": 5,
+      "name": "UAT: Bug Report Export Word (.docx) and Sprint Export Word (.docx)",
+      "status": "not_started"
+    },
+    {
+      "id": 6,
+      "name": "Investigate backend/services/jira_sprint_service.py — uncommitted modification, unknown change",
+      "status": "not_started"
+    },
+    {
+      "id": 7,
+      "name": "Continue page-level responsive improvements if user identifies more areas",
+      "status": "not_started"
+    }
   ],
   "blockers": [
     {
-      "description": "npm install fails on WSL NTFS mount (EACCES) — pre-existing",
+      "description": "Frontend container not restarted — all CSS changes from this session not live",
+      "type": "human_action",
+      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\""
+    },
+    {
+      "description": "Backend container may need restart for export.py (from 2 sessions ago)",
+      "type": "human_action",
+      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
+    },
+    {
+      "description": "Docker CLI not in WSL — use powershell.exe workaround",
       "type": "technical",
-      "workaround": "Use Docker (docker-compose up)"
+      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\""
+    },
+    {
+      "description": "backend/services/jira_sprint_service.py has uncommitted changes — origin unknown",
+      "type": "advisory",
+      "workaround": "git diff HEAD -- backend/services/jira_sprint_service.py to inspect before committing or discarding"
     }
   ],
   "human_actions_pending": [
     {
-      "action": "Browser UAT: verify Jira profile avatar shows on Dashboard, BugReport, Sprint pages after login",
-      "context": "Conditional render added to BugReport+Sprint this session. DashboardPage already had it. Backend /api/auth/me returns avatar from Jira avatarUrls.48x48. Hard refresh (Ctrl+Shift+R) may be needed.",
+      "action": "Restart frontend container",
+      "context": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\"",
+      "blocking": true
+    },
+    {
+      "action": "UAT all changes in browser: sidebar animations, card responsive at mobile/tablet, navbar logo left-aligned on all pages",
+      "context": "3 commits this session: f17b0d6, 43b5e37, d651545",
       "blocking": false
     },
     {
-      "action": "Browser UAT: Sprint page — verify fix versions load, states correct (active/upcoming/completed/archived), 100% bar green",
-      "context": "Changes committed in bab988b+045292d.",
+      "action": "UAT Bug Report Export Word (.docx) and Sprint Export Word (.docx)",
+      "context": "Pending from 2 sessions ago — backend export.py redesigned with matplotlib charts + colored tables",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "Sprint page data from fix versions API not Agile Board API", "rationale": "SAM project has no Scrum board; fix versions exist and are the correct release tracking mechanism", "phase": "04"},
-    {"decision": "State: archived→archived, released→released, startDate<=today→active, else→upcoming", "rationale": "Jira versions have no native active state; infer from startDate", "phase": "04"},
-    {"decision": "sprint_name column reused for fix version name in bugs table", "rationale": "Avoids schema migration; LEFT JOIN on name still works", "phase": "04"},
-    {"decision": "100% progress color: #065B41", "rationale": "User specified exact color; matches done-state green", "phase": "04"},
-    {"decision": "use_worktrees=false permanent", "rationale": "WSL2 NTFS path pollution causes worktree files tracked in commits", "phase": "04"},
-    {"decision": "Export stubs only in Phase 04 (Phase 05 deferred)", "rationale": "Export buttons exist as no-ops in BugReport and Sprint pages; real endpoints in Phase 05", "phase": "04"},
-    {"decision": "Avatar: conditional img+SVG fallback (user?.avatar ? <img 24x24 borderRadius 50%> : <svg>)", "rationale": "DashboardPage pattern applied to all post-login pages; backend already returned avatar field", "phase": "04"}
+    {
+      "decision": "chartBody: grid (1fr auto 1fr) → flex (justify-content: center) for priority donut card",
+      "rationale": "Fixed grid with 240px SVG broke at ~380px card width (e.g. 1000px viewport with sidebar); flex centers naturally at any width",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "chartsRow breakpoint raised 960px → 1100px",
+      "rationale": "At 960-1100px viewport, 1fr+340px grid made priority card only ~380-480px wide — too narrow for the donut layout",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "statusChartBody: flex-direction row at ≤960px (donut left, legend right), column at ≤480px",
+      "rationale": "When chartsRow collapses to 1fr, status card gets full width — horizontal layout uses space better",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "severityCards: flex-wrap at ≤640px with reduced gap",
+      "rationale": "4 items × ~86px + 3 × 48px gap = 408px total, overflows 327px mobile content area",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "sprintMeta min-width: 0 + sprintName text-overflow: ellipsis",
+      "rationale": "white-space: nowrap on sprintName without overflow control caused row overflow on long sprint names",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Navbar logo: left-aligned (not centered) on mobile, consistent all pages",
+      "rationale": "User tested centered and preferred left next to hamburger. navLeft is same 36px on all pages so logo x-position is identical whether hamburger is present or not",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Removed pointer-events: none from navCenter (no longer absolutely positioned)",
+      "rationale": "With left-aligned flow layout, navCenter is in normal flow — pointer-events: none no longer needed and would block logo clicks",
+      "phase": "post-v1"
+    }
   ],
   "uncommitted_files": [
-    "frontend/src/pages/BugReportPage.jsx",
-    "frontend/src/pages/SprintPage.jsx",
     "backend/services/jira_sprint_service.py"
   ],
-  "next_action": "Commit avatar fix (BugReportPage + SprintPage). Browser UAT avatar + Sprint page. Then /gsd-plan-phase 5.",
-  "context_notes": "Phase 04 fully closed. Second session May 13: fixed Jira user avatar on all post-login pages. BugReportPage and SprintPage were showing static SVG person icon in navbar; updated both to conditionally render user.avatar (24x24 circular img) with SVG fallback — matching DashboardPage pattern exactly. Backend /api/auth/me already returned avatar from Jira avatarUrls.48x48. No backend changes needed. Phase 05 Export is next: export buttons already stubbed as no-ops in BugReport and Sprint pages; backend needs openpyxl + python-docx added to requirements."
+  "next_action": "Restart frontend container, then UAT in browser: sidebar animations, card responsive layouts at mobile/tablet, navbar logo left-aligned on all 3 pages.",
+  "context_notes": "All 5 project phases complete (v1.0). Post-v1 UI polish. This session: responsive card internals (3 cards), navbar logo alignment. Key files changed: BugReportPage.module.css (chartBody flex, chartsRow 1100px, statusChartBody row/col, new breakpoints), SprintPage.module.css (sprintMeta min-width, sprintName ellipsis, severityCards wrap), Navbar.module.css (removed absolute centering, logo flows left naturally). All committed. jira_sprint_service.py has an uncommitted change of unknown origin — inspect before touching."
 }

@@ -126,6 +126,40 @@ async def delete_project(project_key: str):
     return {"ok": True}
 
 
+@router.get("/projects/{project_key}")
+async def get_project_meta(project_key: str):
+    """
+    Return project name and Jira cloud instance name for a project key.
+
+    Success: HTTP 200, {"ok": true, "project_key": "...", "project_name": "...", "site_name": "...", "site_url": "..."}
+    """
+    try:
+        _validate_project_key(project_key)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"ok": False, "error": "invalid_project_key", "message": str(exc)},
+        )
+    conn = get_db()
+    try:
+        proj = conn.execute(
+            "SELECT project_key, project_name FROM jira_projects WHERE project_key = ?",
+            (project_key,),
+        ).fetchone()
+        token = conn.execute(
+            "SELECT site_name, site_url FROM oauth_tokens LIMIT 1",
+        ).fetchone()
+    finally:
+        conn.close()
+    return {
+        "ok": True,
+        "project_key": project_key,
+        "project_name": proj["project_name"] if proj else None,
+        "site_name": token["site_name"] if token else None,
+        "site_url": token["site_url"] if token else None,
+    }
+
+
 @router.get("/sprints/{project_key}")
 async def get_sprints(project_key: str):
     """

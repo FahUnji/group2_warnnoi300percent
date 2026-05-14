@@ -1,0 +1,234 @@
+.topnav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 24px;
+  height: 60px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  overflow: visible;
+}
+
+/* ── Three-section layout ── */
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 36px;
+}
+
+.navCenter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── Hamburger ── */
+
+.menuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.menuBtn:hover {
+  background: #f0f7f4;
+}
+
+/* ── Logo ── */
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo {
+  width: 36px;
+  height: 36px;
+  background: #1b4332;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand {
+  font-size: 15px;
+  font-weight: 700;
+  color: #065b41;
+  white-space: nowrap;
+}
+
+/* ── User menu ── */
+
+.userWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.userBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.userBtn:hover {
+  background: #f0f7f4;
+  border-color: #c1e0d5;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  background: #e7f4f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.username {
+  font-size: 13px;
+  font-weight: 600;
+  color: #065b41;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 200;
+  min-width: 180px;
+  overflow: hidden;
+  animation: slideDown 0.15s ease both;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownHeader {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdownName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdownEmail {
+  font-size: 11px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logoutItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #dc2626;
+  transition: background 0.15s;
+}
+
+.logoutItem:hover {
+  background: #fef2f2;
+}
+
+/* ── Responsive ── */
+
+/* Tablet (≤768px): hide brand + username, collapse user button */
+@media (max-width: 768px) {
+  .topnav {
+    padding: 0 16px;
+    gap: 0;
+  }
+
+  .brand {
+    display: none;
+  }
+
+  .username {
+    display: none;
+  }
+
+  .userBtn {
+    padding: 6px;
+    border-radius: 50%;
+    border-color: transparent;
+    gap: 0;
+  }
+
+  .userBtn > svg:last-child {
+    display: none;
+  }
+
+  /* Show hamburger on tablet/mobile for sidebar pages */
+  .menuBtn {
+    display: flex;
+  }
+}
+
+/* Mobile (≤480px): tighter padding */
+@media (max-width: 480px) {
+  .topnav {
+    padding: 0 12px;
+  }
+}

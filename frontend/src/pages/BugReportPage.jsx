@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import Navbar from '../components/Navbar/Navbar';
+import Sidebar from '../components/Sidebar/Sidebar';
 import styles from './BugReportPage.module.css';
 
 const DONE_KEYWORDS = ['done', 'closed', 'resolved', "won't fix", 'wontfix', 'duplicate', 'fixed'];
@@ -42,14 +44,18 @@ function BugReportPage() {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('jira_user') || 'null'); } catch { return null; }
   });
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [projectFullName, setProjectFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stats, setStats] = useState(null);
+  const [animated, setAnimated] = useState(false);
   const [donutTip, setDonutTip] = useState({ visible: false, label: '', pct: 0, color: '', x: 0, y: 0 });
 
-  const userMenuRef = useRef(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+
   const exportRef = useRef(null);
 
   useEffect(() => {
@@ -70,8 +76,17 @@ function BugReportPage() {
     else setLoading(false);
   }, [projectKey]);
 
+  useEffect(() => {
+    if (!projectKey) return;
+    fetch(`/api/projects/${encodeURIComponent(projectKey)}`)
+      .then(r => r.json())
+      .then(data => { if (data.ok && data.project_name) setProjectFullName(data.project_name); })
+      .catch(() => {});
+  }, [projectKey]);
+
   async function fetchStats() {
     setLoading(true);
+    setAnimated(false);
     setError('');
     try {
       // Sync from Jira before reading local DB
@@ -101,6 +116,7 @@ function BugReportPage() {
       });
 
       setStats({ total, open: total - statusCounts.done, resolved: statusCounts.done, priorityCounts, statusCounts });
+      requestAnimationFrame(() => requestAnimationFrame(() => setAnimated(true)));
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -110,16 +126,48 @@ function BugReportPage() {
 
   useEffect(() => {
     function handler(e) {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
       if (exportRef.current && !exportRef.current.contains(e.target)) setExportOpen(false);
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  async function handleExport(format) {
+    setExportOpen(false);
+    setExportLoading(true);
+    try {
+      const url = `/api/export/bugs/${format}?project_key=${encodeURIComponent(projectKey)}`;
+      const r = await fetch(url);
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        setError(err.detail?.message || err.message || 'Export failed. Please try again.');
+        return;
+      }
+      const blob = await r.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      const today = new Date().toISOString().slice(0, 10);
+      a.download = `${projectKey}-bug-report-${today}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(href);
+    } catch {
+      setError('Export failed. Please try again.');
+    } finally {
+      setExportLoading(false);
+    }
+  }
+
   function handleLogout() {
     sessionStorage.clear();
     window.location.href = '/';
+  }
+
+  function handleBackToDashboard() {
+    setIsLeaving(true);
+    setTimeout(() => { window.location.href = '/dashboard'; }, 280);
   }
 
   function showTip(e, label, pct, color) {
@@ -136,142 +184,32 @@ function BugReportPage() {
   const sArcs = stats ? calcArcs(stats.statusCounts, ['todo', 'inProgress', 'done'], S_CIRCUMFERENCE) : [];
   const doneArc = sArcs.find(a => a.key === 'done');
 
-  const sprintHref = projectKey ? `/sprint?project=${projectKey}` : '/sprint';
-  const bugReportHref = projectKey ? `/bug-report?project=${projectKey}` : '/bug-report';
-
   return (
     <div className={styles.root}>
-      <header className={styles.topnav}>
-        <div className={styles.topnavLeft}>
-          <div className={styles.navLogo}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M13 2L4.09347 12.6879C3.74465 13.1064 3.57024 13.3157 3.56709 13.4925C3.56434 13.6461 3.63257 13.7923 3.75168 13.8889C3.88863 14 4.15924 14 4.70046 14H12L11 22L19.9065 11.3121C20.2554 10.8936 20.4298 10.6843 20.4329 10.5075C20.4357 10.3539 20.3674 10.2077 20.2483 10.1111C20.1114 10 19.8408 10 19.2995 10H12L13 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <span className={styles.navBrand}>JIRA Bug Summary</span>
-        </div>
-        <div className={styles.topnavRight}>
-          <div className={styles.searchWrap}>
-            <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none">
-              <circle cx="11" cy="11" r="8" stroke="#6b7280" strokeWidth="2"/>
-              <path d="M21 21L16.65 16.65" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <input className={styles.searchInput} type="text" placeholder="Search bugs, users, tasks..." />
-          </div>
-          <button className={styles.navBtn} aria-label="Notifications">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button className={styles.navBtn} aria-label="Help">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#434654" strokeWidth="2"/>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button className={styles.navBtn} aria-label="History">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <polyline points="12 8 12 12 14 14" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3.05 11a9 9 0 1 0 .5-4M3 3v4h4" stroke="#434654" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <div className={styles.navDivider} />
-          <div className={styles.userMenuWrap} ref={userMenuRef}>
-            <button className={styles.navUser} aria-label="User menu" onClick={() => setShowUserMenu(v => !v)}>
-              <div className={styles.navAvatar}>
-                {user?.avatar ? (
-                  <img src={user.avatar} alt="" width={24} height={24} style={{ borderRadius: '50%' }} />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" stroke="#065b41" strokeWidth="2"/>
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                )}
-              </div>
-              <span className={styles.navUsername}>{user?.name || 'Account'}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
-                <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            {showUserMenu && (
-              <div className={styles.userMenu} role="menu">
-                <button className={styles.logoutItem} role="menuitem" onClick={handleLogout}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <polyline points="16 17 21 12 16 7" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <line x1="21" y1="12" x2="9" y2="12" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar user={user} onLogout={handleLogout} onMenuToggle={() => setSidebarOpen(v => !v)} menuOpen={sidebarOpen} onLogoClick={handleBackToDashboard} />
 
       <div className={styles.layout}>
-        <aside className={styles.sidebar}>
-          <div className={styles.sidebarProject}>
-            <div className={styles.projectIcon}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <div className={styles.projectInfo}>
-              <span className={styles.projectName}>{projectKey || 'Project'}</span>
-              <span className={styles.projectSub}>Jira Cloud Instance</span>
-            </div>
-          </div>
-          <nav className={styles.sidebarNav}>
-            <a href="/dashboard" className={styles.navLink}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="14" y="3" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="14" y="14" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="3" y="14" width="7" height="7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Dashboard
-            </a>
-            <a href={bugReportHref} className={`${styles.navLink} ${styles.navLinkActive}`} aria-current="page">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <polyline points="14 2 14 8 20 8" stroke="#065b41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="16" y1="13" x2="8" y2="13" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="16" y1="17" x2="8" y2="17" stroke="#065b41" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Bug Report
-            </a>
-            <a href={sprintHref} className={styles.navLink}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="16" y1="2" x2="16" y2="6" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="8" y1="2" x2="8" y2="6" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="3" y1="10" x2="21" y2="10" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Sprint
-            </a>
-          </nav>
-        </aside>
+        <Sidebar projectKey={projectKey} projectName={projectFullName} activePage="bug-report" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isLeaving={isLeaving} />
 
-        <main className={styles.mainContent}>
+        <main className={`${styles.mainContent}${isLeaving ? ' ' + styles.mainContentLeaving : ''}`}>
           <div className={styles.pageHeader}>
             <div className={styles.pageHeaderLeft}>
               <h1 className={styles.pageTitle}>Bug Report Summary</h1>
               <p className={styles.pageSubtitle}>
-                {projectKey ? `Real-time status of ${projectKey} Jira Instance` : 'No project selected'}
+                {projectKey ? `Real-time status of ${projectKey} project` : 'No project selected'} 
               </p>
             </div>
             <div className={styles.pageHeaderRight}>
               <div className={styles.exportWrap} ref={exportRef}>
-                <button className={styles.btnOutline} onClick={() => setExportOpen(v => !v)} aria-expanded={exportOpen}>
-                  Export Report
+                <button className={styles.btnOutline} onClick={() => setExportOpen(v => !v)} disabled={exportLoading} aria-expanded={exportOpen}>
+                  {exportLoading ? 'Exporting...' : 'Export Report'}
                   <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
                     <path d="M1 1L5 5L9 1" stroke="#065b41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </button>
                 {exportOpen && (
                   <div className={styles.exportMenu}>
-                    <button className={styles.exportItem} onClick={() => setExportOpen(false)}>
+                    <button className={styles.exportItem} onClick={() => handleExport('docx')}>
                       <div className={styles.exportItemIcon}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -285,7 +223,7 @@ function BugReportPage() {
                         <span className={styles.exportItemExt}>(.docx)</span>
                       </div>
                     </button>
-                    <button className={styles.exportItem} onClick={() => setExportOpen(false)}>
+                    <button className={styles.exportItem} onClick={() => handleExport('xlsx')}>
                       <div className={styles.exportItemIcon}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
                           <rect x="3" y="3" width="18" height="18" rx="2" stroke="#374151" strokeWidth="2"/>
@@ -313,7 +251,7 @@ function BugReportPage() {
           ) : stats ? (
             <>
               <div className={styles.statRow}>
-                <div className={styles.statCard}>
+                <div className={styles.statCard} style={{ '--card-index': 0 }}>
                   <div className={styles.statCardTop}>
                     <span className={styles.statCardLabel}>Total Bugs</span>
                     <div className={`${styles.statIcon} ${styles.statIconBug}`}>
@@ -326,7 +264,7 @@ function BugReportPage() {
                   <div className={`${styles.statCardValue} ${styles.valRed}`}>{stats.total.toLocaleString()}</div>
                 </div>
 
-                <div className={styles.statCard}>
+                <div className={styles.statCard} style={{ '--card-index': 1 }}>
                   <div className={styles.statCardTop}>
                     <span className={styles.statCardLabel}>Open</span>
                     <div className={`${styles.statIcon} ${styles.statIconOpen}`}>
@@ -342,7 +280,7 @@ function BugReportPage() {
                   <p className={styles.statCardSub}>Active development queue</p>
                 </div>
 
-                <div className={styles.statCard}>
+                <div className={styles.statCard} style={{ '--card-index': 2 }}>
                   <div className={styles.statCardTop}>
                     <span className={styles.statCardLabel}>Resolved</span>
                     <div className={`${styles.statIcon} ${styles.statIconResolved}`}>
@@ -365,7 +303,7 @@ function BugReportPage() {
               </div>
 
               <div className={styles.chartsRow}>
-                <div className={`${styles.chartCard} ${styles.chartPriority}`}>
+                <div className={`${styles.chartCard} ${styles.chartPriority}`} style={{ '--chart-index': 0 }}>
                   <div className={styles.chartHeader}>
                     <h3 className={styles.chartTitle}>Bugs by Priority</h3>
                     <div className={styles.priorityLegend}>
@@ -385,7 +323,7 @@ function BugReportPage() {
                           <circle key={arc.key} cx="120" cy="120" r="104" fill="none"
                             stroke={P_COLORS[arc.key]}
                             strokeWidth="28"
-                            strokeDasharray={`${arc.dash} ${P_CIRCUMFERENCE}`}
+                            strokeDasharray={`${animated ? arc.dash : 0} ${P_CIRCUMFERENCE}`}
                             strokeDashoffset={arc.offset}
                             transform="rotate(-90 120 120)"
                             className={styles.donutArc}
@@ -412,7 +350,7 @@ function BugReportPage() {
                   </div>
                 </div>
 
-                <div className={`${styles.chartCard} ${styles.chartStatus}`}>
+                <div className={`${styles.chartCard} ${styles.chartStatus}`} style={{ '--chart-index': 1 }}>
                   <h3 className={styles.chartTitle}>Status Distribution</h3>
                   <div className={styles.statusChartBody}>
                     <div className={styles.donutWrap}>
@@ -422,7 +360,7 @@ function BugReportPage() {
                           <circle key={arc.key} cx="96" cy="96" r="80" fill="none"
                             stroke={S_COLORS[arc.key]}
                             strokeWidth="16"
-                            strokeDasharray={`${arc.dash} ${S_CIRCUMFERENCE}`}
+                            strokeDasharray={`${animated ? arc.dash : 0} ${S_CIRCUMFERENCE}`}
                             strokeDashoffset={arc.offset}
                             transform="rotate(-90 96 96)"
                             className={styles.donutArc}

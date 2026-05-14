@@ -91,7 +91,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User can click an export button and download a .xlsx file containing the current bug report data
   2. User can click an export button and download a .docx file containing the current bug report data
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Backend export router: 4 StreamingResponse endpoints (bugs/xlsx, bugs/docx, sprint/xlsx, sprint/docx), matplotlib donut chart, router registration, requirements.txt deps
+- [ ] 05-02-PLAN.md — Frontend wiring: handleExport + exportLoading state on BugReportPage and SprintPage, replacing no-op stubs with fetch-to-download
 
 ## Progress
 
@@ -104,4 +108,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Data Sync | 2/2 | Complete | 2026-05-12 |
 | 3. Dashboard UI | 2/2 | Complete | 2026-05-13 |
 | 4. Sprint Report | 2/2 | Complete | 2026-05-13 |
-| 5. Export | 0/TBD | Not started | - |
+| 5. Export | 0/2 | Not started | - |
