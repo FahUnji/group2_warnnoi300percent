@@ -20,3 +20,4 @@ Thumbs.db
 
 # Claude Code agent worktrees (never commit)
 .claude/worktrees/
+.env
