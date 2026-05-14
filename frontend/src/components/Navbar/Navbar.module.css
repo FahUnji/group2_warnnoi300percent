@@ -224,30 +224,6 @@
   .menuBtn {
     display: flex;
   }
-
-  /* Center logo on all pages */
-  .navCenter {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    flex: unset;
-  }
-
-  /* navLeft/navRight sit above the absolutely-positioned center */
-  .navLeft,
-  .navRight {
-    position: relative;
-    z-index: 1;
-  }
-
-  .navRight {
-    margin-left: auto;
-  }
-
-  /* Sidebar pages: disable pointer events so hamburger stays clickable through the logo layer */
-  .hasSidebar .navCenter {
-    pointer-events: none;
-  }
 }
 
 /* Mobile (≤480px): tighter padding */
