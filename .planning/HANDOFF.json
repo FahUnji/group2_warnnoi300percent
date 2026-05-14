@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-14T08:42:35.000Z",
+  "timestamp": "2026-05-14T08:52:34.000Z",
   "phase": "post-v1",
   "phase_name": "multi-user-isolation",
   "phase_dir": null,
@@ -35,40 +35,41 @@
     },
     {
       "id": 5,
-      "name": "Add try/except + logging to OAuth callback DB block — catches all exceptions, logs traceback, redirects to /?error=token_exchange_failed instead of raw 500",
+      "name": "Add try/except + logging to OAuth callback DB block — catches DB exceptions, logs traceback",
       "status": "done",
-      "commit": "uncommitted"
+      "commit": "5a44b3d"
+    },
+    {
+      "id": 6,
+      "name": "Add step-by-step logging to ALL OAuth callback error paths (step 1 token exchange, step 2 /me fetch, step 3 accessible-resources)",
+      "status": "done",
+      "commit": "uncommitted — backend/routers/auth.py +4 lines"
     }
   ],
   "remaining_tasks": [
     {
-      "id": 6,
-      "name": "Commit auth.py error handling fix",
-      "status": "not_started"
-    },
-    {
       "id": 7,
-      "name": "Restart container + account 2 tries login + check docker logs for logged exception",
+      "name": "Commit auth.py step logging",
       "status": "not_started"
     },
     {
       "id": 8,
-      "name": "Fix root cause of account 2 login failure (TBD — depends on logged exception)",
+      "name": "Account 2 attempts login → check docker logs for 'OAuth step X' error line → fix root cause",
       "status": "not_started"
     },
     {
       "id": 9,
-      "name": "Verify login works end-to-end for BOTH accounts — clear cookies → OAuth → land on ConnectionPage with no error",
+      "name": "Verify both accounts login successfully",
       "status": "not_started"
     },
     {
       "id": 10,
-      "name": "Verify sync — add Jira project → sync completes without 'Sync failed'",
+      "name": "Verify sync — add Jira project → no 'Sync failed'",
       "status": "not_started"
     },
     {
       "id": 11,
-      "name": "UAT: two browser profiles, different Atlassian accounts → confirm isolated project lists",
+      "name": "UAT: two browser profiles, different accounts → confirm isolated project lists",
       "status": "not_started"
     },
     {
@@ -84,53 +85,48 @@
   ],
   "blockers": [
     {
-      "description": "Account 2 login still fails with raw 500 — exact error unknown until container restart + fresh attempt + log check",
+      "description": "Account 2 login fails with 'Authorization failed — please try again.' — exact step unknown until fresh attempt with new step logging active",
       "type": "technical",
-      "workaround": "auth.py now has try/except that logs the traceback. Restart container, account 2 logs in, check docker logs immediately for ERROR line."
+      "workaround": "New logging active in backend. Account 2 attempts login → immediately run: powershell.exe -Command \"docker logs group2_warnnoi300percent-backend-1 --tail 15 2>&1\" → look for 'OAuth step 1', 'OAuth step 2', 'OAuth step 3', or 'OAuth callback DB/session error' line."
     }
   ],
   "human_actions_pending": [
     {
-      "action": "Commit auth.py: git add backend/routers/auth.py && git commit -m 'fix: catch and log all exceptions in OAuth callback DB block'",
-      "context": "auth.py has uncommitted try/except + logging addition. Must commit before container restart.",
-      "blocking": true
+      "action": "Commit: git add backend/routers/auth.py && commit",
+      "context": "auth.py has +4 lines of step logging — uncommitted",
+      "blocking": false
     },
     {
-      "action": "Restart backend container: powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\"",
-      "context": "uvicorn --reload is blind to NTFS changes from WSL. Manual restart required.",
-      "blocking": true
-    },
-    {
-      "action": "Account 2 attempts login, then immediately run: powershell.exe -Command \"docker logs group2_warnnoi300percent-backend-1 --tail 30 2>&1\" — look for ERROR line with traceback",
-      "context": "auth.py now logs the exception. The logged traceback will reveal the root cause of the 500.",
+      "action": "Account 2 attempts login at http://localhost:3000 → immediately run docker logs --tail 15",
+      "context": "Backend has full step logging. The log will reveal exactly which OAuth step fails for account 2.",
       "blocking": true
     }
   ],
   "decisions": [
     {
       "decision": "Proper users+sessions tables with INTEGER user_id FK on all data tables",
-      "rationale": "Codebase was already refactored to this model. database.py migration now drops+recreates legacy account_id tables on startup.",
+      "rationale": "Codebase refactored to this model. database.py migration drops+recreates legacy account_id tables on startup.",
       "phase": "post-v1"
     },
     {
       "decision": "session_id cookie (opaque token) not jira_session (account_id value)",
-      "rationale": "Proper session abstraction. session_id → user_id lookup in sessions table. Safer than storing account_id directly in cookie.",
+      "rationale": "Proper session abstraction. session_id → user_id lookup in sessions table.",
       "phase": "post-v1"
     },
     {
       "decision": "New users redirect to / not /no-project",
-      "rationale": "/no-project not in React Router — triggers *-catch-all. Direct to / (ConnectionPage) instead.",
+      "rationale": "/no-project not in React Router — triggers *-catch-all.",
       "phase": "post-v1"
     },
     {
-      "decision": "Wrap auth callback DB block in try/except with logger.error(traceback) + redirect to /?error=token_exchange_failed",
-      "rationale": "Account 2 login was returning raw 500. Error was not visible in logs. try/except ensures: (a) traceback logged for diagnosis, (b) user gets friendly error page, (c) no more raw 500.",
+      "decision": "Add logger.error to ALL OAuth callback exception handlers",
+      "rationale": "Account 2 from same Atlassian org keeps failing. Logging added to step 1 (token exchange), step 2 (/me fetch + no account_id), step 3 (accessible-resources), and step 4 (DB/session). Every failure path now produces a log line identifying the exact step.",
       "phase": "post-v1"
     }
   ],
   "uncommitted_files": [
     "backend/routers/auth.py"
   ],
-  "next_action": "1. git add backend/routers/auth.py && commit. 2. docker restart backend. 3. Account 2 logs in. 4. Check docker logs immediately for 'OAuth callback DB/session error' line. 5. Fix root cause.",
-  "context_notes": "DB schema confirmed correct (user_id=True, account_id=False on all 4 data tables). Only 1 user in DB (ps@manaosoftware.com, id=1). The 500 errors in old logs were pre-fix. But account 2 is STILL getting raw 500 on callback. Root cause unknown — could be FERNET_KEY issue, FK constraint, or something else. The new try/except in auth.py will expose the real error in docker logs. Important: 500 errors in log grep were from same Atlassian account_id as account 1 — so those failures were account 1 before the migration fix, NOT account 2. Account 2 has never successfully logged in."
+  "next_action": "1. git add backend/routers/auth.py && commit. 2. Account 2 logs in. 3. Immediately check docker logs --tail 15. 4. Find 'OAuth step X' line. 5. Fix that step.",
+  "context_notes": "Account 2 is from the SAME Atlassian organization as account 1. Both should be able to use the OAuth app. Account 1 (ps@manaosoftware.com, user_id=1) has MLO + SAM projects, works fine. Account 2 has never successfully logged in. The 'Authorization failed' error = token_exchange_failed redirect, which now comes from 4 different error paths. Backend currently running with WatchFiles-detected reload of new auth.py (step logging active). DB schema is correct (user_id=True, account_id=False on all 4 data tables)."
 }

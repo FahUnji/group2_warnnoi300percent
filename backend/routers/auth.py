@@ -92,6 +92,7 @@ async def atlassian_callback(code: str = "", state: str = "", error: str = ""):
         resp.raise_for_status()
         token_data = resp.json()
     except Exception:
+        logger.error("OAuth step 1 (token exchange) failed:\n%s", traceback.format_exc())
         return RedirectResponse(f"{frontend_url}/?error=token_exchange_failed")
 
     access_token = token_data.get("access_token", "")
@@ -109,10 +110,12 @@ async def atlassian_callback(code: str = "", state: str = "", error: str = ""):
         me_resp.raise_for_status()
         me_data = me_resp.json()
     except Exception:
+        logger.error("OAuth step 2 (/me fetch) failed:\n%s", traceback.format_exc())
         return RedirectResponse(f"{frontend_url}/?error=token_exchange_failed")
 
     account_id = me_data.get("account_id", "")
     if not account_id:
+        logger.error("OAuth step 2 (/me) returned no account_id. me_data keys: %s", list(me_data.keys()))
         return RedirectResponse(f"{frontend_url}/?error=token_exchange_failed")
 
     email = me_data.get("email") or me_data.get("emailAddress", "")
@@ -132,6 +135,7 @@ async def atlassian_callback(code: str = "", state: str = "", error: str = ""):
         res.raise_for_status()
         resources = res.json()
     except Exception:
+        logger.error("OAuth step 3 (accessible-resources) failed:\n%s", traceback.format_exc())
         return RedirectResponse(f"{frontend_url}/?error=resources_failed")
 
     if not resources:
