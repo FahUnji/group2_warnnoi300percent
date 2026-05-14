@@ -101,14 +101,17 @@ def init_db() -> None:
         """)
         conn.commit()
 
-        # Migration: drop legacy tables that still use account_id TEXT
-        # (schema changed to user_id INTEGER FK referencing users table)
-        for table in ("oauth_tokens", "jira_projects", "bugs", "sprints"):
-            row = conn.execute(
-                "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
-            ).fetchone()
-            if row and "account_id" in (row[0] or ""):
-                conn.execute(f"DROP TABLE {table}")
+        # Migration: drop any app table that uses old account_id or is missing user_id FK.
+        # users/sessions/jira_config legitimately have no user_id column.
+        _no_user_id = {"users", "sessions", "jira_config"}
+        for name, sql in conn.execute(
+            "SELECT name, sql FROM sqlite_master WHERE type='table'"
+        ).fetchall():
+            if name.startswith("sqlite_") or name in _no_user_id:
+                continue
+            sql = sql or ""
+            if "account_id" in sql or "user_id" not in sql:
+                conn.execute(f"DROP TABLE IF EXISTS [{name}]")
         conn.commit()
 
         # Recreate any tables that were just dropped

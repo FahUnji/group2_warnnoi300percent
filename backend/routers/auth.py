@@ -1,11 +1,15 @@
+import logging
 import os
 import secrets
 import time
+import traceback
 import urllib.parse
 
 import requests as http
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
+
+logger = logging.getLogger(__name__)
 
 from backend.database import count_projects
 from backend.models.oauth_token import upsert_oauth_token
@@ -88,6 +92,7 @@ async def atlassian_callback(code: str = "", state: str = "", error: str = ""):
         resp.raise_for_status()
         token_data = resp.json()
     except Exception:
+        logger.error("OAuth step 1 (token exchange) failed:\n%s", traceback.format_exc())
         return RedirectResponse(f"{frontend_url}/?error=token_exchange_failed")
 
     access_token = token_data.get("access_token", "")
@@ -105,10 +110,12 @@ async def atlassian_callback(code: str = "", state: str = "", error: str = ""):
         me_resp.raise_for_status()
         me_data = me_resp.json()
     except Exception:
+        logger.error("OAuth step 2 (/me fetch) failed:\n%s", traceback.format_exc())
         return RedirectResponse(f"{frontend_url}/?error=token_exchange_failed")
 
     account_id = me_data.get("account_id", "")
     if not account_id:
+        logger.error("OAuth step 2 (/me) returned no account_id. me_data keys: %s", list(me_data.keys()))
         return RedirectResponse(f"{frontend_url}/?error=token_exchange_failed")
 
     email = me_data.get("email") or me_data.get("emailAddress", "")
@@ -128,6 +135,7 @@ async def atlassian_callback(code: str = "", state: str = "", error: str = ""):
         res.raise_for_status()
         resources = res.json()
     except Exception:
+        logger.error("OAuth step 3 (accessible-resources) failed:\n%s", traceback.format_exc())
         return RedirectResponse(f"{frontend_url}/?error=resources_failed")
 
     if not resources:
@@ -139,15 +147,17 @@ async def atlassian_callback(code: str = "", state: str = "", error: str = ""):
     site_name = site.get("name", "")
 
     # Persist user + token
-    user_id = upsert_user(account_id, email, display_name, avatar_url)
-    access_token_enc = _encrypt_token(access_token)
-    refresh_token_enc = _encrypt_token(refresh_token) if refresh_token else ""
-    upsert_oauth_token(user_id, access_token_enc, refresh_token_enc, cloud_id, site_url, site_name, expires_at)
+    try:
+        user_id = upsert_user(account_id, email, display_name, avatar_url)
+        access_token_enc = _encrypt_token(access_token)
+        refresh_token_enc = _encrypt_token(refresh_token) if refresh_token else ""
+        upsert_oauth_token(user_id, access_token_enc, refresh_token_enc, cloud_id, site_url, site_name, expires_at)
+        session_id = create_session(user_id)
+        project_count = count_projects(user_id)
+    except Exception:
+        logger.error("OAuth callback DB/session error:\n%s", traceback.format_exc())
+        return RedirectResponse(f"{frontend_url}/?error=token_exchange_failed")
 
-    # Create session
-    session_id = create_session(user_id)
-
-    project_count = count_projects(user_id)
     redirect_path = "/dashboard" if project_count > 0 else "/"
 
     response = RedirectResponse(f"{frontend_url}{redirect_path}")
