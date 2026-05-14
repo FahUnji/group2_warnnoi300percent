@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-13T16:57:37.000Z",
+  "timestamp": "2026-05-14T01:59:55.000Z",
   "phase": "post-v1",
   "phase_name": "ui-polish",
   "phase_dir": null,
@@ -17,7 +17,7 @@
     },
     {
       "id": 2,
-      "name": "Create shared Sidebar component (Bug Report + Sprint links only, no Dashboard)",
+      "name": "Create shared Sidebar component with Bug Report + Sprint links",
       "status": "done",
       "commit": "3c454ee"
     },
@@ -35,44 +35,69 @@
     },
     {
       "id": 5,
-      "name": "Page transitions: fadeInUp enter + fadeOutUp exit on BugReport and Sprint",
+      "name": "Page transitions: fadeInUp enter + fadeOutUp exit on BugReport and Sprint main content",
       "status": "done",
       "commit": "3c454ee"
     },
     {
       "id": 6,
-      "name": "Remove all old per-page navbar/sidebar CSS from BugReportPage + SprintPage module files",
+      "name": "Remove all old per-page navbar/sidebar CSS from BugReportPage + SprintPage modules",
       "status": "done",
       "commit": "3c454ee"
+    },
+    {
+      "id": 7,
+      "name": "Add Dashboard link back to Sidebar with grid icon (user re-requested)",
+      "status": "done",
+      "commit": "uncommitted"
+    },
+    {
+      "id": 8,
+      "name": "Sidebar entry animation: sidebarEnter keyframe (translateX(-20px)+opacity) on page mount",
+      "status": "done",
+      "commit": "uncommitted"
+    },
+    {
+      "id": 9,
+      "name": "Sidebar exit animation: isLeaving prop → sidebarLeaving class on Bug Report/Sprint → Dashboard",
+      "status": "done",
+      "commit": "uncommitted"
+    },
+    {
+      "id": 10,
+      "name": "Smooth resize breakpoint: move transition to base .sidebar CSS so it fires at all viewport sizes",
+      "status": "done",
+      "commit": "uncommitted"
+    },
+    {
+      "id": 11,
+      "name": "Skip sidebar entry animation on Bug Report ↔ Sprint nav: document.referrer check in useState init",
+      "status": "done",
+      "commit": "uncommitted"
     }
   ],
   "remaining_tasks": [
     {
-      "id": 7,
-      "name": "Browser UAT: restart frontend, verify no gap, mobile hamburger, logo center, transitions",
+      "id": 12,
+      "name": "Browser UAT: restart frontend, verify Dashboard→BugReport/Sprint (sidebar slides in), BugReport↔Sprint (no sidebar anim), BugReport/Sprint→Dashboard (sidebar slides out)",
       "status": "not_started"
     },
     {
-      "id": 8,
-      "name": "Continue responsive/consistency work on page-level layouts (user implied more after navbar)",
+      "id": 13,
+      "name": "UAT pending: Bug Report Export Word (.docx) and Sprint Export Word (.docx)",
       "status": "not_started"
     },
     {
-      "id": 9,
-      "name": "UAT pending from previous session: Bug Report + Sprint Export Word (.docx)",
+      "id": 14,
+      "name": "Continue page-level responsive improvements if UAT passes",
       "status": "not_started"
     }
   ],
   "blockers": [
     {
-      "description": "Frontend container not restarted — UI changes not live yet",
+      "description": "Frontend container not restarted — all sidebar animation changes not live (uncommitted too)",
       "type": "human_action",
       "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\""
-    },
-    {
-      "description": "Backend container may need restart — export.py changes from previous session",
-      "type": "human_action",
-      "workaround": "powershell.exe -Command \"docker restart group2_warnnoi300percent-backend-1\""
     },
     {
       "description": "Docker CLI not in WSL — use powershell.exe workaround",
@@ -92,25 +117,45 @@
   ],
   "human_actions_pending": [
     {
-      "action": "Restart frontend container to see UI changes",
+      "action": "Restart frontend container to see all sidebar animation changes",
       "context": "powershell.exe -Command \"docker restart group2_warnnoi300percent-frontend-1\"",
       "blocking": true
     },
     {
-      "action": "UAT: sidebar flush under navbar, mobile hamburger, logo centered on mobile, page transitions",
-      "context": "All sidebar+navbar changes committed but not tested in browser",
+      "action": "UAT sidebar animations: Dashboard→BugReport/Sprint (slides in), BugReport↔Sprint (no anim), BugReport/Sprint→Dashboard (slides out), resize breakpoint (smooth transition)",
+      "context": "All changes in Sidebar.jsx + Sidebar.module.css + BugReportPage.jsx + SprintPage.jsx",
       "blocking": false
     },
     {
       "action": "UAT: Bug Report Export Word (.docx) and Sprint Export Word (.docx)",
-      "context": "Pending from previous session — backend export.py redesigned with matplotlib charts + colored tables",
+      "context": "Pending from 2 sessions ago — backend export.py redesigned with matplotlib charts + colored tables",
       "blocking": false
     }
   ],
   "decisions": [
     {
-      "decision": "Sidebar shows only Bug Report + Sprint (no Dashboard link)",
-      "rationale": "Explicit user request: 'Display only Bug report page and Sprint page'",
+      "decision": "Dashboard link restored to Sidebar with grid icon",
+      "rationale": "User previously removed it, now re-requested it back",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Sidebar entry animation: CSS @keyframes sidebarEnter, suppressed via sidebarNoAnim class",
+      "rationale": "Keyframe fires on mount; document.referrer check determines whether to suppress",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Sidebar entry animation skip: document.referrer check in useState() initializer",
+      "rationale": "Simpler and more reliable than sessionStorage; browser sets referrer automatically on all same-origin navigations",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Sidebar exit animation reuses isLeaving prop already present on BugReportPage and SprintPage",
+      "rationale": "Both pages already call setIsLeaving(true) in handleBackToDashboard; no new state needed",
+      "phase": "post-v1"
+    },
+    {
+      "decision": "Sidebar resize transition: transition property moved from mobile media query to base .sidebar",
+      "rationale": "Transition only in media query = no animation when crossing breakpoint; base placement fixes this",
       "phase": "post-v1"
     },
     {
@@ -124,22 +169,22 @@
       "phase": "post-v1"
     },
     {
-      "decision": "Removed margin-top 64px from layout divs in BugReport/Sprint/Dashboard",
-      "rationale": "position:sticky takes space in normal flow — the old fixed-nav margin was no longer needed",
-      "phase": "post-v1"
-    },
-    {
-      "decision": "Bug report docx: dual donut charts side by side + stats table (from previous session)",
+      "decision": "Bug report docx: dual donut charts side by side + stats table",
       "rationale": "User requested docx match page visual",
       "phase": "05"
     },
     {
-      "decision": "Sprint docx: colored card table per sprint, no donut charts (from previous session)",
+      "decision": "Sprint docx: colored card table per sprint, no donut charts",
       "rationale": "User explicitly rejected charts for sprint — card rows match sprint page visual",
       "phase": "05"
     }
   ],
-  "uncommitted_files": [],
-  "next_action": "Restart frontend container, open browser, verify: (1) no gap between navbar and sidebar, (2) mobile hamburger collapses sidebar, (3) logo centered on mobile, (4) page transitions animate. Then continue page-level responsive improvements.",
-  "context_notes": "All 5 project phases complete. User iterating on UI consistency and responsive design post-v1. This session: navbar+sidebar extracted to shared components, mobile hamburger added, layout gap fixed, transitions added. Next likely: page-level content responsive improvements (grids, cards). Backend export.py has pending UAT from previous session."
+  "uncommitted_files": [
+    "frontend/src/components/Sidebar/Sidebar.jsx",
+    "frontend/src/components/Sidebar/Sidebar.module.css",
+    "frontend/src/pages/BugReportPage.jsx",
+    "frontend/src/pages/SprintPage.jsx"
+  ],
+  "next_action": "Commit the 4 uncommitted sidebar animation files, restart frontend container, then UAT all sidebar navigation transitions in browser.",
+  "context_notes": "All 5 project phases complete (v1.0). Post-v1 UI polish. This session added: Dashboard link to Sidebar, sidebar enter animation (sidebarEnter keyframe, skipped when navigating between sidebar pages via document.referrer), sidebar exit animation (sidebarLeaving class triggered by isLeaving prop), smooth resize breakpoint transition. Key implementation: Sidebar.jsx useState() initializer reads document.referrer synchronously — if referrer is /bug-report or /sprint, skipAnim=true and sidebarNoAnim CSS class suppresses the keyframe. isLeaving is passed from both BugReportPage and SprintPage to Sidebar."
 }

@@ -275,7 +275,7 @@ function SprintPage() {
       <Navbar user={user} onLogout={handleLogout} onMenuToggle={() => setSidebarOpen(v => !v)} menuOpen={sidebarOpen} onLogoClick={handleBackToDashboard} />
 
       <div className={styles.layout}>
-        <Sidebar projectKey={projectKey} projectName={projectName} activePage="sprint" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar projectKey={projectKey} projectName={projectName} activePage="sprint" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isLeaving={isLeaving} />
 
         <main className={`${styles.mainContent}${isLeaving ? ' ' + styles.mainContentLeaving : ''}`}>
 
